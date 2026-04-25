@@ -1090,26 +1090,32 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
                 const hasR=v.reps!=null&&v.reps!=='';
                 const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
                 const egV=v['eg-setting'];const hasEg=egV!=null&&egV!=='';
-                let content;
                 if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
                   if(hasEg)extras.push('EG: '+egV);
-                  content=React.createElement(React.Fragment,null,
-                    React.createElement('span',{style:{fontWeight:800,color:'var(--text1)'}},v.distance+'m'),
-                    React.createElement('span',{style:{color:'var(--text3)',margin:'0 3px'}},'→'),
-                    React.createElement('span',{style:{fontWeight:700,color:'var(--primary)'}},v['tf-time']+'s'),
-                    extras.length?React.createElement('span',{style:{color:'var(--text3)',fontSize:11,marginLeft:4}},'('+extras.join('  ')+')'):null);
-                }else if(hasTfT){content=React.createElement('span',{style:{fontWeight:800,color:'var(--primary)'}},v['tf-time']+'s');
-                }else if(hasTfD){content=React.createElement('span',{style:{fontWeight:800,color:'var(--primary)'}},v['tf-dist']+'m');
-                }else if(hasW){content=React.createElement(React.Fragment,null,
-                    React.createElement('span',{style:{fontWeight:800,color:'var(--text1)'}},v.weight+'kg'),
-                    hasR?React.createElement(React.Fragment,null,
-                      React.createElement('span',{style:{color:'var(--text3)',margin:'0 4px'}},'×'),
-                      React.createElement('span',{style:{fontWeight:700,color:'var(--primary)'}},v.reps)):null);
-                }else{const usedMids=Object.keys(v).filter(k=>v[k]!==''&&v[k]!=null);
-                  const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
-                  content=showMds.map(md=>React.createElement('span',{key:md.id,style:{fontWeight:600}},v[md.id]+(md.unit?' '+md.unit:'')));}
-                return React.createElement('div',{key:j,style:{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}},
-                  React.createElement('span',{style:{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}},j+1),content)})}
+                  return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}}>
+                    <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                    <span style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>
+                    <span style={{color:'var(--text3)'}}>→</span>
+                    <span style={{fontWeight:700,color:'var(--primary)'}}>{v['tf-time']}s</span>
+                    {extras.length>0&&<span style={{color:'var(--text3)',fontSize:11}}>({extras.join('  ')})</span>}
+                  </div>)}
+                if(hasTfT)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)'}}>
+                  <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                  <span style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-time']}s</span></div>);
+                if(hasTfD)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)'}}>
+                  <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                  <span style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-dist']}m</span></div>);
+                if(hasW)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)'}}>
+                  <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                  <span style={{fontWeight:800,color:'var(--text1)'}}>{v.weight}kg</span>
+                  {hasR&&<><span style={{color:'var(--text3)'}}>×</span><span style={{fontWeight:700,color:'var(--primary)'}}>{v.reps}</span></>}
+                </div>);
+                const usedMids=Object.keys(v).filter(k=>v[k]!==''&&v[k]!=null);
+                const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
+                return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}}>
+                  <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                  {showMds.map(md=><span key={md.id} style={{fontWeight:600}}>{v[md.id]}{md.unit?' '+md.unit:''}</span>)}
+                </div>)})}
             </div></div>)})}</div></>}
     </div></div></div>)}
 
@@ -1513,25 +1519,30 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
               const hasRp=v.reps!=null&&v.reps!=='';
               const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
               const egV=v['eg-setting'];const hasEg=egV!=null&&egV!=='';
-              let content;
               if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
                 if(hasEg)extras.push('EG: '+egV);
-                content=React.createElement(React.Fragment,null,
-                  React.createElement('span',{style:{fontWeight:800,color:'var(--text1)'}},v.distance+'m'),
-                  React.createElement('span',{style:{color:'var(--text3)',margin:'0 3px'}},'→'),
-                  React.createElement('span',{style:{fontWeight:700,color:'var(--primary)'}},v['tf-time']+'s'),
-                  extras.length?React.createElement('span',{style:{color:'var(--text3)',fontSize:11,marginLeft:4}},'('+extras.join('  ')+')'):null);
-              }else if(hasTfT){content=React.createElement('span',{style:{fontWeight:800,color:'var(--primary)'}},v['tf-time']+'s');
-              }else if(hasTfD){content=React.createElement('span',{style:{fontWeight:800,color:'var(--primary)'}},v['tf-dist']+'m');
-              }else if(hasWt){content=React.createElement(React.Fragment,null,
-                  React.createElement('span',{style:{fontWeight:800,color:'var(--text1)'}},v.weight+'kg'),
-                  hasRp?React.createElement(React.Fragment,null,
-                    React.createElement('span',{style:{color:'var(--text3)',margin:'0 4px'}},'×'),
-                    React.createElement('span',{style:{fontWeight:700,color:'var(--primary)'}},v.reps)):null);
-              }else{content=historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
-                  return React.createElement('span',{key:mid},(v[mid]??'-')+(md.unit?' '+md.unit:''))});}
-              return React.createElement('div',{key:j,style:{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0'}},
-                React.createElement('span',{style:{color:'var(--text3)',width:18,fontWeight:700}},j+1),content)})}</div>})}
+                return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0',flexWrap:'wrap'}}>
+                  <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
+                  <span style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>
+                  <span style={{color:'var(--text3)'}}>→</span>
+                  <span style={{fontWeight:700,color:'var(--primary)'}}>{v['tf-time']}s</span>
+                  {extras.length>0&&<span style={{color:'var(--text3)',fontSize:11}}>({extras.join('  ')})</span>}
+                </div>)}
+              if(hasTfT)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
+                <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
+                <span style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-time']}s</span></div>);
+              if(hasTfD)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
+                <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
+                <span style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-dist']}m</span></div>);
+              if(hasWt)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
+                <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
+                <span style={{fontWeight:800,color:'var(--text1)'}}>{v.weight}kg</span>
+                {hasRp&&<><span style={{color:'var(--text3)'}}>×</span><span style={{fontWeight:700,color:'var(--primary)'}}>{v.reps}</span></>}
+              </div>);
+              return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0',flexWrap:'wrap'}}>
+                <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
+                {historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
+                  return<span key={mid}>{v[mid]??'-'}{md.unit?' '+md.unit:''}</span>})}</div>)})}</div>})}
         {!workouts.some(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))})&&
           <div style={{textAlign:'center',color:'var(--text3)',padding:20}}>No history yet</div>}
       </div></div></div>})()}
