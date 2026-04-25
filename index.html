@@ -432,7 +432,8 @@ const BUILTIN_METRICS=[{id:'weight',name:'Weight',unit:'kg',step:2.5},{id:'reps'
   {id:'time',name:'Time',unit:'s',step:1},{id:'distance',name:'Distance',unit:'m',step:10},{id:'rpe',name:'RPE',unit:'',step:0.5},
   {id:'tf-time',name:'Sprint Time',unit:'s',step:0.01},{id:'tf-dist',name:'T&F Distance',unit:'m',step:0.01},
   {id:'height',name:'Height',unit:'m',step:0.01},{id:'eg-setting',name:'EG #',unit:'',step:1},
-  {id:'split-10m',name:'10m Split',unit:'s',step:0.01},{id:'split-20m',name:'20m Split',unit:'s',step:0.01}];
+  {id:'split-10m',name:'10m Split',unit:'s',step:0.01},{id:'split-20m',name:'20m Split',unit:'s',step:0.01},
+  {id:'split-30m',name:'30m Split',unit:'s',step:0.01}];
 const DEFAULT_EXERCISES=[
   {id:'bench-press',name:'Bench Press',category:'Chest',metrics:['weight','reps']},
   {id:'incline-bench',name:'Incline Bench',category:'Chest',metrics:['weight','reps']},
@@ -488,7 +489,7 @@ const DEFAULT_EXERCISES=[
   {id:'build-ups',name:'Build-ups',category:'T&F',metrics:['distance','tf-time']},
   {id:'eg-marches',name:'EG Marches',category:'T&F',metrics:['distance','eg-setting']},
   {id:'resisted-sprint',name:'Resisted Sprint',category:'T&F',metrics:['distance','tf-time','eg-setting']},
-  {id:'free-sprint',name:'Free Sprint',category:'T&F',metrics:['distance','tf-time','split-10m','split-20m']},
+  {id:'free-sprint',name:'Free Sprint',category:'T&F',metrics:['distance','tf-time','split-10m','split-20m','split-30m']},
   {id:'mb-overhead-back',name:'MB Overhead Back Throw',category:'T&F',metrics:['weight','reps']},
   {id:'mb-chest-pass',name:'MB Chest Pass',category:'T&F',metrics:['weight','reps']},
   {id:'mb-rotational',name:'MB Rotational Throw',category:'T&F',metrics:['weight','reps']},
