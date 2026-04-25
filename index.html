@@ -485,8 +485,7 @@ const DEFAULT_EXERCISES=[
   {id:'falling-starts',name:'Falling Starts',category:'T&F',metrics:['reps']},
   {id:'build-ups',name:'Build-ups',category:'T&F',metrics:['distance','tf-time']},
   {id:'eg-marches',name:'EG Marches',category:'T&F',metrics:['distance','eg-setting']},
-  {id:'resisted-sprint',name:'Contrast: Resisted Sprint',category:'T&F',metrics:['distance','tf-time','eg-setting']},
-  {id:'contrast-free',name:'Contrast: Free Sprint',category:'T&F',metrics:['distance','tf-time','split-10m','split-20m']},
+  {id:'resisted-sprint',name:'Resisted Sprint',category:'T&F',metrics:['distance','tf-time','eg-setting']},
   {id:'free-sprint',name:'Free Sprint',category:'T&F',metrics:['distance','tf-time','split-10m','split-20m']},
   {id:'mb-overhead-back',name:'MB Overhead Back Throw',category:'T&F',metrics:['weight','reps']},
   {id:'mb-chest-pass',name:'MB Chest Pass',category:'T&F',metrics:['weight','reps']},
@@ -567,16 +566,17 @@ function computePRs(exId,athId,workouts,exercise){
   })});return prs}
 
 function computeSprintPRs(exId,athId,workouts){
-  const byDist={};
+  const byKey={};
   workouts.forEach(w=>{(w.athletes?.[athId]?.sets?.[exId]||[]).filter(s=>s.completed).forEach(s=>{
     const dist=Number(s.values.distance)||0;if(!dist)return;
     const time=Number(s.values['tf-time']);if(!time)return;
-    const key=dist+'m';
-    const entry={time,dist,splits:{},date:w.startTime,wkName:w.name||'Workout'};
-    Object.keys(s.values).forEach(k=>{if(k!=='distance'&&k!=='tf-time'&&s.values[k]!==''&&s.values[k]!=null)
+    const eg=s.values['eg-setting'];
+    const key=eg?`${dist}m @ EG#${eg}`:`${dist}m`;
+    const entry={time,dist,eg:eg||null,splits:{},date:w.startTime,wkName:w.name||'Workout'};
+    Object.keys(s.values).forEach(k=>{if(k!=='distance'&&k!=='tf-time'&&k!=='eg-setting'&&s.values[k]!==''&&s.values[k]!=null)
       entry.splits[k]=Number(s.values[k])});
-    if(!byDist[key]||time<byDist[key].time)byDist[key]=entry})});
-  return byDist}
+    if(!byKey[key]||time<byKey[key].time)byKey[key]=entry})});
+  return byKey}
 
 function getProgressData(exId,athId,workouts,metric){
   return workouts.filter(w=>w.athletes?.[athId]?.sets?.[exId]?.some(s=>s.completed))
@@ -1718,23 +1718,23 @@ function App(){
     const updated=exercises.map(e=>{const d=defMap[e.id];if(!d||e.isCustom)return e;
       if(d.name!==e.name||JSON.stringify(d.metrics)!==JSON.stringify(e.metrics))return{...e,name:d.name,metrics:d.metrics};return e});
     const changed=updated.some((e,i)=>e!==exercises[i]);
-    if(missing.length||changed)setExercises(changed?[...updated,...missing]:[...exercises,...missing])},[]);
+    const cleaned=(changed?[...updated,...missing]:[...exercises,...missing]).filter(e=>e.id!=='contrast-free');
+    if(missing.length||changed||exercises.some(e=>e.id==='contrast-free'))setExercises(cleaned)},[]);
   useEffect(()=>{const photoMap={};DEFAULT_ATHLETES.forEach(da=>{if(da.photo)photoMap[da.id]=da.photo});
     if(athletes.some(a=>photoMap[a.id]&&!a.photo))setAthletes(prev=>prev.map(a=>photoMap[a.id]&&!a.photo?{...a,photo:photoMap[a.id]}:a))},[]);
-  useEffect(()=>{setPlanned(p=>p.filter(x=>x.id==='pl-sprint-1'||x.id==='pl-sprint-2'||x.id==='pl-sprint-3'?false:true));
-    if(!planned.find(p=>p.id==='pl-sprint-4')){
-    setPlanned(p=>[...p,{id:'pl-sprint-4',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
-      exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','contrast-free','free-sprint',
+  useEffect(()=>{setPlanned(p=>p.filter(x=>!x.id.startsWith('pl-sprint-')));
+    if(!planned.find(p=>p.id==='pl-sprint-5')){
+    setPlanned(p=>[...p,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
+      exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
         'mb-overhead-back','mb-chest-pass','mb-rotational'],
-      supersets:[['resisted-sprint','contrast-free']],
+      supersets:[['resisted-sprint','free-sprint']],
       setConfigs:{
         'wall-drills':[{reps:8},{reps:8},{reps:8}],
         'falling-starts':[{reps:5},{reps:5},{reps:5},{reps:5},{reps:5}],
         'eg-marches':[{distance:20},{distance:20},{distance:20}],
         'waterbag-sprint':[{distance:10},{distance:10},{distance:10}],
         'resisted-sprint':[{distance:20},{distance:20},{distance:20}],
-        'contrast-free':[{distance:20},{distance:25},{distance:30}],
-        'free-sprint':[{distance:30},{distance:30},{distance:30}],
+        'free-sprint':[{distance:20},{distance:25},{distance:30},{distance:30},{distance:30},{distance:30}],
         'mb-overhead-back':[{reps:5}],
         'mb-chest-pass':[{reps:5}],
         'mb-rotational':[{reps:5}]
