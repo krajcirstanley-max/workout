@@ -55,9 +55,9 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 /* Athlete Bar */
 .ath-bar{display:flex;gap:20px;padding:8px 20px 12px;overflow-x:auto;scrollbar-width:none;justify-content:center}
 .ath-bar::-webkit-scrollbar{display:none}
-.ath-item{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:56px}
-.ath-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:17px;border:3px solid transparent;transition:all .25s ease;overflow:hidden}
+.ath-item{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:68px}
+.ath-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:20px;border:3px solid transparent;transition:all .25s ease;overflow:hidden}
 .ath-avatar.active{box-shadow:0 4px 16px rgba(0,0,0,.15)}
 .ath-avatar img{width:100%;height:100%;object-fit:cover}
 .ath-name{font-size:11px;color:var(--text3);max-width:64px;text-align:center;overflow:hidden;
@@ -155,7 +155,8 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 .r1{color:#ef4444}.r2{color:#f97316}.r3{color:#eab308}.r4{color:#22c55e}.r5{color:#10b981}
 
 /* ── Accordion ── */
-.acc{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.acc{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden;transition:all .3s}
+.acc.done{opacity:.55;border:2px solid #10b981}
 .superset-group{border:2px solid var(--primary);border-radius:calc(var(--radius) + 4px);padding:4px;margin-bottom:12px;position:relative}
 .superset-group .acc{margin-bottom:4px;box-shadow:none}
 .superset-group .acc:last-child{margin-bottom:0}
@@ -184,9 +185,9 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 .ex-act-btn.danger{color:var(--danger)}
 
 /* Set Table */
-.set-table{padding:6px 12px 8px}
-.set-row{display:grid;align-items:center;gap:6px;padding:5px 4px;border-radius:10px;min-height:44px}
-.set-row.header{color:var(--text3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;min-height:28px}
+.set-table{padding:6px 12px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.set-row{display:grid;align-items:center;gap:6px;padding:5px 4px;border-radius:10px;min-height:44px;min-width:max-content}
+.set-row.header{color:var(--text3);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;min-height:28px;line-height:1.2}
 .set-row.completed{background:var(--primary-glow)}
 .set-num{font-weight:800;font-size:13px;color:var(--text3);text-align:center;width:24px}
 .set-prev{font-size:11px;color:var(--text3);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
@@ -656,7 +657,8 @@ function MonthCalendar({workouts,planned,competitions,onSelectDay}){
       </button>)})}</div></div>)}
 
 function SetRow({set,idx,metrics,cm,onUpdate,onToggle,onDelete}){
-  const mds=metrics.map(id=>getMetric(id,cm));const gc=`24px ${'1fr '.repeat(metrics.length)}36px 28px`;
+  const mds=metrics.map(id=>getMetric(id,cm));
+  const colW=metrics.length>3?'60px':'1fr';const gc=`24px ${metrics.map(()=>colW).join(' ')} 36px 28px`;
   return(<div className={`set-row ${set.completed?'completed':''}`} style={{gridTemplateColumns:gc}}>
     <div className="set-num">{idx+1}</div>
     {mds.map(md=>(<input key={md.id} type="number" className="set-input" placeholder={md.unit||md.name}
@@ -695,9 +697,12 @@ function fmtLast(prevSets,exercise){
     const wts=done.map(s=>s.values.weight).filter(v=>v!=null&&v!=='');
     if(!reps.length||!wts.length)return'-';
     const allR=reps.every(r=>r===reps[0]),allW=wts.every(w=>w===wts[0]);
-    if(allR&&allW)return`${done.length}×${reps[0]} @ ${wts[0]}`;
-    return reps.join(', ')+' @ '+wts.join(', ')}
-  return done.map(s=>exercise.metrics.map(mid=>s.values[mid]??'-').join('×')).join(', ')}
+    if(allR&&allW)return`${done.length}×${reps[0]} @ ${wts[0]}kg`;
+    return reps.join(', ')+' @ '+wts.join(', ')+'kg'}
+  if(exercise.metrics.length<=2){return done.map(s=>exercise.metrics.map(mid=>s.values[mid]??'-').join('×')).join(', ')}
+  return done.map((s,i)=>`Set ${i+1}: `+exercise.metrics.map(mid=>{const v=s.values[mid];
+    if(v===''||v==null)return null;const m=BUILTIN_METRICS.find(x=>x.id===mid);
+    return `${v}${m?.unit||''}`}).filter(Boolean).join(' / ')).join('\n')}
 
 function InlineMetricEditor({current,cm,onChange}){
   const all=[...BUILTIN_METRICS,...cm];
@@ -727,11 +732,13 @@ function InlineMetricEditor({current,cm,onChange}){
 
 function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics}){
   const[open,setOpen]=useState(false);const[showVZ,setShowVZ]=useState(false);const[showMetrics,setShowMetrics]=useState(false);if(!exercise)return null;
-  const mds=exercise.metrics.map(id=>getMetric(id,cm));const gc=`24px ${'1fr '.repeat(exercise.metrics.length)}36px 28px`;
+  const mds=exercise.metrics.map(id=>getMetric(id,cm));
+  const colW=exercise.metrics.length>3?'60px':'1fr';const gc=`24px ${exercise.metrics.map(()=>colW).join(' ')} 36px 28px`;
   const done=sets.filter(s=>s.completed).length;const gym=isGymEx(exercise);
   const lastStr=fmtLast(prevSets,exercise);const unit=exercise.metrics.includes('weight')?'kg':exercise.metrics.includes('tf-dist')?'m':'';
   const prVal=prs?.maxWeight?`${prs.maxWeight}`:(prs?.maxReps?`${prs.maxReps}`:null);
-  return(<div className="acc">
+  const allDone=sets.length>0&&sets.every(s=>s.completed);
+  return(<div className={`acc ${allDone?'done':''}`}>
     <div className="acc-hdr">
       <div className="drag-handle" onTouchStart={onGripTouch} onMouseDown={onGripTouch}><Icon name="grip" size={16}/></div>
       <div className="acc-hdr-info" onClick={()=>setOpen(!open)}>
@@ -741,7 +748,7 @@ function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSe
             style={{color:'var(--primary)',fontSize:11,fontWeight:700,marginLeft:4}}>History</button>}</div></div>
       <div className={`acc-chevron ${open?'open':''}`} onClick={()=>setOpen(!open)}><Icon name="chevDown" size={18}/></div></div>
     {open&&(lastStr!=='-'||prVal)&&<div className="ex-stats">
-      <div className="ex-stat" style={{flex:2,textAlign:'left'}}><div className="ex-stat-label">Last</div><div className="ex-stat-val" style={{color:'var(--text)'}}>{lastStr}</div></div>
+      <div className="ex-stat" style={{flex:2,textAlign:'left'}}><div className="ex-stat-label">Last</div><div className="ex-stat-val" style={{color:'var(--text)',whiteSpace:'pre-line',fontSize:12,lineHeight:1.5}}>{lastStr}</div></div>
       {prVal&&<div className="ex-stat" style={{flex:1}}><div className="ex-stat-label">PR</div><div className="ex-stat-val">{prVal} {unit}</div></div>}
     </div>}
     {open&&<div className="acc-body">
@@ -760,7 +767,8 @@ function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSe
         <div style={{flex:1}}/><button className="ex-act-btn danger" onClick={onDelete}><Icon name="trash" size={12}/></button></div>
       <div className="set-table">
         <div className="set-row header" style={{gridTemplateColumns:gc}}><div style={{textAlign:'center'}}>#</div>
-          {mds.map(m=><div key={m.id} style={{textAlign:'center'}}>{m.name}</div>)}<div/><div/></div>
+          {mds.map(m=><div key={m.id} style={{textAlign:'center'}}>{m.name}{m.unit?<br/>:''}
+            {m.unit&&<span style={{fontSize:8,opacity:.7}}>({m.unit})</span>}</div>)}<div/><div/></div>
         {sets.map((s,i)=>(<SetRow key={i} set={s} idx={i} metrics={exercise.metrics} cm={cm}
           onUpdate={(mid,v)=>onUpdateSet(i,mid,v)} onToggle={()=>onToggleSet(i)} onDelete={()=>onDeleteSet(i)}/>))}</div>
       <button className="add-set-btn" onClick={onAddSet}><Icon name="plus" size={12}/> Add Set</button></div>}</div>)}
@@ -816,8 +824,8 @@ function ConfirmDialog({title,message,onConfirm,onCancel,confirmText='OK',danger
       <button className="btn btn-secondary" style={{flex:1}} onClick={onCancel}>Cancel</button>
       <button className={`btn ${danger?'btn-danger':'btn-primary'}`} style={{flex:1}} onClick={onConfirm}>{confirmText}</button></div></div></div></div>)}
 
-function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,onSave,onCancel}){
-  const[weather,setWeather]=useState(null);const[tag,setTag]=useState(null);
+function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onSave,onCancel}){
+  const[weather,setWeather]=useState(null);const[tag,setTag]=useState(initialTag||null);
   const[showCustomTag,setShowCustomTag]=useState(false);const[ctName,setCtName]=useState('');const[ctColor,setCtColor]=useState('#8b5cf6');
   const[wkName,setWkName]=useState(workout.name||'');
   const elSec=Math.floor(elapsed/1000);
@@ -1190,6 +1198,11 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const[replacingIdx,setReplacingIdx]=useState(null);const[showFinish,setShowFinish]=useState(false);
   const[historyEx,setHistoryEx]=useState(null);
   const[confirmCancel,setConfirmCancel]=useState(false);
+  const[wkTag,setWkTag]=useState(null);const[showTagPicker,setShowTagPicker]=useState(false);
+  const lastWk=workouts.filter(w=>w.exerciseIds?.length>0).sort((a,b)=>b.startTime-a.startTime)[0];
+  const lastNotes=lastWk?Object.entries(lastWk.athletes||{}).map(([aId,ad])=>{
+    if(!ad?.notes)return null;const ath=athletes.find(a=>a.id===aId);
+    return{name:ath?.name||'?',notes:ad.notes}}).filter(Boolean):[];
   const[localEx,setLocalEx]=useState(initEx);const[localCM,setLocalCM]=useState(initCM);
   const[vzMap,setVzMap]=useState({});
   const[supersets,setSupersets]=useState(()=>{try{const sv=localStorage.getItem('wk2_activeSupersets');if(sv)return JSON.parse(sv)}catch{};return initialPlan?.supersets||[]});
@@ -1258,7 +1271,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const athSets=workout.athletes[activeAth]?.sets||{};
 
   if(showFinish)return<WorkoutFinishForm workout={workout} athletes={athletes} exercises={localEx} cm={localCM} elapsed={elapsed}
-    onSave={handleFinishSave} onCancel={()=>setShowFinish(false)}/>;
+    initialTag={wkTag} onSave={handleFinishSave} onCancel={()=>setShowFinish(false)}/>;
 
   return(<><div className="hdr"><button className="hdr-btn" onClick={()=>setConfirmCancel(true)}><Icon name="x" size={20}/></button>
     <span className="hdr-title">Workout</span><span className="hdr-time">{fmtTime(Math.floor(elapsed/1000))}</span></div>
@@ -1341,8 +1354,28 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
         if(any)setShowFinish(true);else setConfirmCancel(true)}}>Finish Workout</button>}</div>
     {showCheckin&&needsCheckin&&<ReadinessCheckIn athleteName={curAth?.name}
       onSubmit={r=>{setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],readiness:r}}}));
-        setCheckedIn(p=>new Set(p).add(activeAth));setShowCheckin(false)}}
-      onSkip={()=>{setCheckedIn(p=>new Set(p).add(activeAth));setShowCheckin(false)}}/>}
+        setCheckedIn(p=>new Set(p).add(activeAth));setShowCheckin(false);
+        if(checkedIn.size===0)setShowTagPicker(true)}}
+      onSkip={()=>{setCheckedIn(p=>new Set(p).add(activeAth));setShowCheckin(false);
+        if(checkedIn.size===0)setShowTagPicker(true)}}/>}
+    {showTagPicker&&<div className="readiness"><div className="readiness-hdr">
+      <button className="hdr-btn" onClick={()=>setShowTagPicker(false)}><Icon name="x" size={20}/></button>
+      <span className="readiness-title">Session Setup</span>
+      <button className="readiness-skip" onClick={()=>setShowTagPicker(false)}>Skip</button></div>
+      <div className="readiness-body">
+        <div style={{marginBottom:20}}><h3 style={{fontSize:15,fontWeight:800,marginBottom:12}}>Training Type</h3>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>{DEFAULT_TAGS.map(t=>
+            <button key={t.id} onClick={()=>setWkTag(wkTag?.id===t.id?null:t)}
+              style={{padding:'8px 16px',borderRadius:20,fontSize:14,fontWeight:700,
+                background:wkTag?.id===t.id?t.color:t.color+'18',color:wkTag?.id===t.id?'#fff':t.color,
+                border:wkTag?.id===t.id?`2px solid ${t.color}`:'2px solid transparent'}}>{t.name}</button>)}</div></div>
+        {lastNotes.length>0&&<div style={{marginBottom:20}}><h3 style={{fontSize:15,fontWeight:800,marginBottom:12}}>Notes from Last Session</h3>
+          {lastNotes.map((n,i)=><div key={i} style={{padding:'10px 14px',background:'var(--bg)',borderRadius:10,marginBottom:8,
+            borderLeft:'3px solid var(--primary)'}}>
+            <div style={{fontSize:11,fontWeight:800,color:'var(--primary)',marginBottom:4}}>{n.name}</div>
+            <div style={{fontSize:13,color:'var(--text)',lineHeight:1.5}}>{n.notes}</div></div>)}</div>}
+        <button className="btn btn-primary" onClick={()=>setShowTagPicker(false)}>Start Training</button>
+      </div></div>}
     {showPicker&&<ExercisePicker exercises={localEx} cm={localCM}
       onSelect={replacingIdx!=null?replaceEx:addEx}
       onClose={()=>{setShowPicker(false);setReplacingIdx(null)}}
@@ -1671,6 +1704,7 @@ function App(){
   const _clearActiveSession=()=>{['activeSession','activePlan','activeWorkout','activeSupersets','activeCheckedIn'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}})};
   const finishWorkout=(wk,localEx,localCM)=>{_clearActiveSession();
     if(wk.exerciseIds.length>0)setWorkouts(p=>[...p,wk]);
+    if(activePlan)setPlanned(p=>p.filter(pl=>pl.id!==activePlan.id));
     setExercises(localEx);setCM(localCM);setInWorkout(false);setActivePlan(null);setTab('today')};
   const cancelWorkout=()=>{_clearActiveSession();setInWorkout(false);setActivePlan(null);setTab('today')};
   const deleteWorkout=id=>{setWorkouts(p=>p.filter(w=>w.id!==id));setViewing(null)};
