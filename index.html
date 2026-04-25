@@ -1107,7 +1107,7 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
                 </div>
               </div>)})}
             </div></div>)})}</div></>}
-    </div></div></div>)}
+    </div></div></div>))}
 
 // ── Screens ──
 
@@ -1530,7 +1530,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           <div style={{textAlign:'center',color:'var(--text3)',padding:20}}>No history yet</div>}
       </div></div></div>})()}
     {confirmCancel&&<ConfirmDialog title="Discard Workout?" message="All progress will be lost."
-      confirmText="Discard" danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}</>)}
+      confirmText="Discard" danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}</>))
 
 function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,onView,onViewExercise}){
   const usedExIds=[...new Set(workouts.flatMap(w=>(w.athletes?.[activeAth]?Object.keys(w.athletes[activeAth].sets||{}):[])
