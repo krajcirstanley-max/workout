@@ -583,7 +583,7 @@ function computeSprintPRs(exId,athId,workouts){
     const eg=s.values['eg-setting'];
     const key=eg?`${dist}m @ EG#${eg}`:`${dist}m`;
     const entry={time,dist,eg:eg||null,splits:{},date:w.startTime,wkName:w.name||'Workout'};
-    Object.keys(s.values).forEach(k2=>{if(k2!=='distance'&&k2!=='tf-time'&&k2!=='eg-setting'&&s.values[k2]!==''&&s.values[k2]!=null)
+    Object.keys(s.values).forEach(k2=>{if(k2.startsWith('split-')&&s.values[k2]!==''&&s.values[k2]!=null)
       entry.splits[k2]=Number(s.values[k2])});
     if(!byKey[key]||time<byKey[key].time)byKey[key]=entry})})});
   return byKey}
