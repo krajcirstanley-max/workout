@@ -165,6 +165,8 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 .superset-unlink{position:absolute;top:-10px;right:16px;background:var(--surface);border:1px solid var(--border-light);
   color:var(--text3);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;cursor:pointer}
 .superset-unlink:active{background:var(--border-light)}
+.superset-grip{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border-light);
+  color:var(--text3);padding:2px 10px;border-radius:10px;cursor:grab;display:flex;align-items:center;touch-action:none}
 .link-btn{display:flex;align-items:center;justify-content:center;margin:-4px auto;height:24px;width:24px;
   border-radius:50%;background:var(--surface);border:1.5px solid var(--border-light);color:var(--text3);
   cursor:pointer;z-index:1;position:relative;transition:all .15s}
@@ -186,7 +188,7 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 
 /* Set Table */
 .set-table{padding:6px 12px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.set-row{display:grid;align-items:center;gap:6px;padding:5px 4px;border-radius:10px;min-height:44px;min-width:max-content}
+.set-row{display:grid;align-items:center;gap:6px;padding:5px 4px;border-radius:10px;min-height:44px}
 .set-row.header{color:var(--text3);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;min-height:28px;line-height:1.2}
 .set-row.completed{background:var(--primary-glow)}
 .set-num{font-weight:800;font-size:13px;color:var(--text3);text-align:center;width:24px}
@@ -675,7 +677,7 @@ function MonthCalendar({workouts,planned,competitions,onSelectDay}){
 function SetRow({set,idx,metrics,cm,onUpdate,onToggle,onDelete}){
   const mds=metrics.map(id=>getMetric(id,cm));
   const gc=metrics.length>=4?`24px ${metrics.map(()=>'68px').join(' ')} 36px 28px`:`24px ${'1fr '.repeat(metrics.length)}36px 28px`;
-  return(<div className={`set-row ${set.completed?'completed':''}`} style={{gridTemplateColumns:gc}}>
+  return(<div className={`set-row ${set.completed?'completed':''}`} style={{gridTemplateColumns:gc,...(metrics.length>=4?{minWidth:'max-content'}:{})}}>
     <div className="set-num">{idx+1}</div>
     {mds.map(md=>(<input key={md.id} type="number" className="set-input" placeholder={md.unit||md.name}
       value={set.values[md.id]??''} step={md.step} onChange={e=>onUpdate(md.id,e.target.value===''?'':Number(e.target.value))}/>))}
@@ -757,7 +759,7 @@ function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSe
   const prVal=prs?.maxWeight?`${prs.maxWeight}`:prs?.maxReps?`${prs.maxReps}`:
     prs?.['tf-time']?`${prs['tf-time']}s`:prs?.['tf-dist']?`${prs['tf-dist']}m`:null;
   const allDone=sets.length>0&&sets.every(s=>s.completed);
-  return(<div className={`acc ${allDone?'done':''}`}>
+  return(<div className={`acc ${allDone?'done':''}`} data-eid={exId}>
     <div className="acc-hdr">
       <div className="drag-handle" onTouchStart={onGripTouch} onMouseDown={onGripTouch}><Icon name="grip" size={16}/></div>
       <div className="acc-hdr-info" onClick={()=>setOpen(!open)}>
@@ -785,7 +787,7 @@ function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSe
         <button className="ex-act-btn" onClick={onReplace}><Icon name="swap" size={12}/>Replace</button>
         <div style={{flex:1}}/><button className="ex-act-btn danger" onClick={onDelete}><Icon name="trash" size={12}/></button></div>
       <div className="set-table">
-        <div className="set-row header" style={{gridTemplateColumns:gc}}><div style={{textAlign:'center'}}>#</div>
+        <div className="set-row header" style={{gridTemplateColumns:gc,...(exercise.metrics.length>=4?{minWidth:'max-content'}:{})}}><div style={{textAlign:'center'}}>#</div>
           {mds.map(m=>{const showUnit=m.unit&&!m.name.toLowerCase().includes(m.unit.toLowerCase());
             return<div key={m.id} style={{textAlign:'center'}}>{m.name}{showUnit?<><br/><span style={{fontSize:8,opacity:.7}}>({m.unit})</span></>:null}</div>})}<div/><div/></div>
         {sets.map((s,i)=>(<SetRow key={i} set={s} idx={i} metrics={exercise.metrics} cm={cm}
@@ -946,7 +948,10 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
   const addExToWk=ex=>{up(w=>{if(!w.exerciseIds.includes(ex.id)){w.exerciseIds.push(ex.id);
     Object.keys(w.athletes).forEach(aId=>{if(!w.athletes[aId].sets)w.athletes[aId].sets={};
       w.athletes[aId].sets[ex.id]=[{values:{},completed:true}];
-      ex.metrics.forEach(mid=>{w.athletes[aId].sets[ex.id][0].values[mid]=''})})};return w});setShowAddEx(false)};
+      ex.metrics.forEach(mid=>{w.athletes[aId].sets[ex.id][0].values[mid]=''})})
+    }else{Object.keys(w.athletes).forEach(aId=>{if(!w.athletes[aId].sets[ex.id])w.athletes[aId].sets[ex.id]=[];
+      const ns={values:{},completed:true};ex.metrics.forEach(mid=>{ns.values[mid]=''});
+      w.athletes[aId].sets[ex.id].push(ns)})}return w});setShowAddEx(false)};
 
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
     <div className="modal-hdr">
@@ -1320,7 +1325,37 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           const ss=supersets.find(s=>s.includes(eid));
           if(ss){const ssIdxs=ss.map(sid=>ids.indexOf(sid)).filter(i=>i>=0).sort((a,b)=>a-b);
             if(ssIdxs[0]===idx){ssIdxs.forEach(i=>renderedSet.add(i));
-              items.push(<div key={'ss-'+idx} className="superset-group"><div className="superset-label">Superset</div>
+              const ssEids=ssIdxs.map(i=>ids[i]);
+              const onSSGrip=e=>{const touch=e.touches?e.touches[0]:e;if(!touch)return;
+                const groupEl=e.target.closest('.superset-group');if(!groupEl)return;
+                const rect=groupEl.getBoundingClientRect();
+                const ghost=groupEl.cloneNode(true);
+                ghost.style.cssText=`position:fixed;left:${rect.left}px;width:${rect.width}px;top:${rect.top}px;z-index:100;opacity:.85;box-shadow:0 12px 40px rgba(0,0,0,.25);pointer-events:none;border-radius:16px;transform:scale(1.03)`;
+                document.body.appendChild(ghost);groupEl.style.opacity='0.25';
+                const offsetY=touch.clientY-rect.top;
+                const topItems=[...listRef.current.querySelectorAll(':scope > .acc, :scope > .superset-group')];
+                const myIdx=topItems.indexOf(groupEl);const d={overIdx:myIdx};
+                const calcOver=cy=>{let best=myIdx,minD=Infinity;topItems.forEach((it,i)=>{if(it===groupEl)return;
+                  const r=it.getBoundingClientRect();const dist=Math.abs(cy-(r.top+r.height/2));
+                  if(dist<minD){minD=dist;best=i}});return best};
+                const onMove=ev=>{ev.preventDefault();const t=ev.touches?ev.touches[0]:ev;
+                  ghost.style.top=(t.clientY-offsetY)+'px';const newOver=calcOver(t.clientY);
+                  topItems.forEach((it,i)=>{if(it===groupEl)return;
+                    if(myIdx<newOver&&i>myIdx&&i<=newOver)it.style.transform=`translateY(-${rect.height}px)`;
+                    else if(myIdx>newOver&&i>=newOver&&i<myIdx)it.style.transform=`translateY(${rect.height}px)`;
+                    else it.style.transform='';it.style.transition='transform .2s ease'});d.overIdx=newOver};
+                const onEnd=()=>{document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',onEnd);
+                  document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onEnd);
+                  ghost.remove();groupEl.style.opacity='';topItems.forEach(it=>{it.style.transform='';it.style.transition=''});
+                  if(myIdx!==d.overIdx){const vis=topItems.map(it=>it.classList.contains('superset-group')?
+                    it.dataset.eids.split(','):[it.dataset.eid]);
+                    const[moved]=vis.splice(myIdx,1);vis.splice(d.overIdx,0,moved);
+                    setWorkout(w=>({...w,exerciseIds:vis.flat()}))}};
+                document.addEventListener('touchmove',onMove,{passive:false});document.addEventListener('touchend',onEnd);
+                document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onEnd)};
+              items.push(<div key={'ss-'+idx} className="superset-group" data-eids={ssEids.join(',')}>
+                <div className="superset-label">Superset</div>
+                <div className="superset-grip" onTouchStart={onSSGrip} onMouseDown={onSSGrip}><Icon name="grip" size={14}/></div>
                 <button className="superset-unlink" onClick={()=>setSupersets(p=>p.filter(s=>s!==ss))}>Unlink</button>
                 {ssIdxs.map(si=>{const seid=ids[si];const sex=localEx.find(e=>e.id===seid);
                   const sPrs=sex?computePRs(seid,activeAth,workouts,sex):{};
