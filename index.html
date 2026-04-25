@@ -1567,6 +1567,9 @@ function App(){
   const[viewing,setViewing]=useState(null);const[planDate,setPlanDate]=useState(null);
   const[viewExercise,setViewExercise]=useState(null);
   useEffect(()=>{if(!inWorkout){const a=athletes.find(a=>a.id===activeAth);applyTheme(a?.color||'#3b82f6')}},[activeAth,athletes,inWorkout]);
+  useEffect(()=>{const ids=new Set(exercises.map(e=>e.id));
+    const missing=DEFAULT_EXERCISES.filter(e=>!ids.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing])},[]);
   useEffect(()=>{if(!planned.find(p=>p.id==='pl-sprint-1')){
     setPlanned(p=>[...p,{id:'pl-sprint-1',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
       exerciseIds:['b-skip','fast-leg','ankling','wall-drills','falling-starts','build-ups',
