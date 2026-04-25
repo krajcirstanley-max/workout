@@ -1084,10 +1084,13 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
         <div className="plan-hero-name">{plan.name}</div>
         <div className="plan-hero-count">{plan.exerciseIds.length} exercises</div>
         <div className="plan-hero-exercises">
-          {plan.exerciseIds.slice(0,5).map(eid=>{const ex=exercises.find(e=>e.id===eid);
-            return<div key={eid} className="plan-hero-ex">{ex?.name||'?'}</div>})}
-          {plan.exerciseIds.length>5&&<div style={{fontSize:12,color:'var(--text3)',paddingLeft:14}}>+{plan.exerciseIds.length-5} more</div>}
+          {plan.exerciseIds.map(eid=>{const ex=exercises.find(e=>e.id===eid);
+            const cfg=plan.setConfigs?.[eid];const sets=cfg?cfg.length:3;
+            const detail=cfg?(() => {const c=cfg[0];const d=c?.distance;const r=c?.reps;
+              if(d)return `${sets}×${d}m`;if(r)return `${sets}×${r}`;return `${sets}×`})():`${sets}×`;
+            return<div key={eid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {ex?.name||'?'}</div>})}
         </div>
+        {plan.notes&&<div style={{fontSize:12,color:'var(--text3)',marginTop:8,lineHeight:1.4}}>{plan.notes}</div>}
         <button className="btn btn-primary" onClick={()=>onStartPlan(plan)}>Start Workout</button>
       </div>))}
 
@@ -1146,10 +1149,13 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const[workout,setWorkout]=useState(()=>{const a={};athletes.forEach(at=>{a[at.id]={readiness:null,sets:{}}});
     const w={id:uid(),name:initialPlan?.name||'',startTime:Date.now(),exerciseIds:[],athletes:a};
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
+      const cfgs=initialPlan.setConfigs||{};
       Object.keys(a).forEach(aId=>{initialPlan.exerciseIds.forEach(eid=>{
         const ex=initEx.find(e=>e.id===eid);if(ex){const prev=getPrevSets(eid,aId,workouts);
-          a[aId].sets[eid]=Array.from({length:3},(_,i)=>{const s={values:{},completed:false};
-            ex.metrics.forEach(mid=>{s.values[mid]=prev?.[i]?.values[mid]??''});return s})}})});
+          const cfg=cfgs[eid];const numSets=cfg?cfg.length:3;
+          a[aId].sets[eid]=Array.from({length:numSets},(_,i)=>{const s={values:{},completed:false};
+            ex.metrics.forEach(mid=>{const prefill=cfg?.[i]?.[mid];
+              s.values[mid]=prefill!=null?prefill:(prev?.[i]?.values[mid]??'')});return s})}})});
     }return w});
   const[showCheckin,setShowCheckin]=useState(true);const[checkedIn,setCheckedIn]=useState(new Set());
   const[showPicker,setShowPicker]=useState(false);const[showEditor,setShowEditor]=useState(false);
@@ -1570,10 +1576,24 @@ function App(){
   useEffect(()=>{const ids=new Set(exercises.map(e=>e.id));
     const missing=DEFAULT_EXERCISES.filter(e=>!ids.has(e.id));
     if(missing.length)setExercises(p=>[...p,...missing])},[]);
-  useEffect(()=>{if(!planned.find(p=>p.id==='pl-sprint-1')){
-    setPlanned(p=>[...p,{id:'pl-sprint-1',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
-      exerciseIds:['b-skip','fast-leg','ankling','wall-drills','falling-starts','build-ups',
-        'eg-marches','resisted-sprint','free-sprint','mb-overhead-back','mb-chest-pass','mb-rotational']}])}},[]);
+  useEffect(()=>{const old=planned.find(p=>p.id==='pl-sprint-1');
+    if(old)setPlanned(p=>p.filter(x=>x.id!=='pl-sprint-1'));
+    if(!planned.find(p=>p.id==='pl-sprint-2')){
+    setPlanned(p=>[...p,{id:'pl-sprint-2',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
+      exerciseIds:['wall-drills','falling-starts','eg-marches','resisted-sprint','free-sprint',
+        'mb-overhead-back','mb-chest-pass','mb-rotational'],
+      setConfigs:{
+        'wall-drills':[{reps:8},{reps:8},{reps:8}],
+        'falling-starts':[{},{},{},{},{}],
+        'eg-marches':[{distance:20},{distance:20},{distance:20}],
+        'resisted-sprint':[{distance:20},{distance:20},{distance:20}],
+        'free-sprint':[{distance:20},{distance:25},{distance:30},{distance:30},{distance:30},{distance:30}],
+        'mb-overhead-back':[{reps:5}],
+        'mb-chest-pass':[{reps:5}],
+        'mb-rotational':[{reps:5}]
+      },
+      notes:'Contrast: Resisted 20m → Free 20m/25m/30m (4 min rest). Free sprints: 5 min rest. Freelap splits on free sprints.'
+    }])}},[]);
 
   const finishWorkout=(wk,localEx,localCM)=>{
     if(wk.exerciseIds.length>0)setWorkouts(p=>[...p,wk]);
