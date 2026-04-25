@@ -566,6 +566,18 @@ function computePRs(exId,athId,workouts,exercise){
       else if(DIST_METRICS.includes(mid)){if(!prs[mid]||v>prs[mid])prs[mid]=v}});
   })});return prs}
 
+function computeSprintPRs(exId,athId,workouts){
+  const byDist={};
+  workouts.forEach(w=>{(w.athletes?.[athId]?.sets?.[exId]||[]).filter(s=>s.completed).forEach(s=>{
+    const dist=Number(s.values.distance)||0;if(!dist)return;
+    const time=Number(s.values['tf-time']);if(!time)return;
+    const key=dist+'m';
+    const entry={time,dist,splits:{},date:w.startTime,wkName:w.name||'Workout'};
+    Object.keys(s.values).forEach(k=>{if(k!=='distance'&&k!=='tf-time'&&s.values[k]!==''&&s.values[k]!=null)
+      entry.splits[k]=Number(s.values[k])});
+    if(!byDist[key]||time<byDist[key].time)byDist[key]=entry})});
+  return byDist}
+
 function getProgressData(exId,athId,workouts,metric){
   return workouts.filter(w=>w.athletes?.[athId]?.sets?.[exId]?.some(s=>s.completed))
     .map(w=>{const sets=w.athletes[athId].sets[exId].filter(s=>s.completed);
@@ -1021,10 +1033,13 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
 
 function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
   const[selAth,setSelAth]=useState(athletes[0]?.id);const prs=computePRs(exercise.id,selAth,workouts,exercise);
+  const isSprint=exercise.metrics.includes('tf-time')&&exercise.metrics.includes('distance');
+  const sprintPRs=isSprint?computeSprintPRs(exercise.id,selAth,workouts):{};
   const hasW=exercise.metrics.includes('weight'),hasR=exercise.metrics.includes('reps');
   const hasTF=exercise.metrics.includes('tf-time');
   const chartMetric=hasTF?'tf-time':hasW?'weight':hasR?'reps':exercise.metrics[0];
   const chartData=getProgressData(exercise.id,selAth,workouts,chartMetric);
+  const allMds=[...BUILTIN_METRICS,...cm];
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
   const history=[...workouts].reverse().filter(w=>w.athletes?.[selAth]?.sets?.[exercise.id]?.some(s=>s.completed)).slice(0,15);
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
@@ -1033,16 +1048,22 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
     <div className="modal-body">
       <AthleteBar athletes={athletes} active={selAth} onSelect={setSelAth}/>
       <div style={{marginTop:16}}><div className="section-title">Personal Records</div>
-        <div className="pr-grid">
+        {isSprint?(<div>{Object.keys(sprintPRs).length?Object.entries(sprintPRs).sort((a,b)=>Number(a[0])-Number(b[0])).map(([dist,pr])=>(
+          <div key={dist} style={{background:'var(--bg)',borderRadius:12,padding:'12px 16px',marginBottom:8}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
+              <div style={{fontSize:18,fontWeight:900,color:'var(--primary)'}}>{dist} — {pr.time}s</div>
+              <div style={{fontSize:11,color:'var(--text3)',fontWeight:600}}>{new Date(pr.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div>
+            {Object.keys(pr.splits).length>0&&<div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+              {Object.entries(pr.splits).map(([k,v])=>{const m=allMds.find(x=>x.id===k);
+                return<div key={k} style={{fontSize:13}}><span style={{color:'var(--text3)',fontWeight:600}}>{m?.name||k}:</span>{' '}
+                  <span style={{fontWeight:800}}>{v}{m?.unit?'s':''}</span></div>})}</div>}
+          </div>)):<div style={{padding:16,textAlign:'center',color:'var(--text3)',fontSize:13}}>No data yet</div>}</div>)
+        :(<><div className="pr-grid">
           {prs.maxWeight&&<div className="pr-card"><div className="pr-val">{prs.maxWeight} kg</div><div className="pr-label">Max Weight</div></div>}
           {prs.maxReps&&<div className="pr-card"><div className="pr-val">{prs.maxReps}</div><div className="pr-label">Max Reps</div></div>}
           {prs.e1rm&&<div className="pr-card"><div className="pr-val">{prs.e1rm} kg</div><div className="pr-label">Est. 1RM</div></div>}
           {prs.maxVol&&<div className="pr-card"><div className="pr-val">{prs.maxVol}</div><div className="pr-label">Best Volume</div></div>}
-          {exercise.metrics.filter(mid=>TIME_METRICS.includes(mid)).map(mid=>{const v=prs[mid];if(!v)return null;
-            const m=getMetric(mid,cm);return<div key={mid} className="pr-card"><div className="pr-val">{v}s</div><div className="pr-label">Best {m.name}</div></div>})}
-          {exercise.metrics.filter(mid=>DIST_METRICS.includes(mid)&&mid!=='distance').map(mid=>{const v=prs[mid];if(!v)return null;
-            const m=getMetric(mid,cm);return<div key={mid} className="pr-card"><div className="pr-val">{v}m</div><div className="pr-label">Best {m.name}</div></div>})}
-        </div>{!Object.keys(prs).length&&<div style={{padding:16,textAlign:'center',color:'var(--text3)',fontSize:13}}>No data yet</div>}</div>
+        </div>{!Object.keys(prs).length&&<div style={{padding:16,textAlign:'center',color:'var(--text3)',fontSize:13}}>No data yet</div>}</>)}</div>
       <div className="section-title">Progress</div>
       <div className="card" style={{padding:10,marginBottom:16}}><MiniChart data={chartData}/></div>
       {history.length>0&&<><div className="section-title">History</div>
@@ -1053,10 +1074,12 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
               <div style={{fontSize:13,fontWeight:700,color:'var(--text1)'}}>{w.name||'Workout'}</div>
               <div style={{fontSize:12,fontWeight:600,color:'var(--text3)'}}>{d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div>
             <div style={{display:'flex',flexDirection:'column',gap:3}}>
-              {sets.map((s,j)=>(<div key={j} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'var(--text2)'}}>
+              {sets.map((s,j)=>{const usedMids=Object.keys(s.values).filter(k=>s.values[k]!==''&&s.values[k]!=null);
+                const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
+                return(<div key={j} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}}>
                 <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
-                {mds.map(md=><span key={md.id} style={{fontWeight:600}}>{s.values[md.id]??'-'}{md.unit?' '+md.unit:''}</span>)}
-              </div>))}
+                {showMds.map(md=><span key={md.id} style={{fontWeight:600}}>{s.values[md.id]}{md.unit?' '+md.unit:''}</span>)}
+              </div>)})}
             </div></div>)})}</div></>}
     </div></div></div>)}
 
