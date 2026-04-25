@@ -156,6 +156,11 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 
 /* ── Accordion ── */
 .acc{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.superset-group{border:2px solid var(--primary);border-radius:calc(var(--radius) + 4px);padding:4px;margin-bottom:12px;position:relative}
+.superset-group .acc{margin-bottom:4px;box-shadow:none}
+.superset-group .acc:last-child{margin-bottom:0}
+.superset-label{position:absolute;top:-10px;left:16px;background:var(--primary);color:#fff;font-size:10px;font-weight:800;
+  padding:2px 10px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase}
 .acc-hdr{display:flex;align-items:center;padding:16px 18px;gap:12px}
 .acc-hdr-info{flex:1;min-width:0}
 .acc-hdr-name{font-weight:800;font-size:16px;color:var(--primary);letter-spacing:-.2px}
@@ -468,10 +473,11 @@ const DEFAULT_EXERCISES=[
   {id:'fast-leg',name:'Fast Leg',category:'T&F',metrics:['distance','reps']},
   {id:'ankling',name:'Ankling',category:'T&F',metrics:['distance','reps']},
   {id:'wall-drills',name:'Wall Drills',category:'T&F',metrics:['reps']},
-  {id:'falling-starts',name:'Falling Starts',category:'T&F',metrics:['tf-time']},
+  {id:'falling-starts',name:'Falling Starts',category:'T&F',metrics:['reps']},
   {id:'build-ups',name:'Build-ups',category:'T&F',metrics:['distance','tf-time']},
   {id:'eg-marches',name:'EG Marches',category:'T&F',metrics:['distance','eg-setting']},
-  {id:'resisted-sprint',name:'Resisted Sprint',category:'T&F',metrics:['distance','tf-time','eg-setting']},
+  {id:'resisted-sprint',name:'Contrast: Resisted Sprint',category:'T&F',metrics:['distance','tf-time','eg-setting']},
+  {id:'contrast-free',name:'Contrast: Free Sprint',category:'T&F',metrics:['distance','tf-time','split-10m','split-20m']},
   {id:'free-sprint',name:'Free Sprint',category:'T&F',metrics:['distance','tf-time','split-10m','split-20m']},
   {id:'mb-overhead-back',name:'MB Overhead Back Throw',category:'T&F',metrics:['weight','reps']},
   {id:'mb-chest-pass',name:'MB Chest Pass',category:'T&F',metrics:['weight','reps']},
@@ -1084,11 +1090,21 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
         <div className="plan-hero-name">{plan.name}</div>
         <div className="plan-hero-count">{plan.exerciseIds.length} exercises</div>
         <div className="plan-hero-exercises">
-          {plan.exerciseIds.map(eid=>{const ex=exercises.find(e=>e.id===eid);
-            const cfg=plan.setConfigs?.[eid];const sets=cfg?cfg.length:3;
-            const detail=cfg?(() => {const c=cfg[0];const d=c?.distance;const r=c?.reps;
-              if(d)return `${sets}×${d}m`;if(r)return `${sets}×${r}`;return `${sets}×`})():`${sets}×`;
-            return<div key={eid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {ex?.name||'?'}</div>})}
+          {(()=>{const ss=(plan.supersets||[]).flat();const rendered=new Set();
+            return plan.exerciseIds.map(eid=>{
+              if(rendered.has(eid))return null;
+              const ssGroup=(plan.supersets||[]).find(g=>g.includes(eid));
+              if(ssGroup){ssGroup.forEach(id=>rendered.add(id));
+                return<div key={'ss-'+eid} style={{border:'1px solid var(--primary)',borderRadius:8,padding:'4px 8px',margin:'4px 0'}}>
+                  <div style={{fontSize:10,fontWeight:800,color:'var(--primary)',marginBottom:2}}>SUPERSET</div>
+                  {ssGroup.map(sid=>{const sex=exercises.find(e=>e.id===sid);const cfg=plan.setConfigs?.[sid];const sets=cfg?cfg.length:3;
+                    const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
+                    const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
+                    return<div key={sid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {sex?.name||'?'}</div>})}</div>}
+              const ex=exercises.find(e=>e.id===eid);const cfg=plan.setConfigs?.[eid];const sets=cfg?cfg.length:3;
+              const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
+              const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
+              return<div key={eid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {ex?.name||'?'}</div>})})()}
         </div>
         {plan.notes&&<div style={{fontSize:12,color:'var(--text3)',marginTop:8,lineHeight:1.4}}>{plan.notes}</div>}
         <button className="btn btn-primary" onClick={()=>onStartPlan(plan)}>Start Workout</button>
@@ -1226,9 +1242,26 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     <span className="hdr-title">Workout</span><span className="hdr-time">{fmtTime(Math.floor(elapsed/1000))}</span></div>
     <AthleteBar athletes={athletes} active={activeAth} onSelect={setActiveAth}/>
     <div className="screen pad" ref={listRef} style={{paddingBottom:curRestStart?'calc(var(--nav-h) + 80px)':undefined}}>
-      {workout.exerciseIds.map((eid,idx)=>{const ex=localEx.find(e=>e.id===eid);
-        const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
-        return<ExerciseAccordion key={eid} exId={eid} exercise={ex} sets={athSets[eid]||[]}
+      {(()=>{const supersets=initialPlan?.supersets||[];const rendered=new Set();
+        return workout.exerciseIds.map((eid,idx)=>{
+          if(rendered.has(idx))return null;
+          const ss=supersets.find(s=>s.includes(eid));
+          if(ss){const ssIdxs=ss.map(sid=>workout.exerciseIds.indexOf(sid)).filter(i=>i>=0);
+            if(ssIdxs[0]===idx){ssIdxs.forEach(i=>rendered.add(i));
+              return<div key={'ss-'+idx} className="superset-group"><div className="superset-label">Superset</div>
+                {ssIdxs.map(si=>{const seid=workout.exerciseIds[si];const sex=localEx.find(e=>e.id===seid);
+                  const sPrs=sex?computePRs(seid,activeAth,workouts,sex):{};
+                  return<ExerciseAccordion key={seid} exId={seid} exercise={sex} sets={athSets[seid]||[]}
+                    prevSets={getPrevSets(seid,activeAth,workouts)} cm={localCM} prs={sPrs}
+                    velocityZone={vzMap[seid]||null} onSetVZ={vz=>setVzMap(p=>({...p,[seid]:vz}))}
+                    onUpdateSet={(si2,mid,v)=>updateSet(seid,si2,mid,v)} onToggleSet={si2=>toggleSet(seid,si2)}
+                    onDeleteSet={si2=>deleteSet(seid,si2)} onAddSet={()=>addSet(seid)}
+                    onReplace={()=>{setReplacingIdx(si);setShowPicker(true)}} onDelete={()=>delEx(si)}
+                    onShowHistory={()=>setHistoryEx(sex)}
+                    onChangeMetrics={changeMetrics} onGripTouch={()=>{}}/>})}</div>}}
+          const ex=localEx.find(e=>e.id===eid);
+          const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
+          return<ExerciseAccordion key={eid} exId={eid} exercise={ex} sets={athSets[eid]||[]}
           prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
           velocityZone={vzMap[eid]||null} onSetVZ={vz=>setVzMap(p=>({...p,[eid]:vz}))}
           onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
@@ -1575,26 +1608,31 @@ function App(){
   useEffect(()=>{if(!inWorkout){const a=athletes.find(a=>a.id===activeAth);applyTheme(a?.color||'#3b82f6')}},[activeAth,athletes,inWorkout]);
   useEffect(()=>{const ids=new Set(exercises.map(e=>e.id));
     const missing=DEFAULT_EXERCISES.filter(e=>!ids.has(e.id));
-    if(missing.length)setExercises(p=>[...p,...missing])},[]);
+    const defMap=Object.fromEntries(DEFAULT_EXERCISES.map(e=>[e.id,e]));
+    const updated=exercises.map(e=>{const d=defMap[e.id];if(!d||e.isCustom)return e;
+      if(d.name!==e.name||JSON.stringify(d.metrics)!==JSON.stringify(e.metrics))return{...e,name:d.name,metrics:d.metrics};return e});
+    const changed=updated.some((e,i)=>e!==exercises[i]);
+    if(missing.length||changed)setExercises(changed?[...updated,...missing]:[...exercises,...missing])},[]);
   useEffect(()=>{const photoMap={};DEFAULT_ATHLETES.forEach(da=>{if(da.photo)photoMap[da.id]=da.photo});
     if(athletes.some(a=>photoMap[a.id]&&!a.photo))setAthletes(prev=>prev.map(a=>photoMap[a.id]&&!a.photo?{...a,photo:photoMap[a.id]}:a))},[]);
-  useEffect(()=>{const old=planned.find(p=>p.id==='pl-sprint-1');
-    if(old)setPlanned(p=>p.filter(x=>x.id!=='pl-sprint-1'));
-    if(!planned.find(p=>p.id==='pl-sprint-2')){
-    setPlanned(p=>[...p,{id:'pl-sprint-2',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
-      exerciseIds:['wall-drills','falling-starts','eg-marches','resisted-sprint','free-sprint',
+  useEffect(()=>{setPlanned(p=>p.filter(x=>x.id!=='pl-sprint-1'&&x.id!=='pl-sprint-2'));
+    if(!planned.find(p=>p.id==='pl-sprint-3')){
+    setPlanned(p=>[...p,{id:'pl-sprint-3',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
+      exerciseIds:['wall-drills','falling-starts','eg-marches','resisted-sprint','contrast-free','free-sprint',
         'mb-overhead-back','mb-chest-pass','mb-rotational'],
+      supersets:[['resisted-sprint','contrast-free']],
       setConfigs:{
         'wall-drills':[{reps:8},{reps:8},{reps:8}],
-        'falling-starts':[{},{},{},{},{}],
+        'falling-starts':[{reps:5},{reps:5},{reps:5},{reps:5},{reps:5}],
         'eg-marches':[{distance:20},{distance:20},{distance:20}],
         'resisted-sprint':[{distance:20},{distance:20},{distance:20}],
-        'free-sprint':[{distance:20},{distance:25},{distance:30},{distance:30},{distance:30},{distance:30}],
+        'contrast-free':[{distance:20},{distance:25},{distance:30}],
+        'free-sprint':[{distance:30},{distance:30},{distance:30}],
         'mb-overhead-back':[{reps:5}],
         'mb-chest-pass':[{reps:5}],
         'mb-rotational':[{reps:5}]
       },
-      notes:'Contrast: Resisted 20m → Free 20m/25m/30m (4 min rest). Free sprints: 5 min rest. Freelap splits on free sprints.'
+      notes:'Contrast: Resisted 20m → Free 20m/25m/30m (4 min rest). Free sprints 3×30m (5 min rest). Freelap on free sprints.'
     }])}},[]);
 
   const finishWorkout=(wk,localEx,localCM)=>{
