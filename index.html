@@ -1076,7 +1076,7 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
             {Object.keys(pr.splits).length>0&&<div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
               {Object.entries(pr.splits).map(([k,v])=>{const m=allMds.find(x=>x.id===k);
                 return<div key={k} style={{fontSize:13}}><span style={{color:'var(--text3)',fontWeight:600}}>{m?.name||k}:</span>{' '}
-                  <span style={{fontWeight:800}}>{v}{m?.unit?'s':''}</span></div>})}</div>}
+                  <span style={{fontWeight:800}}>{v}{m?.unit?' '+m.unit:''}</span></div>})}</div>}
           </div>)):<div style={{padding:16,textAlign:'center',color:'var(--text3)',fontSize:13}}>No data yet</div>}</div>)
         :(<><div className="pr-grid">
           {prs.maxWeight&&<div className="pr-card"><div className="pr-val">{prs.maxWeight} kg</div><div className="pr-label">Max Weight</div></div>}
