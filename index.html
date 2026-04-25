@@ -415,7 +415,8 @@ const catColor=cat=>CAT_COLORS[cat]||'var(--primary)';
 const BUILTIN_METRICS=[{id:'weight',name:'Weight',unit:'kg',step:2.5},{id:'reps',name:'Reps',unit:'',step:1},
   {id:'time',name:'Time',unit:'s',step:1},{id:'distance',name:'Distance',unit:'m',step:10},{id:'rpe',name:'RPE',unit:'',step:0.5},
   {id:'tf-time',name:'Sprint Time',unit:'s',step:0.01},{id:'tf-dist',name:'T&F Distance',unit:'m',step:0.01},
-  {id:'height',name:'Height',unit:'m',step:0.01}];
+  {id:'height',name:'Height',unit:'m',step:0.01},{id:'eg-setting',name:'EG #',unit:'',step:1},
+  {id:'split-10m',name:'10m Split',unit:'s',step:0.01},{id:'split-20m',name:'20m Split',unit:'s',step:0.01}];
 const DEFAULT_EXERCISES=[
   {id:'bench-press',name:'Bench Press',category:'Chest',metrics:['weight','reps']},
   {id:'incline-bench',name:'Incline Bench',category:'Chest',metrics:['weight','reps']},
@@ -463,6 +464,18 @@ const DEFAULT_EXERCISES=[
   {id:'discus',name:'Discus Throw',category:'T&F',metrics:['tf-dist']},
   {id:'javelin',name:'Javelin Throw',category:'T&F',metrics:['tf-dist']},
   {id:'hammer-throw',name:'Hammer Throw',category:'T&F',metrics:['tf-dist']},
+  {id:'b-skip',name:'B-Skip',category:'T&F',metrics:['distance','reps']},
+  {id:'fast-leg',name:'Fast Leg',category:'T&F',metrics:['distance','reps']},
+  {id:'ankling',name:'Ankling',category:'T&F',metrics:['distance','reps']},
+  {id:'wall-drills',name:'Wall Drills',category:'T&F',metrics:['reps']},
+  {id:'falling-starts',name:'Falling Starts',category:'T&F',metrics:['tf-time']},
+  {id:'build-ups',name:'Build-ups',category:'T&F',metrics:['distance','tf-time']},
+  {id:'eg-marches',name:'EG Marches',category:'T&F',metrics:['distance','eg-setting']},
+  {id:'resisted-sprint',name:'Resisted Sprint',category:'T&F',metrics:['distance','tf-time','eg-setting']},
+  {id:'free-sprint',name:'Free Sprint',category:'T&F',metrics:['distance','tf-time','split-10m','split-20m']},
+  {id:'mb-overhead-back',name:'MB Overhead Back Throw',category:'T&F',metrics:['weight','reps']},
+  {id:'mb-chest-pass',name:'MB Chest Pass',category:'T&F',metrics:['weight','reps']},
+  {id:'mb-rotational',name:'MB Rotational Throw',category:'T&F',metrics:['weight','reps']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
 const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -1301,28 +1314,13 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     {confirmCancel&&<ConfirmDialog title="Discard Workout?" message="All progress will be lost."
       confirmText="Discard" danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}</>)}
 
-function ProgressScreen({workouts,planned,athletes,activeAth,exercises,cm,competitions,onView,onPlan,onDeletePlan,onViewExercise}){
-  const[selectedDay,setSelectedDay]=useState(null);
-  const dayWk=selectedDay?workouts.filter(w=>dateKey(w.startTime)===selectedDay):[];
-  const dayPl=selectedDay?(planned||[]).filter(p=>p.date===selectedDay):[];
+function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,onView,onViewExercise}){
   const usedExIds=[...new Set(workouts.flatMap(w=>(w.athletes?.[activeAth]?Object.keys(w.athletes[activeAth].sets||{}):[])
     .filter(eid=>(w.athletes[activeAth].sets[eid]||[]).some(s=>s.completed))))];
   const topExercises=usedExIds.slice(0,6).map(eid=>exercises.find(e=>e.id===eid)).filter(Boolean);
 
   return(<div className="screen pad">
     <h2 style={{fontSize:24,fontWeight:900,letterSpacing:'-.5px',marginBottom:16}}>Progress</h2>
-    <div className="card" style={{padding:16,marginBottom:20}}><MonthCalendar workouts={workouts} planned={planned} competitions={competitions} onSelectDay={setSelectedDay}/></div>
-    {selectedDay&&<div style={{marginBottom:20}}>
-      <div className="section-title">{new Date(selectedDay+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</div>
-      <div className="card-list">{dayWk.map(wk=>
-        <WorkoutCard key={wk.id} wk={wk} onClick={()=>onView(wk)}/>)}</div>
-      {dayPl.map(pl=>(<div key={pl.id} className="recent-card">
-        <div className="recent-dot" style={{background:pl.color}}/><div className="recent-info">
-          <div className="recent-name">{pl.name}</div><div className="recent-meta">Planned</div></div>
-        <button className="hdr-btn" style={{color:'var(--danger)',width:32,height:32}} onClick={()=>onDeletePlan(pl.id)}><Icon name="trash" size={14}/></button></div>))}
-      {!dayWk.length&&!dayPl.length&&<div style={{textAlign:'center',color:'var(--text3)',fontSize:13,padding:12}}>No workouts</div>}
-      <button className="btn btn-secondary btn-sm" style={{marginTop:8}} onClick={()=>onPlan(selectedDay)}>
-        <Icon name="plus" size={14}/> Plan Workout</button></div>}
     {topExercises.length>0&&<><div className="section-title">Your Exercises</div>
       <div className="card-list">{topExercises.map(ex=>{const prs=computePRs(ex.id,activeAth,workouts,ex);const best=prs.maxWeight?`${prs.maxWeight} kg`:prs.maxReps?`${prs.maxReps} reps`:'';
         const cc=catColor(ex.category);
@@ -1569,6 +1567,10 @@ function App(){
   const[viewing,setViewing]=useState(null);const[planDate,setPlanDate]=useState(null);
   const[viewExercise,setViewExercise]=useState(null);
   useEffect(()=>{if(!inWorkout){const a=athletes.find(a=>a.id===activeAth);applyTheme(a?.color||'#3b82f6')}},[activeAth,athletes,inWorkout]);
+  useEffect(()=>{if(!planned.find(p=>p.id==='pl-sprint-1')){
+    setPlanned(p=>[...p,{id:'pl-sprint-1',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
+      exerciseIds:['b-skip','fast-leg','ankling','wall-drills','falling-starts','build-ups',
+        'eg-marches','resisted-sprint','free-sprint','mb-overhead-back','mb-chest-pass','mb-rotational']}])}},[]);
 
   const finishWorkout=(wk,localEx,localCM)=>{
     if(wk.exerciseIds.length>0)setWorkouts(p=>[...p,wk]);
@@ -1587,9 +1589,8 @@ function App(){
       onStartEmpty={()=>setInWorkout(true)} onStartPlan={startPlan} onView={setViewing}/>}
     {tab==='calendar'&&<CalendarScreen workouts={workouts} planned={planned} exercises={exercises}
       competitions={competitions} onView={setViewing}/>}
-    {tab==='progress'&&<ProgressScreen workouts={workouts} planned={planned} athletes={athletes} activeAth={activeAth}
-      exercises={exercises} cm={cm} competitions={competitions} onView={setViewing} onPlan={setPlanDate}
-      onDeletePlan={id=>setPlanned(p=>p.filter(pl=>pl.id!==id))} onViewExercise={setViewExercise}/>}
+    {tab==='progress'&&<ProgressScreen workouts={workouts} athletes={athletes} activeAth={activeAth}
+      exercises={exercises} cm={cm} competitions={competitions} onView={setViewing} onViewExercise={setViewExercise}/>}
     {tab==='profile'&&<ProfileScreen athletes={athletes} activeAth={activeAth} onSelectAth={setActiveAth}
       exercises={exercises} cm={cm} workouts={workouts} onUpdateAthletes={setAthletes}
       onUpdateExercises={setExercises} onUpdateCM={setCM}
