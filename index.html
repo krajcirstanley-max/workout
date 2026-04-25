@@ -931,7 +931,7 @@ function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onS
             onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],notes:e.target.value}}))}/></div></div>))}
       <button className="btn btn-primary" onClick={()=>onSave({name:wkName,weather,tag,athData,customDuration:customElapsed})}>Save Workout</button></div></div>)}
 
-function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,onUpdate}){
+function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,onUpdate,onRepeat}){
   const[wk,setWk]=useState(JSON.parse(JSON.stringify(initWk)));
   const[selAth,setSelAth]=useState(athletes[0]?.id);
   const[editing,setEditing]=useState(false);
@@ -1043,6 +1043,7 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
         onClick={()=>setShowAddEx(true)}><Icon name="plus" size={14}/> Add Exercise</button>}
 
       {dirty&&<button className="btn btn-primary" style={{marginTop:8}} onClick={()=>{onUpdate(wk);setEditing(false)}}>Save Changes</button>}
+      {onRepeat&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>onRepeat(wk)}>🔁 Repeat Workout</button>}
       <button className="btn btn-danger" style={{marginTop:8}} onClick={()=>onDelete(wk.id)}>Delete Workout</button>
     </div>
     {showAddEx&&<ExercisePicker exercises={exercises} cm={cm} onSelect={addExToWk} onClose={()=>setShowAddEx(false)}
@@ -1786,6 +1787,78 @@ function PlanWorkoutModal({date,exercises,onSave,onClose}){
     {showPicker&&<ExercisePicker exercises={exercises} cm={[]} onSelect={ex=>{setSelEx(p=>[...p,ex.id]);setShowPicker(false)}}
       onClose={()=>setShowPicker(false)} onCreateNew={()=>{}}/>}</>)}
 
+function WorkoutSummary({workout,athletes,exercises,cm,onClose}){
+  const dur=workout.endTime?workout.endTime-workout.startTime:0;
+  const d=new Date(workout.startTime);
+  const dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const copyText=()=>{const lines=[workout.name||'Workout',dateStr,fmtDur(dur)+(workout.tempC!=null?' · '+workout.tempC+'°C':''),''];
+    athletes.filter(a=>workout.athletes[a.id]).forEach(a=>{
+      const ad=workout.athletes[a.id];if(athletes.length>1)lines.push(a.name);
+      workout.exerciseIds.forEach(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));
+        const sets=(ad.sets[eid]||[]).filter(s=>s.completed);if(!sets.length)return;
+        lines.push('  '+(ex?.name||'?'));
+        sets.forEach((s,j)=>{const parts=[];const v=s.values;
+          if(v.distance!=null&&v.distance!==''&&v['tf-time']!=null&&v['tf-time']!==''){
+            let l=v.distance+'m → '+v['tf-time']+'s';
+            const sp=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null).map(k=>k.replace('split-','')+': '+v[k]);
+            if(sp.length)l+=' ('+sp.join(' ')+')';parts.push(l);
+          }else{(ex?.metrics||[]).forEach(mid=>{const md=getMetric(mid,cm);const val=v[mid];
+            if(val!=null&&val!=='')parts.push(val+(md.unit?' '+md.unit:''))});}
+          lines.push('    '+(j+1)+'. '+parts.join(' · '))});
+        if(workout.exNotes?.[eid])lines.push('    → '+workout.exNotes[eid])});
+      if(ad.rpe)lines.push('  RPE: '+ad.rpe+'/10');if(ad.notes)lines.push('  '+ad.notes);lines.push('')});
+    navigator.clipboard?.writeText(lines.join('\n')).then(()=>alert('Copied!'))};
+  const c=workout.tag?.color||workout.color||'var(--primary)';
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal" style={{maxWidth:400}}>
+    <div style={{padding:'24px 20px',background:c+'12',borderBottom:'3px solid '+c}}>
+      <div style={{fontSize:22,fontWeight:900,color:'var(--text1)',letterSpacing:'-.5px'}}>{workout.name||'Workout'}</div>
+      <div style={{fontSize:13,color:'var(--text2)',marginTop:4,fontWeight:500}}>{dateStr}</div>
+      <div style={{display:'flex',gap:12,marginTop:10,fontSize:13,fontWeight:700,color:'var(--text2)'}}>
+        <span>{fmtDur(dur)}</span>
+        {workout.tempC!=null&&<span>{workout.tempC}°C</span>}
+        {workout.weather&&<span>{fmtWeather(workout.weather)}</span>}
+      </div>
+    </div>
+    <div style={{padding:'16px 20px',maxHeight:'50vh',overflow:'auto'}}>
+      {athletes.filter(a=>workout.athletes[a.id]).map(a=>{const ad=workout.athletes[a.id];
+        return(<div key={a.id} style={{marginBottom:16}}>
+          {athletes.length>1&&<div style={{fontSize:14,fontWeight:800,color:a.color,marginBottom:8}}>{a.name}</div>}
+          {workout.exerciseIds.map(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));
+            const sets=(ad.sets[eid]||[]).filter(s=>s.completed);if(!sets.length)return null;
+            return(<div key={eid} style={{marginBottom:12}}>
+              <div style={{fontSize:13,fontWeight:800,color:'var(--text1)',marginBottom:4}}>{ex?.name||'?'}</div>
+              {sets.map((s,j)=>{const v=s.values;
+                const hasDist=v.distance!=null&&v.distance!=='';const hasTfT=v['tf-time']!=null&&v['tf-time']!=='';
+                const hasTfD=v['tf-dist']!=null&&v['tf-dist']!=='';const hasW=v.weight!=null&&v.weight!=='';
+                const hasR=v.reps!=null&&v.reps!=='';
+                const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
+                let primary=null,extra=null;
+                if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
+                  primary=[<span key="d" style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>,
+                    <span key="a" style={{color:'var(--text3)'}}>→</span>,
+                    <span key="t" style={{fontWeight:700,color:c}}>{v['tf-time']}s</span>];
+                  if(extras.length)extra=<span key="e" style={{color:'var(--text3)',fontSize:11}}>({extras.join('  ')})</span>;
+                }else if(hasTfT){primary=<span style={{fontWeight:800,color:c}}>{v['tf-time']}s</span>;
+                }else if(hasTfD){primary=<span style={{fontWeight:800,color:c}}>{v['tf-dist']}m</span>;
+                }else if(hasW){primary=[<span key="w" style={{fontWeight:800,color:'var(--text1)'}}>{v.weight}kg</span>];
+                  if(hasR)primary.push(<span key="x" style={{color:'var(--text3)'}}>×</span>,<span key="r" style={{fontWeight:700,color:c}}>{v.reps}</span>);
+                }else{primary=(ex?.metrics||[]).map(mid=>{const md=getMetric(mid,cm);
+                  return<span key={mid} style={{fontWeight:600}}>{v[mid]!=null?v[mid]:'-'}{md.unit?' '+md.unit:''}</span>});}
+                return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)',padding:'1px 0'}}>
+                  <span style={{width:16,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                  {primary}{extra}</div>)})}
+              {workout.exNotes?.[eid]&&<div style={{fontSize:11,color:'var(--text3)',fontStyle:'italic',marginTop:2}}>{workout.exNotes[eid]}</div>}
+            </div>)})}
+          {ad.rpe&&<div style={{fontSize:12,fontWeight:700,color:'var(--text3)',marginTop:4}}>RPE: {ad.rpe}/10</div>}
+          {ad.notes&&<div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{ad.notes}</div>}
+        </div>)})}
+    </div>
+    <div style={{padding:'12px 20px',display:'flex',gap:10,borderTop:'1px solid var(--border-light)'}}>
+      <button className="btn btn-secondary" style={{flex:1}} onClick={copyText}>📋 Copy</button>
+      <button className="btn btn-primary" style={{flex:1}} onClick={onClose}>Done</button>
+    </div>
+  </div></div>)}
+
 // ── App ──
 function App(){
   const[tab,setTab]=useState('today');const[inWorkout,setInWorkout]=useState(()=>{try{return localStorage.getItem('wk2_activeSession')==='1'}catch{return false}});const[activePlan,setActivePlan]=useState(()=>{try{const v=localStorage.getItem('wk2_activePlan');return v?JSON.parse(v):null}catch{return null}});
@@ -1797,7 +1870,7 @@ function App(){
   const[planned,setPlanned]=useStore('planned2',[]);
   const[competitions,setCompetitions]=useStore('competitions',[]);
   const[viewing,setViewing]=useState(null);const[planDate,setPlanDate]=useState(null);
-  const[viewExercise,setViewExercise]=useState(null);
+  const[viewExercise,setViewExercise]=useState(null);const[summaryWk,setSummaryWk]=useState(null);
   useEffect(()=>{if(!inWorkout){const a=athletes.find(a=>a.id===activeAth);applyTheme(a?.color||'#3b82f6')}},[activeAth,athletes,inWorkout]);
   useEffect(()=>{const ids=new Set(exercises.map(e=>e.id));
     const missing=DEFAULT_EXERCISES.filter(e=>!ids.has(e.id));
@@ -1842,13 +1915,18 @@ function App(){
 
   const _clearActiveSession=()=>{['activeSession','activePlan','activeWorkout','activeSupersets','activeCheckedIn'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}})};
   const finishWorkout=(wk,localEx,localCM)=>{_clearActiveSession();
-    if(wk.exerciseIds.length>0)setWorkouts(p=>[...p,wk]);
+    if(wk.exerciseIds.length>0){setWorkouts(p=>[...p,wk]);setSummaryWk(wk)}
     if(activePlan)setPlanned(p=>p.filter(pl=>pl.id!==activePlan.id));
     setExercises(localEx);setCM(localCM);setInWorkout(false);setActivePlan(null);setTab('today')};
   const cancelWorkout=()=>{_clearActiveSession();setInWorkout(false);setActivePlan(null);setTab('today')};
   const deleteWorkout=id=>{setWorkouts(p=>p.filter(w=>w.id!==id));setViewing(null)};
   const startPlan=plan=>{_clearActiveSession();try{localStorage.setItem('wk2_activePlan',JSON.stringify(plan));localStorage.setItem('wk2_activeSession','1')}catch{};setActivePlan(plan);setInWorkout(true)};
   const startEmpty=()=>{_clearActiveSession();try{localStorage.setItem('wk2_activeSession','1')}catch{};setInWorkout(true)};
+  const repeatWorkout=wk=>{const plan={id:'pl-'+uid(),name:wk.name||'Workout',exerciseIds:wk.exerciseIds.map(baseExId),
+    supersets:[],setConfigs:{}};wk.exerciseIds.forEach(eid=>{const base=baseExId(eid);
+    const sets=Object.values(wk.athletes).flatMap(a=>(a.sets[eid]||[]).filter(s=>s.completed));
+    if(sets.length)plan.setConfigs[base]=sets.map(s=>{const cfg={};Object.entries(s.values).forEach(([k,v])=>{if(v!==''&&v!=null)cfg[k]=v});return cfg})});
+    setViewing(null);startPlan(plan)};
 
   if(inWorkout)return(<div id="root" style={{height:'100%',display:'flex',flexDirection:'column'}}>
     <ActiveWorkoutScreen athletes={athletes} exercises={exercises} customMetrics={cm}
@@ -1874,7 +1952,10 @@ function App(){
 
     {viewing&&<WorkoutDetail workout={viewing} athletes={athletes} exercises={exercises} cm={cm}
       onClose={()=>setViewing(null)} onDelete={deleteWorkout}
-      onUpdate={wk=>{setWorkouts(p=>p.map(w=>w.id===wk.id?wk:w));setViewing(wk)}}/>}
+      onUpdate={wk=>{setWorkouts(p=>p.map(w=>w.id===wk.id?wk:w));setViewing(wk)}}
+      onRepeat={repeatWorkout}/>}
+    {summaryWk&&<WorkoutSummary workout={summaryWk} athletes={athletes} exercises={exercises} cm={cm}
+      onClose={()=>setSummaryWk(null)}/>}
     {planDate&&<PlanWorkoutModal date={planDate} exercises={exercises}
       onSave={p=>{setPlanned(prev=>[...prev,p]);setPlanDate(null)}} onClose={()=>setPlanDate(null)}/>}
     {viewExercise&&<ExerciseStats exercise={viewExercise} athletes={athletes} workouts={workouts} cm={cm}
