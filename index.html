@@ -1720,6 +1720,17 @@ function App(){
     const changed=updated.some((e,i)=>e!==exercises[i]);
     const cleaned=(changed?[...updated,...missing]:[...exercises,...missing]).filter(e=>e.id!=='contrast-free');
     if(missing.length||changed||exercises.some(e=>e.id==='contrast-free'))setExercises(cleaned)},[]);
+  useEffect(()=>{if(!workouts.some(w=>w.exerciseIds?.includes('contrast-free')))return;
+    setWorkouts(prev=>prev.map(w=>{if(!w.exerciseIds?.includes('contrast-free'))return w;
+      const nw={...w,exerciseIds:[...w.exerciseIds],athletes:{...w.athletes}};
+      Object.keys(nw.athletes).forEach(aId=>{const a={...nw.athletes[aId],sets:{...nw.athletes[aId].sets}};
+        if(a.sets['contrast-free']){const existing=a.sets['free-sprint']||[];
+          a.sets['free-sprint']=[...existing,...a.sets['contrast-free']];delete a.sets['contrast-free']}
+        nw.athletes[aId]=a});
+      const idx=nw.exerciseIds.indexOf('contrast-free');
+      if(idx>=0){if(!nw.exerciseIds.includes('free-sprint'))nw.exerciseIds[idx]='free-sprint';
+        else nw.exerciseIds.splice(idx,1)}
+      return nw}))},[]);
   useEffect(()=>{const photoMap={};DEFAULT_ATHLETES.forEach(da=>{if(da.photo)photoMap[da.id]=da.photo});
     if(athletes.some(a=>photoMap[a.id]&&!a.photo))setAthletes(prev=>prev.map(a=>photoMap[a.id]&&!a.photo?{...a,photo:photoMap[a.id]}:a))},[]);
   useEffect(()=>{setPlanned(p=>p.filter(x=>!x.id.startsWith('pl-sprint-')));
