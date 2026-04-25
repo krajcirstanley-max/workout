@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#3b82f6">
+<title>Workout</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f5f5f5;--surface:#fff;--surface2:#ebebeb;--surface3:#ddd;
+  --primary:#3b82f6;--primary-dark:#2563eb;--primary-dim:rgba(59,130,246,.1);--primary-glow:rgba(59,130,246,.06);
+  --danger:#ef4444;--danger-dim:rgba(239,68,68,.08);
+  --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+  --border:#e5e7eb;--border-light:#f3f4f6;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.1);
+  --radius:16px;--radius-sm:12px;
+  --safe-b:env(safe-area-inset-bottom,0px);--nav-h:64px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+#root{height:100%;display:flex;flex-direction:column}
+input,button,select,textarea{font:inherit;color:inherit;border:none;background:none;outline:none}
+button{cursor:pointer;-webkit-user-select:none;user-select:none}
+input[type=number]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
+
+.screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen::after{content:'';display:block;height:calc(var(--nav-h) + var(--safe-b) + 16px);flex-shrink:0}
+.pad{padding:16px}
+
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;
+  padding-top:calc(env(safe-area-inset-top,10px) + 8px);
+  background:rgba(245,245,245,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  min-height:52px;position:sticky;top:0;z-index:20}
+.hdr-title{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.hdr-btn{width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  border-radius:12px;color:var(--text2);flex-shrink:0}
+.hdr-btn:active{background:rgba(0,0,0,.06)}
+.hdr-btn.primary{color:var(--primary)}
+.hdr-time{font-size:15px;font-weight:700;color:var(--text2);font-variant-numeric:tabular-nums;
+  background:var(--surface);padding:5px 14px;border-radius:20px;box-shadow:var(--shadow)}
+
+/* Athlete Bar */
+.ath-bar{display:flex;gap:20px;padding:8px 20px 12px;overflow-x:auto;scrollbar-width:none;justify-content:center}
+.ath-bar::-webkit-scrollbar{display:none}
+.ath-item{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:56px}
+.ath-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:17px;border:3px solid transparent;transition:all .25s ease;overflow:hidden}
+.ath-avatar.active{box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.ath-avatar img{width:100%;height:100%;object-fit:cover}
+.ath-name{font-size:11px;color:var(--text3);max-width:64px;text-align:center;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.ath-name.active{color:var(--text);font-weight:700}
+
+/* Nav */
+.nav{display:flex;background:rgba(255,255,255,.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-top:1px solid rgba(0,0,0,.06);padding-bottom:var(--safe-b);position:fixed;bottom:0;left:0;right:0;z-index:30}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 0;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:.3px;transition:color .2s}
+.nav-item.active{color:var(--primary)}
+.nav-item svg{width:24px;height:24px}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 24px;
+  border-radius:var(--radius);font-weight:700;font-size:15px;transition:all .2s;width:100%}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;
+  box-shadow:0 2px 12px rgba(16,185,129,.3)}
+.btn-secondary{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.btn-danger{background:var(--danger-dim);color:var(--danger)}
+.btn-ghost{color:var(--primary);font-weight:600}
+.btn-sm{padding:10px 16px;font-size:13px;border-radius:var(--radius-sm)}
+
+/* Inputs */
+.input{background:var(--border-light);border:2px solid transparent;border-radius:var(--radius-sm);
+  padding:14px 16px;font-size:16px;width:100%;color:var(--text);font-weight:500;transition:all .2s}
+.input:focus{border-color:var(--primary);background:var(--surface);box-shadow:0 0 0 4px var(--primary-dim)}
+.input::placeholder{color:var(--text3);font-weight:400}
+textarea.input{resize:vertical;min-height:70px;font-size:14px}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+
+/* ── Today Screen ── */
+.greeting{margin-bottom:24px}
+.greeting h1{font-size:26px;font-weight:900;letter-spacing:-.5px;margin-bottom:2px}
+.greeting p{font-size:14px;color:var(--text2);font-weight:500}
+
+.plan-hero{background:var(--surface);border-radius:20px;box-shadow:var(--shadow-lg);padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+.plan-hero::before{content:'';position:absolute;top:0;left:0;bottom:0;width:5px}
+.plan-hero-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:12px}
+.plan-hero-name{font-size:22px;font-weight:900;letter-spacing:-.3px;margin-bottom:4px}
+.plan-hero-count{font-size:13px;color:var(--text2);font-weight:500;margin-bottom:16px}
+.plan-hero-exercises{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.plan-hero-ex{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.plan-hero-ex::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--primary);flex-shrink:0}
+
+.or-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:12px;font-weight:600}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.week-stats{display:flex;gap:16px;padding:14px 16px;background:var(--surface);border-radius:var(--radius);
+  box-shadow:var(--shadow);margin-bottom:24px}
+.week-stat{display:flex;flex-direction:column;align-items:center;flex:1}
+.week-stat-val{font-size:20px;font-weight:900;color:var(--primary)}
+.week-stat-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+
+.card-list{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px}
+.wk-card{display:flex;align-items:stretch;background:var(--surface);
+  border-bottom:1px solid var(--border-light);transition:background .15s;position:relative;overflow:hidden}
+.wk-card:last-child{border-bottom:none}
+.wk-card:active{background:var(--border-light)}
+.wk-card-bar{width:4px;flex-shrink:0}
+.wk-card-body{flex:1;padding:14px 16px;min-width:0}
+.wk-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wk-card-name{font-size:16px;font-weight:800;letter-spacing:-.3px;color:var(--text1)}
+.wk-card-date{font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap}
+.wk-card-bottom{display:flex;align-items:center;gap:8px;margin-top:5px}
+.wk-card-meta{font-size:13px;color:var(--text2);font-weight:600}
+.wk-card-tag{padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;margin-left:auto}
+.ex-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);
+  border-bottom:1px solid var(--border-light);transition:background .15s;width:100%;text-align:left}
+.ex-card:last-child{border-bottom:none}
+.ex-card:active{background:var(--border-light)}
+.ex-card-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ex-card-info{flex:1;min-width:0}
+.ex-card-name{font-size:15px;font-weight:700;letter-spacing:-.2px}
+.ex-card-meta{font-size:12px;color:var(--text3);font-weight:500;margin-top:2px;display:flex;gap:4px;align-items:center}
+
+/* ── Readiness ── */
+.readiness{position:fixed;inset:0;background:var(--surface);z-index:50;display:flex;flex-direction:column;overflow-y:auto}
+.readiness-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;
+  padding-top:calc(env(safe-area-inset-top,14px) + 12px);border-bottom:1px solid var(--border)}
+.readiness-title{font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2)}
+.readiness-skip{color:var(--primary);font-weight:700;font-size:15px;padding:8px 12px;border-radius:8px}
+.readiness-body{flex:1;padding:28px 24px}
+.readiness-q{margin-bottom:36px}
+.readiness-q h3{font-size:18px;font-weight:700;margin-bottom:14px}
+.readiness-scale{display:flex;gap:8px}
+.readiness-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 4px;
+  border-radius:var(--radius-sm);border:2px solid var(--border);transition:all .25s;min-width:0;background:var(--surface)}
+.readiness-btn span:first-child{font-size:22px;font-weight:900}
+.readiness-btn span:last-child{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;text-align:center;line-height:1.2}
+.readiness-btn.sel{border-color:currentColor;background:currentColor}
+.readiness-btn.sel span{color:#fff!important}
+.r1{color:#ef4444}.r2{color:#f97316}.r3{color:#eab308}.r4{color:#22c55e}.r5{color:#10b981}
+
+/* ── Accordion ── */
+.acc{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.acc-hdr{display:flex;align-items:center;padding:16px 18px;gap:12px}
+.acc-hdr-info{flex:1;min-width:0}
+.acc-hdr-name{font-weight:800;font-size:16px;color:var(--primary);letter-spacing:-.2px}
+.acc-hdr-sub{font-size:12px;color:var(--text3);margin-top:2px;display:flex;gap:10px;font-weight:500}
+.acc-chevron{color:var(--text3);transition:transform .25s;flex-shrink:0}
+.acc-chevron.open{transform:rotate(180deg)}
+.acc-body{border-top:1px solid var(--border);animation:accIn .25s ease}
+@keyframes accIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+.ex-actions{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid var(--border-light);background:var(--border-light)}
+.ex-act-btn{padding:7px 10px;border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);
+  display:flex;align-items:center;gap:4px;white-space:nowrap}
+.ex-act-btn:active{background:rgba(0,0,0,.06)}
+.ex-act-btn.danger{color:var(--danger)}
+
+/* Set Table */
+.set-table{padding:6px 12px 8px}
+.set-row{display:grid;align-items:center;gap:6px;padding:5px 4px;border-radius:10px;min-height:44px}
+.set-row.header{color:var(--text3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;min-height:28px}
+.set-row.completed{background:var(--primary-glow)}
+.set-num{font-weight:800;font-size:13px;color:var(--text3);text-align:center;width:24px}
+.set-prev{font-size:11px;color:var(--text3);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.set-input{background:var(--border-light);border:2px solid transparent;border-radius:8px;padding:9px 4px;
+  text-align:center;font-size:16px;font-weight:700;width:100%;min-width:0;transition:all .2s}
+.set-input:focus{border-color:var(--primary);background:var(--surface)}
+.set-input::placeholder{color:var(--text3);font-weight:400;font-size:12px}
+.set-check{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:var(--border-light);color:var(--text3);transition:all .2s;flex-shrink:0}
+.set-check.done{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(16,185,129,.3)}
+.set-check:active{transform:scale(.88)}
+.add-set-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;
+  color:var(--primary);font-size:13px;font-weight:700;width:100%;border-top:1px solid var(--border-light)}
+.add-set-btn:active{background:var(--primary-dim)}
+
+/* Rest Timer */
+.rest-bar{position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + var(--safe-b) + 8px);
+  background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:25;
+  animation:slideUp .35s cubic-bezier(.16,1,.3,1);overflow:hidden}
+@keyframes slideUp{from{transform:translateY(120%);opacity:0}to{transform:translateY(0);opacity:1}}
+.rest-bar-progress{position:absolute;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--primary),var(--primary-dark));transition:width 1s linear}
+.rest-bar-content{display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
+.rest-bar-time{font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--primary)}
+.rest-bar-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.rest-bar-actions{display:flex;gap:8px}
+.rest-btn{padding:8px 14px;border-radius:10px;background:var(--border-light);color:var(--text2);font-size:14px;font-weight:700}
+.rest-btn:active{background:var(--surface3)}
+.rest-btn.skip{color:var(--primary);background:var(--primary-dim)}
+
+/* Modals */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  z-index:40;display:flex;align-items:flex-end;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-height:92vh;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;animation:modalUp .35s cubic-bezier(.16,1,.3,1);padding-bottom:var(--safe-b)}
+@keyframes modalUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;
+  border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-title{font-size:18px;font-weight:800}
+.modal-body{padding:20px}
+
+/* Picker & Forms */
+.search-bar{position:relative;margin-bottom:14px}
+.search-bar .input{padding-left:42px}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3)}
+.cat-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none}
+.cat-chips::-webkit-scrollbar{display:none}
+.chip{padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;background:var(--border-light);color:var(--text2);transition:all .2s}
+.chip.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(16,185,129,.25)}
+.ex-list-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border-light)}
+.ex-list-item:last-child{border-bottom:none}
+.ex-list-item:active{background:var(--border-light)}
+.ex-list-name{font-weight:700;font-size:15px}
+.ex-list-cat{font-size:12px;color:var(--text3);margin-top:2px;font-weight:500}
+.ex-list-metrics{font-size:11px;color:var(--text3);margin-top:2px}
+.metric-tag{display:inline-flex;padding:7px 14px;background:var(--border-light);border:2px solid transparent;
+  border-radius:20px;font-size:13px;font-weight:600;margin:3px;transition:all .2s}
+.metric-tag.selected{background:var(--primary-dim);border-color:var(--primary);color:var(--primary)}
+.form-group{margin-bottom:18px}
+.form-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px;display:block}
+.form-row{display:flex;gap:10px}
+.select-wrap select{appearance:none;background:var(--border-light);border:2px solid transparent;
+  border-radius:var(--radius-sm);padding:14px 34px 14px 16px;font-size:16px;width:100%;color:var(--text);font-weight:500}
+.select-wrap{position:relative}.select-wrap::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+
+/* Calendar */
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 4px;margin-bottom:10px}
+.cal-hdr-title{font-size:17px;font-weight:800}
+.cal-hdr-btn{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text2)}
+.cal-hdr-btn:active{background:var(--border-light)}
+.cal-day-names{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;
+  color:var(--text3);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:12px;font-size:14px;font-weight:600;position:relative;min-height:42px}
+.cal-cell:active{background:var(--border-light)}
+.cal-cell.today{font-weight:900;color:#fff;background:var(--primary);border-radius:50%}
+.cal-cell.comp{font-weight:900;color:#f59e0b;background:rgba(245,158,11,.12);border-radius:50%}
+.cal-cell.comp.today{color:#fff;background:linear-gradient(135deg,var(--primary),#f59e0b)}
+.cal-dots{display:flex;gap:3px;margin-top:2px;position:absolute;bottom:3px}
+.cal-dot{width:5px;height:5px;border-radius:50%}
+
+/* PRs & Stats */
+.pr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.pr-card{background:var(--border-light);border-radius:var(--radius);padding:16px}
+.pr-val{font-size:22px;font-weight:900;color:var(--primary)}
+.pr-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-top:4px;font-weight:700}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.summary-stat{background:var(--border-light);border-radius:var(--radius);padding:16px;text-align:center}
+.summary-val{font-size:24px;font-weight:900;color:var(--primary)}
+.summary-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-top:4px;font-weight:700}
+
+/* Weather & Color pickers */
+.weather-picker{display:flex;gap:10px;margin-bottom:20px}
+.weather-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;
+  border-radius:var(--radius);background:var(--border-light);font-size:13px;font-weight:700;color:var(--text2)}
+.weather-btn.active{background:var(--primary-dim);color:var(--primary);box-shadow:inset 0 0 0 2px var(--primary)}
+.weather-btn .emoji{font-size:28px}
+.color-dots{display:flex;gap:10px;flex-wrap:wrap}
+.color-dot{width:34px;height:34px;border-radius:50%;border:3px solid transparent;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.color-dot.active{border-color:var(--text);transform:scale(1.15)}
+.rpe-scale{display:flex;gap:6px;flex-wrap:wrap}
+.rpe-btn{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15px;background:var(--border-light);color:var(--text2);transition:all .2s}
+.rpe-btn.sel{background:var(--primary);color:#fff}
+
+/* Profile */
+.profile-hero{text-align:center;padding:28px 20px 20px;margin-bottom:12px}
+.profile-avatar{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:28px;margin:0 auto 14px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.profile-photo{width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto 14px;display:block;
+  box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.profile-name{font-size:24px;font-weight:900;letter-spacing:-.4px}
+.profile-stats{font-size:13px;color:var(--text2);font-weight:500;margin-top:4px}
+.menu-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
+  background:var(--surface);border-bottom:1px solid var(--border-light);transition:background .15s;width:100%;text-align:left}
+.menu-item:last-child{border-bottom:none}
+.menu-item:active{background:var(--border-light)}
+.menu-item-left{display:flex;align-items:center;gap:14px}
+.menu-item-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.menu-item-label{font-weight:700;font-size:15px;letter-spacing:-.2px}
+.menu-item-sub{font-size:12px;color:var(--text3);font-weight:500;margin-top:1px}
+.menu-item-right{color:var(--text3);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+
+.detail-ex{padding:10px 0;border-bottom:1px solid var(--border-light)}
+.detail-ex:last-child{border-bottom:none}
+.detail-ex-name{font-weight:800;color:var(--primary);margin-bottom:4px;font-size:15px}
+.detail-set{display:flex;gap:12px;font-size:14px;color:var(--text2);padding:3px 0;font-weight:500}
+.detail-set-num{color:var(--text3);width:20px;font-weight:700}
+
+.confirm-body{text-align:center;padding:28px 24px}
+.confirm-body h3{font-size:18px;font-weight:800;margin-bottom:8px}
+.confirm-body p{color:var(--text2);margin-bottom:24px;font-size:15px}
+.confirm-actions{display:flex;gap:10px}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 28px;color:var(--text3);text-align:center}
+.empty-icon{font-size:48px;margin-bottom:16px}
+.empty-text{font-size:16px;margin-bottom:20px;font-weight:500}
+.section-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:10px;padding:0 4px}
+.finish-screen{position:fixed;inset:0;background:var(--surface);z-index:50;display:flex;flex-direction:column;overflow-y:auto}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+  background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:8px}
+
+/* Date Strip */
+.date-strip{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.date-strip-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px}
+.date-strip-month{font-size:15px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.date-strip-month .chev{transition:transform .25s;color:var(--text3);font-size:12px}
+.date-strip-month .chev.open{transform:rotate(180deg)}
+.date-strip-today{font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;
+  padding:4px 10px;border-radius:20px;border:1.5px solid var(--primary);background:none;cursor:pointer}
+.date-strip-today:active{background:var(--primary-dim)}
+.date-strip-days{display:flex;padding:4px 8px 10px;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.date-strip-days::-webkit-scrollbar{display:none}
+.date-strip-day{display:flex;flex-direction:column;align-items:center;min-width:44px;padding:6px 4px 4px;
+  border-radius:12px;cursor:pointer;flex-shrink:0;position:relative}
+.date-strip-day.active{background:var(--primary);color:#fff}
+.date-strip-day.active .ds-label,.date-strip-day.active .ds-num{color:#fff}
+.ds-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px}
+.ds-num{font-size:17px;font-weight:800;color:var(--text1)}
+.ds-dot{width:5px;height:5px;border-radius:50%;background:var(--primary);margin-top:3px}
+.date-strip-day.active .ds-dot{background:rgba(255,255,255,.7)}
+.cal-body{background:var(--surface);border-radius:0 0 var(--radius) var(--radius);box-shadow:var(--shadow);
+  padding:4px 16px 16px;margin-bottom:16px;margin-top:-4px}
+
+/* Competition cards */
+.comp-upcoming{padding:14px 16px;background:var(--surface);
+  border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:14px;transition:background .15s}
+.comp-upcoming:last-child{border-bottom:none}
+.comp-upcoming:active{background:var(--border-light)}
+.comp-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.comp-info{flex:1;min-width:0}
+.comp-title{font-size:15px;font-weight:700}
+.comp-sub{font-size:12px;color:var(--text2);font-weight:500;margin-top:1px}
+.comp-days{font-size:12px;font-weight:700;white-space:nowrap;padding:4px 10px;border-radius:8px}
+
+/* Drag reorder */
+.acc.dragging{opacity:.5;transform:scale(.97);transition:all .15s}
+.acc.drag-over{border-top:3px solid var(--primary);margin-top:-3px}
+.drag-handle{display:flex;align-items:center;justify-content:center;width:28px;color:var(--text3);
+  touch-action:none;cursor:grab;flex-shrink:0;padding:4px 0}
+.drag-handle:active{cursor:grabbing}
+.drag-handle svg{pointer-events:none}
+.ex-stats{display:flex;gap:4px;padding:10px 14px;border-top:1px solid var(--border-light);background:var(--bg)}
+.ex-stat{flex:1;text-align:center}
+.ex-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:2px}
+.ex-stat-val{font-size:13px;font-weight:700;color:var(--primary)}
+
+/* Velocity Zone */
+.vz-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--border-light);
+  border-bottom:1px solid rgba(0,0,0,.04);font-size:12px;font-weight:600;color:var(--text2)}
+.vz-badge{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.3px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const{useState,useEffect,useRef,useCallback,useMemo}=React;
+
+const Icon=({name,size=24})=>{const d={
+  home:<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/>,
+  dumbbell:<path d="M6.5 6.5h11M4 9h2.5m11 0H20M4 15h2.5m11 0H20M6.5 12h11M6.5 9v6M17.5 9v6M4 9v6m16-6v6" strokeLinecap="round"/>,
+  plus:<path d="M12 5v14m-7-7h14"/>,
+  check:<path d="M5 13l4 4L19 7"/>,
+  x:<path d="M6 6l12 12M18 6L6 18"/>,
+  trash:<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>,
+  settings:<><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></>,
+  search:<><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></>,
+  chevDown:<path d="M6 9l6 6 6-6"/>,
+  chevLeft:<path d="M15 18l-6-6 6-6"/>,
+  chevRight:<path d="M9 18l6-6-6-6"/>,
+  arrowUp:<path d="M12 19V5m-5 5l5-5 5 5"/>,
+  arrowDown:<path d="M12 5v14m5-5l-5 5-5-5"/>,
+  swap:<><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></>,
+  edit:<><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+  barChart:<path d="M18 20V10M12 20V4M6 20v-6"/>,
+  user:<><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+  trophy:<><path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4M6 3h12v6a6 6 0 01-12 0V3zM9 21h6M12 15v6"/></>,
+  play:<polygon points="5,3 19,12 5,21"/>,
+  calendar:<><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>,
+  clock:<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></>,
+  grip:<><circle cx="9" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.5" fill="currentColor" stroke="none"/></>,
+};return<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d[name]}</svg>};
+
+// ── Data ──
+const CATEGORIES=['All','Chest','Back','Shoulders','Arms','Legs','Core','Cardio','T&F'];
+const CAT_COLORS={Chest:'#ef4444',Back:'#3b82f6',Shoulders:'#f97316',Arms:'#8b5cf6',
+  Legs:'#10b981',Core:'#eab308',Cardio:'#ec4899','T&F':'#06b6d4'};
+const catColor=cat=>CAT_COLORS[cat]||'var(--primary)';
+const BUILTIN_METRICS=[{id:'weight',name:'Weight',unit:'kg',step:2.5},{id:'reps',name:'Reps',unit:'',step:1},
+  {id:'time',name:'Time',unit:'s',step:1},{id:'distance',name:'Distance',unit:'m',step:10},{id:'rpe',name:'RPE',unit:'',step:0.5},
+  {id:'tf-time',name:'Sprint Time',unit:'s',step:0.01},{id:'tf-dist',name:'T&F Distance',unit:'m',step:0.01},
+  {id:'height',name:'Height',unit:'m',step:0.01}];
+const DEFAULT_EXERCISES=[
+  {id:'bench-press',name:'Bench Press',category:'Chest',metrics:['weight','reps']},
+  {id:'incline-bench',name:'Incline Bench',category:'Chest',metrics:['weight','reps']},
+  {id:'db-bench',name:'DB Bench Press',category:'Chest',metrics:['weight','reps']},
+  {id:'cable-fly',name:'Cable Fly',category:'Chest',metrics:['weight','reps']},
+  {id:'push-up',name:'Push-Up',category:'Chest',metrics:['reps']},
+  {id:'deadlift',name:'Deadlift',category:'Back',metrics:['weight','reps']},
+  {id:'barbell-row',name:'Barbell Row',category:'Back',metrics:['weight','reps']},
+  {id:'pull-up',name:'Pull-Up',category:'Back',metrics:['weight','reps']},
+  {id:'lat-pulldown',name:'Lat Pulldown',category:'Back',metrics:['weight','reps']},
+  {id:'cable-row',name:'Cable Row',category:'Back',metrics:['weight','reps']},
+  {id:'db-row',name:'DB Row',category:'Back',metrics:['weight','reps']},
+  {id:'ohp',name:'Overhead Press',category:'Shoulders',metrics:['weight','reps']},
+  {id:'lateral-raise',name:'Lateral Raise',category:'Shoulders',metrics:['weight','reps']},
+  {id:'face-pull',name:'Face Pull',category:'Shoulders',metrics:['weight','reps']},
+  {id:'barbell-curl',name:'Barbell Curl',category:'Arms',metrics:['weight','reps']},
+  {id:'db-curl',name:'DB Curl',category:'Arms',metrics:['weight','reps']},
+  {id:'hammer-curl',name:'Hammer Curl',category:'Arms',metrics:['weight','reps']},
+  {id:'tricep-pushdown',name:'Tricep Pushdown',category:'Arms',metrics:['weight','reps']},
+  {id:'skull-crusher',name:'Skull Crusher',category:'Arms',metrics:['weight','reps']},
+  {id:'squat',name:'Squat',category:'Legs',metrics:['weight','reps']},
+  {id:'front-squat',name:'Front Squat',category:'Legs',metrics:['weight','reps']},
+  {id:'leg-press',name:'Leg Press',category:'Legs',metrics:['weight','reps']},
+  {id:'rdl',name:'Romanian Deadlift',category:'Legs',metrics:['weight','reps']},
+  {id:'leg-curl',name:'Leg Curl',category:'Legs',metrics:['weight','reps']},
+  {id:'leg-extension',name:'Leg Extension',category:'Legs',metrics:['weight','reps']},
+  {id:'calf-raise',name:'Calf Raise',category:'Legs',metrics:['weight','reps']},
+  {id:'hip-thrust',name:'Hip Thrust',category:'Legs',metrics:['weight','reps']},
+  {id:'plank',name:'Plank',category:'Core',metrics:['time']},
+  {id:'hanging-leg-raise',name:'Hanging Leg Raise',category:'Core',metrics:['reps']},
+  {id:'russian-twist',name:'Russian Twist',category:'Core',metrics:['weight','reps']},
+  {id:'running',name:'Running',category:'Cardio',metrics:['distance','time']},
+  {id:'cycling',name:'Cycling',category:'Cardio',metrics:['distance','time']},
+  {id:'sprint-60m',name:'60m Sprint',category:'T&F',metrics:['tf-time']},
+  {id:'sprint-100m',name:'100m Sprint',category:'T&F',metrics:['tf-time']},
+  {id:'sprint-200m',name:'200m Sprint',category:'T&F',metrics:['tf-time']},
+  {id:'sprint-400m',name:'400m Sprint',category:'T&F',metrics:['tf-time']},
+  {id:'hurdles-110m',name:'110m Hurdles',category:'T&F',metrics:['tf-time']},
+  {id:'hurdles-100m',name:'100m Hurdles',category:'T&F',metrics:['tf-time']},
+  {id:'long-jump',name:'Long Jump',category:'T&F',metrics:['tf-dist']},
+  {id:'triple-jump',name:'Triple Jump',category:'T&F',metrics:['tf-dist']},
+  {id:'high-jump',name:'High Jump',category:'T&F',metrics:['height']},
+  {id:'pole-vault',name:'Pole Vault',category:'T&F',metrics:['height']},
+  {id:'shot-put',name:'Shot Put',category:'T&F',metrics:['tf-dist']},
+  {id:'discus',name:'Discus Throw',category:'T&F',metrics:['tf-dist']},
+  {id:'javelin',name:'Javelin Throw',category:'T&F',metrics:['tf-dist']},
+  {id:'hammer-throw',name:'Hammer Throw',category:'T&F',metrics:['tf-dist']},
+];
+const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
+const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
+const DEFAULT_TAGS=[
+  {id:'max-speed',name:'Max Rýchlosť',color:'#ef4444'},
+  {id:'accel',name:'Accel',color:'#f97316'},
+  {id:'gym',name:'Gym',color:'#3b82f6'},
+  {id:'low-day',name:'Low Day',color:'#10b981'},
+  {id:'dialka',name:'Diaľka',color:'#8b5cf6'}];
+const COMP_DISCIPLINES=['60m','100m','200m','Long Jump','Triple Jump','4x100m Relay'];
+const fmtDisc=d=>{if(!d||!d.length)return'';if(Array.isArray(d))return d.join(', ');return d};
+const VELOCITY_ZONES=[
+  {id:'max-str',name:'Max Strength',range:'0.15–0.35 m/s',color:'#ef4444'},
+  {id:'acc-str',name:'Acc. Strength',range:'0.35–0.60 m/s',color:'#f97316'},
+  {id:'str-spd',name:'Str-Speed',range:'0.60–0.75 m/s',color:'#eab308'},
+  {id:'spd-str',name:'Spd-Strength',range:'0.75–1.00 m/s',color:'#22c55e'},
+  {id:'start-str',name:'Starting Str',range:'1.00–1.30 m/s',color:'#3b82f6'},
+];
+const isGymEx=ex=>ex&&['Chest','Back','Shoulders','Arms','Legs'].includes(ex.category);
+const DEFAULT_ATHLETES=[{id:'ath-1',name:'Stanley',color:'#3b82f6'},{id:'ath-2',name:'Miška',color:'#ec4899'}];
+
+// ── Storage ──
+const st={get(k,f){try{const v=localStorage.getItem('wk2_'+k);return v?JSON.parse(v):f}catch{return f}},set(k,v){localStorage.setItem('wk2_'+k,JSON.stringify(v))}};
+function useStore(k,f){const[v,setV]=useState(()=>st.get(k,f));
+  const up=useCallback(fn=>{const n=typeof fn==='function'?fn(st.get(k,f)):fn;st.set(k,n);setV(n)},[k]);return[v,up]}
+
+// ── Helpers ──
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fmtTime=s=>{const m=Math.floor(Math.abs(s)/60);return`${m}:${(Math.abs(s)%60).toString().padStart(2,'0')}`};
+const fmtDur=ms=>{const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return h?`${h}h ${m}m`:`${m}m`};
+const fmtDate=d=>{const dt=new Date(d);const now=new Date();if(dt.toDateString()===now.toDateString())return'Today';
+  const y=new Date(now);y.setDate(y.getDate()-1);if(dt.toDateString()===y.toDateString())return'Yesterday';
+  const diff=Math.floor((now-dt)/864e5);if(diff<7)return`${diff}d ago`;
+  return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})};
+const dateKey=d=>{const dt=new Date(d);return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`};
+const WEATHER_MAP={sunny:'☀️',windy:'💨',rainy:'🌧️'};
+const fmtWeather=w=>{if(!w)return'';if(Array.isArray(w))return w.map(k=>WEATHER_MAP[k]||'').join('');return WEATHER_MAP[w]||''};
+const toggleWeather=(cur,k)=>{const arr=Array.isArray(cur)?[...cur]:cur?[cur]:[];return arr.includes(k)?arr.filter(x=>x!==k):[...arr,k]};
+const hasWeather=(cur,k)=>Array.isArray(cur)?cur.includes(k):cur===k;
+const getMetric=(id,cm)=>BUILTIN_METRICS.find(m=>m.id===id)||(cm||[]).find(m=>m.id===id)||{id,name:id,unit:'',step:1};
+const initials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const greeting=()=>{const h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening'};
+const fullDate=()=>new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+const hexRgb=h=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return{r,g,b}};
+const applyTheme=color=>{const{r,g,b}=hexRgb(color);const s=document.documentElement.style;
+  s.setProperty('--primary',color);s.setProperty('--primary-dark',`rgb(${Math.max(0,r-30)},${Math.max(0,g-30)},${Math.max(0,b-30)})`);
+  s.setProperty('--primary-dim',`rgba(${r},${g},${b},.1)`);s.setProperty('--primary-glow',`rgba(${r},${g},${b},.06)`)};
+
+function getPrevSets(exId,athId,workouts){
+  for(let i=workouts.length-1;i>=0;i--){const a=workouts[i].athletes?.[athId];if(a?.sets?.[exId]?.length>0)return a.sets[exId]}return null}
+
+function computePRs(exId,athId,workouts,exercise){
+  const prs={};if(!exercise)return prs;
+  workouts.forEach(w=>{(w.athletes?.[athId]?.sets?.[exId]||[]).filter(s=>s.completed).forEach(s=>{
+    const hw=exercise.metrics.includes('weight'),hr=exercise.metrics.includes('reps');
+    if(hw&&(s.values.weight||0)>(prs.maxWeight||0))prs.maxWeight=s.values.weight;
+    if(hr&&(s.values.reps||0)>(prs.maxReps||0))prs.maxReps=s.values.reps;
+    if(hw&&hr){const e1=(s.values.weight||0)*(1+(s.values.reps||0)/30);if(e1>(prs.e1rm||0))prs.e1rm=Math.round(e1*10)/10;
+      const vol=(s.values.weight||0)*(s.values.reps||0);if(vol>(prs.maxVol||0))prs.maxVol=vol}
+    if(exercise.metrics.includes('time')&&(s.values.time||0)>(prs.maxTime||0))prs.maxTime=s.values.time;
+  })});return prs}
+
+function getProgressData(exId,athId,workouts,metric){
+  return workouts.filter(w=>w.athletes?.[athId]?.sets?.[exId]?.some(s=>s.completed))
+    .map(w=>{const sets=w.athletes[athId].sets[exId].filter(s=>s.completed);
+      return{x:new Date(w.startTime),y:Math.max(...sets.map(s=>s.values[metric]||0))}}).filter(d=>d.y>0)}
+
+// ── Hooks ──
+function useRestTimer(){const[t,setT]=useState({active:false,elapsed:0});const iv=useRef(null);
+  const start=useCallback(()=>{clearInterval(iv.current);setT({active:true,elapsed:0});
+    iv.current=setInterval(()=>setT(p=>({...p,elapsed:p.elapsed+1})),1000)},[]);
+  const stop=useCallback(()=>{clearInterval(iv.current);setT({active:false,elapsed:0})},[]);
+  useEffect(()=>()=>clearInterval(iv.current),[]);return{timer:t,start,stop}}
+
+function useElapsed(s){const[e,setE]=useState(0);useEffect(()=>{if(!s)return;const iv=setInterval(()=>setE(Date.now()-s),1000);return()=>clearInterval(iv)},[s]);return e}
+
+function WorkoutCard({wk,onClick}){
+  const dur=wk.endTime?wk.endTime-wk.startTime:0;const c=wk.tag?.color||wk.color||'var(--primary)';
+  return(<button className="wk-card" onClick={onClick}>
+    <div className="wk-card-bar" style={{background:c}}/>
+    <div className="wk-card-body">
+      <div className="wk-card-top">
+        <div className="wk-card-name">{wk.name||'Workout'}</div>
+        <div className="wk-card-date">{fmtDate(wk.startTime)}</div>
+      </div>
+      <div className="wk-card-bottom">
+        <div className="wk-card-meta">{fmtDur(dur)} · {wk.exerciseIds.length} exercises{wk.weather?` · ${fmtWeather(wk.weather)}`:''}</div>
+        {wk.tag&&<div className="wk-card-tag" style={{background:wk.tag.color+'18',color:wk.tag.color}}>{wk.tag.name}</div>}
+      </div>
+    </div></button>)}
+
+// ── Small Components ──
+function AthleteBar({athletes,active,onSelect}){return(
+  <div className="ath-bar">{athletes.map(a=>(
+    <button key={a.id} className="ath-item" onClick={()=>onSelect(a.id)}>
+      <div className={`ath-avatar ${active===a.id?'active':''}`}
+        style={{background:a.photo?'none':a.color+'18',color:a.color,borderColor:active===a.id?a.color:'transparent'}}>
+        {a.photo?<img src={a.photo} alt={a.name}/>:initials(a.name)}</div>
+      <span className={`ath-name ${active===a.id?'active':''}`}>{a.name}</span></button>))}</div>)}
+
+function RestTimerBar({timer,onStop}){if(!timer.active)return null;
+  return(<div className="rest-bar">
+    <div className="rest-bar-content"><div><div className="rest-bar-label">Rest</div>
+      <div className="rest-bar-time">{fmtTime(timer.elapsed)}</div></div>
+      <div className="rest-bar-actions">
+        <button className="rest-btn skip" onClick={onStop}>Done</button></div></div></div>)}
+
+function ReadinessCheckIn({athleteName,onSubmit,onSkip}){
+  const[vals,setVals]=useState({sleep:null,energy:null,soreness:null});
+  const qs=[{k:'sleep',l:'How did you sleep?',ls:['Terrible','Poor','OK','Good','Great']},
+    {k:'energy',l:'Energy level?',ls:['Exhausted','Tired','Normal','High','Very high']},
+    {k:'soreness',l:'Muscle soreness?',ls:['Very sore','Sore','Moderate','A little','Fresh']}];
+  return(<div className="readiness">
+    <div className="readiness-hdr"><button className="hdr-btn" onClick={onSkip}><Icon name="x" size={20}/></button>
+      <span className="readiness-title">Check-in</span><button className="readiness-skip" onClick={onSkip}>Skip</button></div>
+    <div className="readiness-body">
+      <p style={{color:'var(--text2)',fontSize:14,marginBottom:24,textAlign:'center',fontWeight:600}}>{athleteName}</p>
+      {qs.map(q=>(<div key={q.k} className="readiness-q"><h3>{q.l}</h3>
+        <div className="readiness-scale">{[1,2,3,4,5].map(n=>(
+          <button key={n} className={`readiness-btn r${n} ${vals[q.k]===n?'sel':''}`}
+            onClick={()=>setVals(p=>({...p,[q.k]:n}))}><span>{n}</span><span>{q.ls[n-1]}</span></button>))}</div></div>))}
+      <button className="btn btn-primary" style={{marginTop:8}} disabled={!vals.sleep||!vals.energy||!vals.soreness}
+        onClick={()=>onSubmit(vals)}>Continue</button></div></div>)}
+
+function MiniChart({data}){if(!data||data.length<2)return<div style={{padding:20,textAlign:'center',color:'var(--text3)',fontSize:13}}>Not enough data</div>;
+  const w=300,h=120,p=28;const ys=data.map(d=>d.y);const maxY=Math.max(...ys),minY=Math.min(...ys);const range=maxY-minY||1;
+  const pts=data.map((d,i)=>({x:p+(i/(data.length-1))*(w-2*p),y:p+(1-(d.y-minY)/range)*(h-2*p)}));
+  const pathD=pts.map((pt,i)=>`${i===0?'M':'L'}${pt.x} ${pt.y}`).join(' ');
+  return(<svg viewBox={`0 0 ${w} ${h}`} style={{width:'100%',display:'block'}}>
+    <text x={p} y={h-p+14} fill="var(--text3)" fontSize="9" fontWeight="600">{minY}</text>
+    <text x={p} y={p-8} fill="var(--text3)" fontSize="9" fontWeight="600">{maxY}</text>
+    <path d={pathD} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    {pts.map((pt,i)=><circle key={i} cx={pt.x} cy={pt.y} r="4" fill="var(--primary)"/>)}</svg>)}
+
+function MonthCalendar({workouts,planned,competitions,onSelectDay}){
+  const[month,setMonth]=useState(new Date().getMonth());const[year,setYear]=useState(new Date().getFullYear());
+  const dim=new Date(year,month+1,0).getDate();const fd=new Date(year,month,1).getDay();const off=fd===0?6:fd-1;
+  const todayStr=dateKey(new Date());const cells=[];for(let i=0;i<off;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
+  const getDotsForDay=day=>{const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    return[...workouts.filter(w=>dateKey(w.startTime)===ds).map(w=>w.color||'#10b981'),
+      ...(planned||[]).filter(p=>p.date===ds).map(p=>p.color||'#3b82f6'),
+      ...(competitions||[]).filter(c=>c.date===ds).map(()=>'#f59e0b')]};
+  const prev=()=>{if(month===0){setMonth(11);setYear(y=>y-1)}else setMonth(m=>m-1)};
+  const next=()=>{if(month===11){setMonth(0);setYear(y=>y+1)}else setMonth(m=>m+1)};
+  return(<div>
+    <div className="cal-hdr"><button className="cal-hdr-btn" onClick={prev}><Icon name="chevLeft" size={20}/></button>
+      <span className="cal-hdr-title">{new Date(year,month).toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span>
+      <button className="cal-hdr-btn" onClick={next}><Icon name="chevRight" size={20}/></button></div>
+    <div className="cal-day-names">{['M','T','W','T','F','S','S'].map((d,i)=><div key={i}>{d}</div>)}</div>
+    <div className="cal-grid">{cells.map((d,i)=>{if(!d)return<div key={`e${i}`}/>;
+      const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const dots=getDotsForDay(d);
+      const isComp=(competitions||[]).some(c=>c.date===ds);
+      return(<button key={i} className={`cal-cell ${ds===todayStr?'today':''} ${isComp?'comp':''}`} onClick={()=>onSelectDay(ds)}>
+        <span>{d}</span>{dots.length>0&&<div className="cal-dots">{dots.slice(0,3).map((c,j)=><div key={j} className="cal-dot" style={{background:c}}/>)}</div>}
+      </button>)})}</div></div>)}
+
+function SetRow({set,idx,metrics,cm,onUpdate,onToggle,onDelete}){
+  const mds=metrics.map(id=>getMetric(id,cm));const gc=`24px ${'1fr '.repeat(metrics.length)}36px 28px`;
+  return(<div className={`set-row ${set.completed?'completed':''}`} style={{gridTemplateColumns:gc}}>
+    <div className="set-num">{idx+1}</div>
+    {mds.map(md=>(<input key={md.id} type="number" className="set-input" placeholder={md.unit||md.name}
+      value={set.values[md.id]??''} step={md.step} onChange={e=>onUpdate(md.id,e.target.value===''?'':Number(e.target.value))}/>))}
+    <button className={`set-check ${set.completed?'done':''}`} onClick={onToggle}><Icon name="check" size={14}/></button>
+    <button style={{color:'var(--text3)',padding:2,display:'flex',alignItems:'center',justifyContent:'center'}}
+      onClick={onDelete}><Icon name="x" size={12}/></button></div>)}
+
+function VelocityZonePicker({current,onSelect}){
+  const[custom,setCustom]=useState(false);const[name,setName]=useState('');const[lo,setLo]=useState('');const[hi,setHi]=useState('');
+  return(<div style={{padding:'10px 14px',background:'var(--border-light)',borderBottom:'1px solid rgba(0,0,0,.04)'}}>
+    <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:custom?10:0}}>
+      {VELOCITY_ZONES.map(vz=><button key={vz.id} className="vz-badge" style={{background:vz.color+'22',color:vz.color,
+        border:current?.id===vz.id?`2px solid ${vz.color}`:'2px solid transparent',padding:'5px 10px',cursor:'pointer'}}
+        onClick={()=>onSelect(vz)}>{vz.name}</button>)}
+      <button className="vz-badge" style={{background:'var(--surface)',color:'var(--text2)',border:'2px solid var(--border)',
+        padding:'5px 10px',cursor:'pointer'}} onClick={()=>setCustom(!custom)}>Custom</button></div>
+    {custom&&<div style={{display:'flex',gap:6,alignItems:'center',marginTop:6}}>
+      <input className="input" placeholder="Zone name" value={name} onChange={e=>setName(e.target.value)}
+        style={{flex:2,padding:'8px 10px',fontSize:13}}/>
+      <input className="input" type="number" placeholder="Low" value={lo} onChange={e=>setLo(e.target.value)}
+        style={{flex:1,padding:'8px 6px',fontSize:13,textAlign:'center'}} step="0.01"/>
+      <span style={{color:'var(--text3)',fontSize:12}}>–</span>
+      <input className="input" type="number" placeholder="High" value={hi} onChange={e=>setHi(e.target.value)}
+        style={{flex:1,padding:'8px 6px',fontSize:13,textAlign:'center'}} step="0.01"/>
+      <span style={{color:'var(--text3)',fontSize:11}}>m/s</span>
+      <button className="ex-act-btn" style={{color:'var(--primary)',fontWeight:800,padding:'8px'}}
+        onClick={()=>{if(!name.trim())return;onSelect({id:'custom-'+uid(),name:name.trim(),
+          range:`${lo||'?'}–${hi||'?'} m/s`,color:'#8b5cf6'})}}>Add</button></div>}
+  </div>)}
+
+function fmtLast(prevSets,exercise){
+  if(!prevSets?.length)return'-';const done=prevSets.filter(s=>Object.values(s.values).some(v=>v!==''&&v!=null));
+  if(!done.length)return'-';const hw=exercise.metrics.includes('weight'),hr=exercise.metrics.includes('reps');
+  if(hw&&hr){const reps=done.map(s=>s.values.reps).filter(v=>v!=null&&v!=='');
+    const wts=done.map(s=>s.values.weight).filter(v=>v!=null&&v!=='');
+    if(!reps.length||!wts.length)return'-';
+    const allR=reps.every(r=>r===reps[0]),allW=wts.every(w=>w===wts[0]);
+    if(allR&&allW)return`${done.length}×${reps[0]} @ ${wts[0]}`;
+    return reps.join(', ')+' @ '+wts.join(', ')}
+  return done.map(s=>exercise.metrics.map(mid=>s.values[mid]??'-').join('×')).join(', ')}
+
+function InlineMetricEditor({current,cm,onChange}){
+  const all=[...BUILTIN_METRICS,...cm];
+  const[showNew,setShowNew]=useState(false);const[nm,setNm]=useState('');const[nu,setNu]=useState('');const[ns,setNs]=useState('1');
+  const toggle=id=>{onChange(current.includes(id)?current.filter(x=>x!==id):[...current,id])};
+  return(<div style={{padding:'10px 14px',background:'var(--border-light)',borderRadius:8,marginBottom:8}}>
+    <div style={{fontSize:11,fontWeight:800,textTransform:'uppercase',letterSpacing:'.5px',color:'var(--text3)',marginBottom:8}}>Metrics</div>
+    <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+      {all.map(m=><button key={m.id} style={{padding:'5px 10px',borderRadius:8,fontSize:12,fontWeight:700,
+        background:current.includes(m.id)?'var(--primary)':'var(--surface)',
+        color:current.includes(m.id)?'#fff':'var(--text2)',
+        border:current.includes(m.id)?'2px solid var(--primary)':'2px solid var(--border)',cursor:'pointer'}}
+        onClick={()=>toggle(m.id)}>{m.name}{m.unit?` (${m.unit})`:''}</button>)}
+      <button style={{padding:'5px 10px',borderRadius:8,fontSize:12,fontWeight:700,
+        background:'var(--surface)',color:'var(--text3)',border:'2px solid var(--border)',cursor:'pointer'}}
+        onClick={()=>setShowNew(!showNew)}>+ Custom</button></div>
+    {showNew&&<div style={{display:'flex',gap:6,alignItems:'center',marginTop:8}}>
+      <input className="input" placeholder="Name" value={nm} onChange={e=>setNm(e.target.value)}
+        style={{flex:2,padding:'6px 8px',fontSize:12}}/>
+      <input className="input" placeholder="Unit" value={nu} onChange={e=>setNu(e.target.value)}
+        style={{flex:1,padding:'6px 8px',fontSize:12}}/>
+      <button className="ex-act-btn" style={{color:'var(--primary)',fontWeight:800,padding:'6px 8px',fontSize:12}}
+        onClick={()=>{if(!nm.trim())return;const id='cm-'+uid();
+          onChange([...current,id],{id,name:nm.trim(),unit:nu.trim(),step:Number(ns)||1});
+          setNm('');setNu('');setShowNew(false)}}>Add</button></div>}
+  </div>)}
+
+function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics}){
+  const[open,setOpen]=useState(false);const[showVZ,setShowVZ]=useState(false);const[showMetrics,setShowMetrics]=useState(false);if(!exercise)return null;
+  const mds=exercise.metrics.map(id=>getMetric(id,cm));const gc=`24px ${'1fr '.repeat(exercise.metrics.length)}36px 28px`;
+  const done=sets.filter(s=>s.completed).length;const gym=isGymEx(exercise);
+  const lastStr=fmtLast(prevSets,exercise);const unit=exercise.metrics.includes('weight')?'kg':exercise.metrics.includes('tf-dist')?'m':'';
+  const prVal=prs?.maxWeight?`${prs.maxWeight}`:(prs?.maxReps?`${prs.maxReps}`:null);
+  return(<div className="acc">
+    <div className="acc-hdr">
+      <div className="drag-handle" onTouchStart={onGripTouch} onMouseDown={onGripTouch}><Icon name="grip" size={16}/></div>
+      <div className="acc-hdr-info" onClick={()=>setOpen(!open)}>
+        <div className="acc-hdr-name">{exercise.name}</div>
+        <div className="acc-hdr-sub"><span>{exercise.category}</span><span>{done}/{sets.length} sets</span>
+          {onShowHistory&&<button onClick={e=>{e.stopPropagation();onShowHistory()}}
+            style={{color:'var(--primary)',fontSize:11,fontWeight:700,marginLeft:4}}>History</button>}</div></div>
+      <div className={`acc-chevron ${open?'open':''}`} onClick={()=>setOpen(!open)}><Icon name="chevDown" size={18}/></div></div>
+    {open&&(lastStr!=='-'||prVal)&&<div className="ex-stats">
+      <div className="ex-stat" style={{flex:2,textAlign:'left'}}><div className="ex-stat-label">Last</div><div className="ex-stat-val" style={{color:'var(--text)'}}>{lastStr}</div></div>
+      {prVal&&<div className="ex-stat" style={{flex:1}}><div className="ex-stat-label">PR</div><div className="ex-stat-val">{prVal} {unit}</div></div>}
+    </div>}
+    {open&&<div className="acc-body">
+      {velocityZone&&<div className="vz-bar"><span>Velocity Zone:</span>
+        <span className="vz-badge" style={{background:velocityZone.color+'22',color:velocityZone.color}}>{velocityZone.name}</span>
+        <span style={{color:'var(--text3)'}}>{velocityZone.range}</span>
+        <button style={{marginLeft:'auto',color:'var(--text3)',padding:4}} onClick={()=>onSetVZ&&onSetVZ(null)}>
+          <Icon name="x" size={12}/></button></div>}
+      {showVZ&&<VelocityZonePicker current={velocityZone} onSelect={vz=>{onSetVZ&&onSetVZ(vz);setShowVZ(false)}}/>}
+      {showMetrics&&<InlineMetricEditor current={exercise.metrics} cm={cm}
+        onChange={(newMetrics,newCustom)=>onChangeMetrics&&onChangeMetrics(exId,newMetrics,newCustom)}/>}
+      <div className="ex-actions">
+        {gym&&<button className="ex-act-btn" onClick={()=>setShowVZ(!showVZ)}>⚡ VZ</button>}
+        <button className="ex-act-btn" onClick={()=>setShowMetrics(!showMetrics)}>📏 Metrics</button>
+        <button className="ex-act-btn" onClick={onReplace}><Icon name="swap" size={12}/>Replace</button>
+        <div style={{flex:1}}/><button className="ex-act-btn danger" onClick={onDelete}><Icon name="trash" size={12}/></button></div>
+      <div className="set-table">
+        <div className="set-row header" style={{gridTemplateColumns:gc}}><div style={{textAlign:'center'}}>#</div>
+          {mds.map(m=><div key={m.id} style={{textAlign:'center'}}>{m.name}</div>)}<div/><div/></div>
+        {sets.map((s,i)=>(<SetRow key={i} set={s} idx={i} metrics={exercise.metrics} cm={cm}
+          onUpdate={(mid,v)=>onUpdateSet(i,mid,v)} onToggle={()=>onToggleSet(i)} onDelete={()=>onDeleteSet(i)}/>))}</div>
+      <button className="add-set-btn" onClick={onAddSet}><Icon name="plus" size={12}/> Add Set</button></div>}</div>)}
+
+// ── Modal Components ──
+function ExercisePicker({exercises,cm,onSelect,onClose,onCreateNew}){
+  const[search,setSearch]=useState('');
+  const filtered=exercises.filter(ex=>!search||ex.name.toLowerCase().includes(search.toLowerCase()));
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
+    <div className="modal-hdr"><span className="modal-title">Add Exercise</span><button className="hdr-btn" onClick={onClose}><Icon name="x" size={20}/></button></div>
+    <div className="modal-body">
+      <div className="search-bar"><span className="search-icon"><Icon name="search" size={16}/></span>
+        <input className="input" placeholder="Search exercises..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+      <button className="btn btn-secondary btn-sm" style={{marginBottom:14}} onClick={onCreateNew}><Icon name="plus" size={14}/> Custom Exercise</button>
+      <div className="card">{filtered.map(ex=>(<div key={ex.id} className="ex-list-item" onClick={()=>onSelect(ex)}><div>
+        <div className="ex-list-name">{ex.name}</div><div className="ex-list-cat">{ex.category}{ex.isCustom?' · Custom':''}</div>
+        <div className="ex-list-metrics">{ex.metrics.map(id=>getMetric(id,cm).name).join(', ')}</div></div></div>))}
+        {!filtered.length&&<div style={{padding:20,textAlign:'center',color:'var(--text3)'}}>Nothing found</div>}</div></div></div></div>)}
+
+function ExerciseEditor({exercise,cm,onSave,onClose,onAddMetric}){
+  const[name,setName]=useState(exercise?.name||'');const[cat,setCat]=useState(exercise?.category||'Chest');
+  const[sel,setSel]=useState(exercise?.metrics||['weight','reps']);
+  const[showNew,setShowNew]=useState(false);const[nm,setNm]=useState('');const[nu,setNu]=useState('');const[ns,setNs]=useState('1');
+  const all=[...BUILTIN_METRICS,...cm];
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
+    <div className="modal-hdr"><span className="modal-title">{exercise?'Edit':'New'} Exercise</span>
+      <button className="hdr-btn" onClick={onClose}><Icon name="x" size={20}/></button></div>
+    <div className="modal-body">
+      <div className="form-group"><label className="form-label">Name</label>
+        <input className="input" placeholder="Exercise name" value={name} onChange={e=>setName(e.target.value)}/></div>
+      <div className="form-group"><label className="form-label">Metrics</label>
+        <div style={{display:'flex',flexWrap:'wrap'}}>{all.map(m=><button key={m.id}
+          className={`metric-tag ${sel.includes(m.id)?'selected':''}`}
+          onClick={()=>setSel(p=>p.includes(m.id)?p.filter(x=>x!==m.id):[...p,m.id])}>{m.name}{m.unit?` (${m.unit})`:''}</button>)}</div>
+        {!showNew?<button className="btn-ghost" style={{fontSize:13,marginTop:8}} onClick={()=>setShowNew(true)}>+ Custom Metric</button>
+        :<div style={{marginTop:10,padding:14,background:'var(--border-light)',borderRadius:'var(--radius-sm)'}}>
+          <div className="form-row" style={{marginBottom:10}}><div style={{flex:1}}><label className="form-label">Name</label>
+            <input className="input" value={nm} onChange={e=>setNm(e.target.value)}/></div></div>
+          <div className="form-row" style={{marginBottom:10}}>
+            <div style={{flex:1}}><label className="form-label">Unit</label><input className="input" value={nu} onChange={e=>setNu(e.target.value)}/></div>
+            <div style={{flex:1}}><label className="form-label">Step</label><input className="input" type="number" value={ns} onChange={e=>setNs(e.target.value)}/></div></div>
+          <div style={{display:'flex',gap:8}}><button className="btn btn-primary btn-sm" style={{flex:1}} onClick={()=>{if(!nm.trim())return;
+            const m={id:'cm-'+uid(),name:nm.trim(),unit:nu.trim(),step:Number(ns)||1};onAddMetric(m);setSel(p=>[...p,m.id]);
+            setShowNew(false);setNm('');setNu('');setNs('1')}}>Add</button>
+            <button className="btn btn-secondary btn-sm" onClick={()=>setShowNew(false)}>Cancel</button></div></div>}</div>
+      <button className="btn btn-primary" style={{marginTop:12}} onClick={()=>{if(!name.trim()||!sel.length)return;
+        onSave({id:exercise?.id||'ex-'+uid(),name:name.trim(),category:cat,metrics:sel,isCustom:true})}}
+        disabled={!name.trim()||!sel.length}>{exercise?'Save':'Create'}</button></div></div></div>)}
+
+function ConfirmDialog({title,message,onConfirm,onCancel,confirmText='OK',danger}){
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onCancel()}><div className="modal" style={{borderRadius:'var(--radius)'}}>
+    <div className="confirm-body"><h3>{title}</h3><p>{message}</p><div className="confirm-actions">
+      <button className="btn btn-secondary" style={{flex:1}} onClick={onCancel}>Cancel</button>
+      <button className={`btn ${danger?'btn-danger':'btn-primary'}`} style={{flex:1}} onClick={onConfirm}>{confirmText}</button></div></div></div></div>)}
+
+function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,onSave,onCancel}){
+  const[weather,setWeather]=useState(null);const[tag,setTag]=useState(null);
+  const[showCustomTag,setShowCustomTag]=useState(false);const[ctName,setCtName]=useState('');const[ctColor,setCtColor]=useState('#8b5cf6');
+  const[wkName,setWkName]=useState(workout.name||'');
+  const elSec=Math.floor(elapsed/1000);
+  const[editDur,setEditDur]=useState(false);
+  const[durH,setDurH]=useState(String(Math.floor(elSec/3600)));
+  const[durM,setDurM]=useState(String(Math.floor((elSec%3600)/60)));
+  const[durS,setDurS]=useState(String(elSec%60));
+  const customElapsed=(parseInt(durH||0)*3600+parseInt(durM||0)*60+parseInt(durS||0))*1000;
+  const[athData,setAthData]=useState(()=>{const d={};athletes.forEach(a=>{if(workout.athletes[a.id])d[a.id]={rpe:null,notes:''}});return d});
+  return(<div className="finish-screen">
+    <div className="hdr"><button className="hdr-btn" onClick={onCancel}><Icon name="chevLeft" size={20}/></button>
+      <span className="hdr-title">Finish Workout</span><div style={{width:40}}/></div>
+    <div style={{flex:1,overflow:'auto',padding:20}}>
+      <div style={{textAlign:'center',marginBottom:24}}>
+        {!editDur?<><div style={{fontSize:40,fontWeight:900,color:'var(--primary)',letterSpacing:'-1px',cursor:'pointer'}}
+          onClick={()=>setEditDur(true)}>{fmtTime(Math.floor(customElapsed/1000))}</div>
+          <div style={{fontSize:12,color:'var(--text3)',marginTop:4,fontWeight:600,textTransform:'uppercase',letterSpacing:'1px'}}>Total Duration · <span style={{color:'var(--primary)',cursor:'pointer'}} onClick={()=>setEditDur(true)}>Edit</span></div></>
+        :<div><div style={{display:'flex',gap:8,justifyContent:'center',alignItems:'center',marginBottom:8}}>
+          <input type="number" min="0" value={durH} onChange={e=>setDurH(e.target.value)}
+            style={{width:52,textAlign:'center',fontSize:28,fontWeight:900,background:'var(--bg2)',border:'2px solid var(--primary)',borderRadius:10,padding:'6px 4px',color:'var(--text1)'}}/><span style={{fontSize:24,fontWeight:900,color:'var(--text3)'}}>:</span>
+          <input type="number" min="0" max="59" value={durM} onChange={e=>setDurM(e.target.value)}
+            style={{width:52,textAlign:'center',fontSize:28,fontWeight:900,background:'var(--bg2)',border:'2px solid var(--primary)',borderRadius:10,padding:'6px 4px',color:'var(--text1)'}}/><span style={{fontSize:24,fontWeight:900,color:'var(--text3)'}}>:</span>
+          <input type="number" min="0" max="59" value={durS} onChange={e=>setDurS(e.target.value)}
+            style={{width:52,textAlign:'center',fontSize:28,fontWeight:900,background:'var(--bg2)',border:'2px solid var(--primary)',borderRadius:10,padding:'6px 4px',color:'var(--text1)'}}/></div>
+          <div style={{fontSize:11,color:'var(--text3)',fontWeight:600,textTransform:'uppercase',letterSpacing:'1px'}}>h : m : s</div>
+          <button style={{marginTop:8,fontSize:13,fontWeight:700,color:'var(--primary)',background:'none',border:'none',cursor:'pointer'}} onClick={()=>setEditDur(false)}>Done</button></div>}
+      </div>
+      <div className="form-group"><label className="form-label">Workout Name</label>
+        <input className="input" placeholder="e.g. Push Day" value={wkName} onChange={e=>setWkName(e.target.value)}/></div>
+      <div className="form-group"><label className="form-label">Weather</label>
+        <div className="weather-picker">{[{k:'sunny',e:'☀️',l:'Sunny'},{k:'windy',e:'💨',l:'Windy'},{k:'rainy',e:'🌧️',l:'Rainy'}].map(w=>(
+          <button key={w.k} className={`weather-btn ${hasWeather(weather,w.k)?'active':''}`}
+            onClick={()=>{const nw=toggleWeather(weather,w.k);setWeather(nw.length?nw:null)}}>
+            <span className="emoji">{w.e}</span><span>{w.l}</span></button>))}</div></div>
+      <div className="form-group"><label className="form-label">Tag</label>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+          {DEFAULT_TAGS.map(t=><button key={t.id} onClick={()=>setTag(tag?.id===t.id?null:t)}
+            style={{padding:'7px 14px',borderRadius:20,fontSize:13,fontWeight:700,cursor:'pointer',
+              background:tag?.id===t.id?t.color:t.color+'18',color:tag?.id===t.id?'#fff':t.color,
+              border:tag?.id===t.id?`2px solid ${t.color}`:'2px solid transparent'}}>{t.name}</button>)}
+          <button onClick={()=>setShowCustomTag(!showCustomTag)}
+            style={{padding:'7px 14px',borderRadius:20,fontSize:13,fontWeight:700,cursor:'pointer',
+              background:'var(--surface)',color:'var(--text3)',border:'2px solid var(--border)'}}>+ Custom</button></div>
+        {showCustomTag&&<div style={{display:'flex',gap:8,alignItems:'center',marginTop:10}}>
+          <input className="input" placeholder="Tag name" value={ctName} onChange={e=>setCtName(e.target.value)}
+            style={{flex:1,padding:'8px 10px',fontSize:13}}/>
+          <input type="color" value={ctColor} onChange={e=>setCtColor(e.target.value)}
+            style={{width:36,height:36,border:'none',borderRadius:8,cursor:'pointer',padding:0}}/>
+          <button style={{padding:'8px 12px',borderRadius:8,fontSize:13,fontWeight:800,background:'var(--primary)',color:'#fff',border:'none',cursor:'pointer'}}
+            onClick={()=>{if(!ctName.trim())return;const t={id:'tag-'+uid(),name:ctName.trim(),color:ctColor};
+              setTag(t);setShowCustomTag(false);setCtName('')}}>Add</button></div>}</div>
+      {athletes.filter(a=>workout.athletes[a.id]).map(a=>(<div key={a.id} style={{marginBottom:20}}>
+        <div style={{fontWeight:800,fontSize:15,marginBottom:10,color:a.color}}>{a.name}</div>
+        <div className="form-group"><label className="form-label">RPE {athData[a.id]?.rpe?`— ${athData[a.id].rpe}/10`:''}</label>
+          {(()=>{const rpeLabels={1:'Very light',2:'Light',3:'Moderate',4:'Somewhat hard',5:'Hard',
+            6:'Harder',7:'Very hard',8:'Very hard+',9:'Near max',10:'Max effort'};
+            const rpeColors={1:'#10b981',2:'#22c55e',3:'#84cc16',4:'#a3e635',5:'#eab308',
+              6:'#f59e0b',7:'#f97316',8:'#ef4444',9:'#dc2626',10:'#991b1b'};
+            const v=athData[a.id]?.rpe||5;
+            return(<div>
+              <input type="range" min="1" max="10" step="1" value={v}
+                onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],rpe:Number(e.target.value)}}))}
+                style={{width:'100%',accentColor:rpeColors[v],height:6}}/>
+              <div style={{display:'flex',justifyContent:'space-between',marginTop:4}}>
+                <span style={{fontSize:11,fontWeight:700,color:'var(--text3)'}}>1</span>
+                <span style={{fontSize:13,fontWeight:800,color:rpeColors[v]}}>{rpeLabels[v]}</span>
+                <span style={{fontSize:11,fontWeight:700,color:'var(--text3)'}}>10</span></div></div>)})()}</div>
+        <div className="form-group"><label className="form-label">Notes</label>
+          <textarea className="input" placeholder="How did it go?" value={athData[a.id]?.notes||''}
+            onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],notes:e.target.value}}))}/></div></div>))}
+      <button className="btn btn-primary" onClick={()=>onSave({name:wkName,weather,tag,athData,customDuration:customElapsed})}>Save Workout</button></div></div>)}
+
+function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,onUpdate}){
+  const[wk,setWk]=useState(JSON.parse(JSON.stringify(initWk)));
+  const[selAth,setSelAth]=useState(athletes[0]?.id);
+  const[editing,setEditing]=useState(false);
+  const[showTagPicker,setShowTagPicker]=useState(false);
+  const[ctName,setCtName]=useState('');const[ctColor,setCtColor]=useState('#8b5cf6');
+  const[showAddEx,setShowAddEx]=useState(false);
+  const dirty=JSON.stringify(wk)!==JSON.stringify(initWk);
+  const durMs=wk.endTime?wk.endTime-wk.startTime:0;const durSec=Math.floor(durMs/1000);
+  const[editDur,setEditDur]=useState(false);
+  const[dH,setDH]=useState(String(Math.floor(durSec/3600)));
+  const[dM,setDM]=useState(String(Math.floor((durSec%3600)/60)));
+  const[dS,setDS]=useState(String(durSec%60));
+  const dur=editDur?(parseInt(dH||0)*3600+parseInt(dM||0)*60+parseInt(dS||0))*1000:durMs;
+  const ad=wk.athletes?.[selAth];
+  const totalSets=wk.exerciseIds.reduce((a,eid)=>(a+(ad?.sets?.[eid]||[]).length),0);
+
+  const up=fn=>{const c=JSON.parse(JSON.stringify(wk));const n=fn(c);setWk(n)};
+  const setVal=(eid,si,mid,val)=>up(w=>{w.athletes[selAth].sets[eid][si].values[mid]=val===''?val:Number(val);return w});
+  const addSet=eid=>up(w=>{const ex=exercises.find(e=>e.id===eid);const ns={values:{},completed:true};
+    (ex?.metrics||[]).forEach(mid=>{ns.values[mid]=''});w.athletes[selAth].sets[eid].push(ns);return w});
+  const delSet=(eid,si)=>up(w=>{w.athletes[selAth].sets[eid].splice(si,1);
+    if(!w.athletes[selAth].sets[eid].length){delete w.athletes[selAth].sets[eid];
+      w.exerciseIds=w.exerciseIds.filter(id=>id!==eid)}return w});
+  const delEx=eid=>up(w=>{w.exerciseIds=w.exerciseIds.filter(id=>id!==eid);
+    Object.keys(w.athletes).forEach(aId=>{delete w.athletes[aId].sets[eid]});return w});
+  const addExToWk=ex=>{up(w=>{if(!w.exerciseIds.includes(ex.id)){w.exerciseIds.push(ex.id);
+    Object.keys(w.athletes).forEach(aId=>{if(!w.athletes[aId].sets)w.athletes[aId].sets={};
+      w.athletes[aId].sets[ex.id]=[{values:{},completed:true}];
+      ex.metrics.forEach(mid=>{w.athletes[aId].sets[ex.id][0].values[mid]=''})})};return w});setShowAddEx(false)};
+
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
+    <div className="modal-hdr">
+      {!editing?<span className="modal-title">{wk.name||'Workout'}</span>
+        :<input className="input" value={wk.name} onChange={e=>setWk({...wk,name:e.target.value})}
+          style={{flex:1,fontSize:15,fontWeight:800,padding:'6px 10px'}} placeholder="Workout name"/>}
+      <div style={{display:'flex',gap:4}}>
+        <button className="hdr-btn" onClick={()=>setEditing(!editing)}>
+          <Icon name={editing?'check':'edit'} size={18}/></button>
+        <button className="hdr-btn" onClick={onClose}><Icon name="x" size={20}/></button></div></div>
+    <div className="modal-body">
+      <AthleteBar athletes={athletes.filter(a=>wk.athletes?.[a.id])} active={selAth} onSelect={setSelAth}/>
+      <div style={{textAlign:'center',margin:'12px 0',fontSize:12,color:'var(--text3)',fontWeight:500}}>
+        {new Date(wk.startTime).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
+        {wk.weather&&` · ${fmtWeather(wk.weather)}`}</div>
+
+      {editing&&<div style={{marginBottom:12}}>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
+          {DEFAULT_TAGS.map(t=><button key={t.id} onClick={()=>setWk({...wk,tag:wk.tag?.id===t.id?null:t,color:t.color})}
+            style={{padding:'5px 12px',borderRadius:20,fontSize:12,fontWeight:700,cursor:'pointer',
+              background:wk.tag?.id===t.id?t.color:t.color+'18',color:wk.tag?.id===t.id?'#fff':t.color,
+              border:wk.tag?.id===t.id?`2px solid ${t.color}`:'2px solid transparent'}}>{t.name}</button>)}
+        </div>
+        <div className="weather-picker" style={{justifyContent:'flex-start',gap:6}}>
+          {[{k:'sunny',e:'☀️'},{k:'windy',e:'💨'},{k:'rainy',e:'🌧️'}].map(w=>
+            <button key={w.k} className={`weather-btn ${hasWeather(wk.weather,w.k)?'active':''}`} style={{padding:'6px 12px',fontSize:13}}
+              onClick={()=>{const nw=toggleWeather(wk.weather,w.k);setWk({...wk,weather:nw.length?nw:null})}}>{w.e}</button>)}
+        </div></div>}
+
+      <div className="summary-grid">
+        <div className="summary-stat" onClick={()=>{if(editing){setEditDur(!editDur)}}} style={{cursor:editing?'pointer':'default'}}>
+          {!editDur?<div className="summary-val">{fmtDur(dur)}</div>
+            :<div style={{display:'flex',gap:4,alignItems:'center',justifyContent:'center'}}>
+              <input type="number" min="0" value={dH} onChange={e=>{setDH(e.target.value);setWk({...wk,endTime:wk.startTime+(parseInt(e.target.value||0)*3600+parseInt(dM||0)*60+parseInt(dS||0))*1000})}}
+                style={{width:32,textAlign:'center',fontSize:16,fontWeight:900,background:'var(--bg2)',border:'2px solid var(--primary)',borderRadius:6,padding:'2px',color:'var(--text1)'}}/>
+              <span style={{fontWeight:900,color:'var(--text3)'}}>:</span>
+              <input type="number" min="0" max="59" value={dM} onChange={e=>{setDM(e.target.value);setWk({...wk,endTime:wk.startTime+(parseInt(dH||0)*3600+parseInt(e.target.value||0)*60+parseInt(dS||0))*1000})}}
+                style={{width:32,textAlign:'center',fontSize:16,fontWeight:900,background:'var(--bg2)',border:'2px solid var(--primary)',borderRadius:6,padding:'2px',color:'var(--text1)'}}/>
+              <span style={{fontWeight:900,color:'var(--text3)'}}>:</span>
+              <input type="number" min="0" max="59" value={dS} onChange={e=>{setDS(e.target.value);setWk({...wk,endTime:wk.startTime+(parseInt(dH||0)*3600+parseInt(dM||0)*60+parseInt(e.target.value||0))*1000})}}
+                style={{width:32,textAlign:'center',fontSize:16,fontWeight:900,background:'var(--bg2)',border:'2px solid var(--primary)',borderRadius:6,padding:'2px',color:'var(--text1)'}}/>
+            </div>}
+          <div className="summary-label">Duration{editing?' · tap to edit':''}</div></div>
+        <div className="summary-stat"><div className="summary-val">{totalSets}</div><div className="summary-label">Sets</div></div></div>
+      {ad?.rpe&&<div style={{textAlign:'center',marginBottom:12,fontSize:14,color:'var(--text2)'}}>RPE <strong>{ad.rpe}/10</strong></div>}
+      {editing&&ad&&<div style={{marginBottom:12}}>
+        <label className="form-label" style={{fontSize:11}}>RPE</label>
+        <input type="range" min="1" max="10" value={ad.rpe||5} style={{width:'100%'}}
+          onChange={e=>up(w=>{w.athletes[selAth].rpe=Number(e.target.value);return w})}/></div>}
+      {ad?.notes&&!editing&&<div style={{padding:12,background:'var(--border-light)',borderRadius:'var(--radius-sm)',marginBottom:14,fontSize:14,color:'var(--text2)'}}>{ad.notes}</div>}
+      {editing&&<div style={{marginBottom:14}}><label className="form-label" style={{fontSize:11}}>Notes</label>
+        <textarea className="input" value={ad?.notes||''} placeholder="Notes..."
+          onChange={e=>up(w=>{w.athletes[selAth].notes=e.target.value;return w})}/></div>}
+
+      {wk.exerciseIds.map((eid,i)=>{const ex=exercises.find(e=>e.id===eid);
+        const sets=ad?.sets?.[eid]||[];if(!sets.length&&!editing)return null;
+        const mds=(ex?.metrics||[]).map(id=>getMetric(id,cm));
+        return(<div key={eid} className="detail-ex">
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div className="detail-ex-name">{ex?.name||'?'}</div>
+            {editing&&<button style={{color:'var(--danger)',padding:4}} onClick={()=>delEx(eid)}><Icon name="trash" size={14}/></button>}
+          </div>
+          {!editing?sets.map((s,j)=>(<div key={j} className="detail-set"><span className="detail-set-num">{j+1}</span>
+            {mds.map(md=><span key={md.id}>{s.values[md.id]??'-'}{md.unit?` ${md.unit}`:''}</span>)}</div>))
+          :<>{sets.map((s,j)=>(<div key={j} className="detail-set" style={{gap:6}}>
+            <span className="detail-set-num">{j+1}</span>
+            {mds.map(md=><input key={md.id} type="number" className="set-input" placeholder={md.unit||md.name}
+              value={s.values[md.id]??''} step={md.step}
+              onChange={e=>setVal(eid,j,md.id,e.target.value)}/>)}
+            <button style={{color:'var(--text3)',padding:2,flexShrink:0}} onClick={()=>delSet(eid,j)}><Icon name="x" size={12}/></button></div>))}
+            <button style={{fontSize:12,fontWeight:700,color:'var(--primary)',padding:'6px 0',background:'none',border:'none',cursor:'pointer'}}
+              onClick={()=>addSet(eid)}>+ Add Set</button></>}
+        </div>)})}
+
+      {editing&&<button className="btn btn-secondary btn-sm" style={{marginTop:8,marginBottom:12}}
+        onClick={()=>setShowAddEx(true)}><Icon name="plus" size={14}/> Add Exercise</button>}
+
+      {dirty&&<button className="btn btn-primary" style={{marginTop:8}} onClick={()=>{onUpdate(wk);setEditing(false)}}>Save Changes</button>}
+      <button className="btn btn-danger" style={{marginTop:8}} onClick={()=>onDelete(wk.id)}>Delete Workout</button>
+    </div>
+    {showAddEx&&<ExercisePicker exercises={exercises} cm={cm} onSelect={addExToWk} onClose={()=>setShowAddEx(false)}
+      onCreateNew={()=>{}}/>}
+  </div></div>)}
+
+function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
+  const[selAth,setSelAth]=useState(athletes[0]?.id);const prs=computePRs(exercise.id,selAth,workouts,exercise);
+  const hasW=exercise.metrics.includes('weight'),hasR=exercise.metrics.includes('reps');
+  const chartMetric=hasW?'weight':hasR?'reps':exercise.metrics[0];
+  const chartData=getProgressData(exercise.id,selAth,workouts,chartMetric);
+  const mds=exercise.metrics.map(id=>getMetric(id,cm));
+  const history=[...workouts].reverse().filter(w=>w.athletes?.[selAth]?.sets?.[exercise.id]?.some(s=>s.completed)).slice(0,15);
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
+    <div className="modal-hdr"><span className="modal-title">{exercise.name}</span>
+      <button className="hdr-btn" onClick={onClose}><Icon name="x" size={20}/></button></div>
+    <div className="modal-body">
+      <AthleteBar athletes={athletes} active={selAth} onSelect={setSelAth}/>
+      <div style={{marginTop:16}}><div className="section-title">Personal Records</div>
+        <div className="pr-grid">
+          {prs.maxWeight&&<div className="pr-card"><div className="pr-val">{prs.maxWeight} kg</div><div className="pr-label">Max Weight</div></div>}
+          {prs.maxReps&&<div className="pr-card"><div className="pr-val">{prs.maxReps}</div><div className="pr-label">Max Reps</div></div>}
+          {prs.e1rm&&<div className="pr-card"><div className="pr-val">{prs.e1rm} kg</div><div className="pr-label">Est. 1RM</div></div>}
+          {prs.maxVol&&<div className="pr-card"><div className="pr-val">{prs.maxVol}</div><div className="pr-label">Best Volume</div></div>}
+        </div>{!Object.keys(prs).length&&<div style={{padding:16,textAlign:'center',color:'var(--text3)',fontSize:13}}>No data yet</div>}</div>
+      <div className="section-title">Progress</div>
+      <div className="card" style={{padding:10,marginBottom:16}}><MiniChart data={chartData}/></div>
+      {history.length>0&&<><div className="section-title">History</div>
+        <div className="card-list">{history.map(w=>{const sets=w.athletes[selAth].sets[exercise.id].filter(s=>s.completed);
+          const d=new Date(w.startTime);
+          return(<div key={w.id} style={{padding:'12px 16px',borderBottom:'1px solid var(--border-light)'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <div style={{fontSize:13,fontWeight:700,color:'var(--text1)'}}>{w.name||'Workout'}</div>
+              <div style={{fontSize:12,fontWeight:600,color:'var(--text3)'}}>{d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div>
+            <div style={{display:'flex',flexDirection:'column',gap:3}}>
+              {sets.map((s,j)=>(<div key={j} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'var(--text2)'}}>
+                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                {mds.map(md=><span key={md.id} style={{fontWeight:600}}>{s.values[md.id]??'-'}{md.unit?' '+md.unit:''}</span>)}
+              </div>))}
+            </div></div>)})}</div></>}
+    </div></div></div>)}
+
+// ── Screens ──
+
+function DateStrip({workouts,planned,competitions,selectedDate,onSelectDate}){
+  const[calOpen,setCalOpen]=useState(false);
+  const today=dateKey(Date.now());
+  const selKey=dateKey(selectedDate.getTime());
+  const daysRef=useRef(null);
+
+  const days=useMemo(()=>{const arr=[];const start=new Date(selectedDate);start.setDate(start.getDate()-14);
+    for(let i=0;i<35;i++){const d=new Date(start);d.setDate(d.getDate()+i);arr.push(d)}return arr},[selKey]);
+
+  const wkDates=useMemo(()=>{const s=new Set();workouts.forEach(w=>s.add(dateKey(w.startTime)));return s},[workouts]);
+
+  useEffect(()=>{if(daysRef.current){const active=daysRef.current.querySelector('.date-strip-day.active');
+    if(active)active.scrollIntoView({inline:'center',behavior:'smooth'})}},[selKey]);
+
+  const monthLabel=selectedDate.toLocaleDateString('en-US',{month:'short',year:'2-digit'}).toUpperCase().replace(',','');
+  const dayLabels=['SU','MO','TU','WE','TH','FR','SA'];
+
+  return(<div className="date-strip">
+    <div className="date-strip-hdr">
+      <div className="date-strip-month" onClick={()=>setCalOpen(!calOpen)}>
+        {monthLabel} <span className={`chev ${calOpen?'open':''}`}>▾</span></div>
+      <button className="date-strip-today" onClick={()=>onSelectDate(new Date())}>Today</button></div>
+    <div className="date-strip-days" ref={daysRef}>
+      {days.map(d=>{const dk=dateKey(d.getTime());const isActive=dk===selKey;const hasWk=wkDates.has(dk);
+        return(<div key={dk} className={`date-strip-day ${isActive?'active':''}`}
+          onClick={()=>onSelectDate(d)}>
+          <div className="ds-label">{dayLabels[d.getDay()]}</div>
+          <div className="ds-num">{d.getDate()}</div>
+          {hasWk&&<div className="ds-dot"/>}
+        </div>)})}</div>
+    {calOpen&&<div className="cal-body"><MonthCalendar workouts={workouts} planned={planned} competitions={competitions}
+      onSelectDay={d=>{onSelectDate(new Date(d));setCalOpen(false)}}/></div>}
+  </div>)}
+
+function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView}){
+  const athlete=athletes.find(a=>a.id===activeAth);
+  const today=dateKey(Date.now());
+  const todayPlans=(planned||[]).filter(p=>p.date===today);
+  const weekCount=workouts.filter(w=>Date.now()-w.startTime<7*864e5).length;
+  const monthCount=workouts.filter(w=>Date.now()-w.startTime<30*864e5).length;
+  const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
+  const recent=[...workouts].reverse().slice(0,5);
+
+  return(<div className="screen pad">
+    <AthleteBar athletes={athletes} active={activeAth} onSelect={onSelectAth}/>
+    <div style={{padding:'4px 0 0'}}>
+      <div className="greeting">
+        <h1>{greeting()}, {athlete?.name?.split(' ')[0]}</h1>
+        <p>{fullDate()}</p>
+      </div>
+
+      {todayPlans.map(plan=>(<div key={plan.id} className="plan-hero" style={{'--c':plan.color}}>
+        <div style={{position:'absolute',top:0,left:0,bottom:0,width:5,background:plan.color}}/>
+        <div className="plan-hero-label">Today's Workout</div>
+        <div className="plan-hero-name">{plan.name}</div>
+        <div className="plan-hero-count">{plan.exerciseIds.length} exercises</div>
+        <div className="plan-hero-exercises">
+          {plan.exerciseIds.slice(0,5).map(eid=>{const ex=exercises.find(e=>e.id===eid);
+            return<div key={eid} className="plan-hero-ex">{ex?.name||'?'}</div>})}
+          {plan.exerciseIds.length>5&&<div style={{fontSize:12,color:'var(--text3)',paddingLeft:14}}>+{plan.exerciseIds.length-5} more</div>}
+        </div>
+        <button className="btn btn-primary" onClick={()=>onStartPlan(plan)}>Start Workout</button>
+      </div>))}
+
+      {todayPlans.length===0&&<button className="btn btn-primary" style={{marginBottom:16,fontSize:16,padding:'18px 24px'}} onClick={onStartEmpty}>
+        <Icon name="play" size={18}/> Start Workout</button>}
+
+      {todayPlans.length>0&&<><div className="or-divider">or</div>
+        <button className="btn btn-secondary" style={{marginBottom:16}} onClick={onStartEmpty}>Start Empty Workout</button></>}
+
+      {todayWorkouts.length>0&&<><div className="section-title">Today</div>
+        <div className="card-list">{todayWorkouts.map(wk=>
+          <WorkoutCard key={wk.id} wk={wk} onClick={()=>onView(wk)}/>)}</div></>}
+
+      <div className="week-stats">
+        <div className="week-stat"><div className="week-stat-val">{weekCount}</div><div className="week-stat-label">This Week</div></div>
+        <div className="week-stat"><div className="week-stat-val">{monthCount}</div><div className="week-stat-label">This Month</div></div>
+      </div>
+
+      {recent.length>0&&<><div className="section-title">Recent</div>
+        <div className="card-list">{recent.map(wk=>
+          <WorkoutCard key={wk.id} wk={wk} onClick={()=>onView(wk)}/>)}</div></>}
+
+      {!recent.length&&!todayPlans.length&&<div className="empty"><div className="empty-icon">💪</div>
+        <div className="empty-text">Your workout journey starts here</div></div>}
+    </div></div>)}
+
+function CalendarScreen({workouts,planned,exercises,competitions,onView}){
+  const[selDate,setSelDate]=useState(new Date());
+  const selKey=dateKey(selDate.getTime());
+  const dayWks=workouts.filter(w=>dateKey(w.startTime)===selKey);
+  const dayPlans=(planned||[]).filter(p=>p.date===selKey);
+  const selLabel=selDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  return(<div className="screen pad">
+    <div style={{padding:'4px 0 0'}}>
+      <MonthCalendar workouts={workouts} planned={planned} competitions={competitions}
+        onSelectDay={d=>setSelDate(new Date(d))}/>
+
+      <div className="section-title" style={{marginTop:16}}>{selLabel}</div>
+
+      {dayWks.length>0&&<div className="card-list">{dayWks.map(wk=>
+        <WorkoutCard key={wk.id} wk={wk} onClick={()=>onView(wk)}/>)}</div>}
+
+      {dayPlans.length>0&&dayPlans.map(p=>(<div key={p.id} style={{padding:'12px 16px',background:'var(--surface)',
+        borderRadius:'var(--radius)',marginBottom:8,borderLeft:`4px solid ${p.color||'var(--primary)'}`}}>
+        <div style={{fontWeight:800,fontSize:14}}>{p.name}</div>
+        <div style={{fontSize:12,color:'var(--text3)',marginTop:2}}>{p.exerciseIds.length} exercises planned</div></div>))}
+
+      {!dayWks.length&&!dayPlans.length&&<div style={{textAlign:'center',padding:'24px 0',color:'var(--text3)',fontSize:14}}>
+        No workouts</div>}
+    </div></div>)}
+
+function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,workouts,
+  onFinish,onCancel,initialPlan}){
+  const[activeAth,setActiveAth]=useState(athletes[0]?.id);
+  const[workout,setWorkout]=useState(()=>{const a={};athletes.forEach(at=>{a[at.id]={readiness:null,sets:{}}});
+    const w={id:uid(),name:initialPlan?.name||'',startTime:Date.now(),exerciseIds:[],athletes:a};
+    if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
+      Object.keys(a).forEach(aId=>{initialPlan.exerciseIds.forEach(eid=>{
+        const ex=initEx.find(e=>e.id===eid);if(ex){const prev=getPrevSets(eid,aId,workouts);
+          a[aId].sets[eid]=Array.from({length:3},(_,i)=>{const s={values:{},completed:false};
+            ex.metrics.forEach(mid=>{s.values[mid]=prev?.[i]?.values[mid]??''});return s})}})});
+    }return w});
+  const[showCheckin,setShowCheckin]=useState(true);const[checkedIn,setCheckedIn]=useState(new Set());
+  const[showPicker,setShowPicker]=useState(false);const[showEditor,setShowEditor]=useState(false);
+  const[replacingIdx,setReplacingIdx]=useState(null);const[showFinish,setShowFinish]=useState(false);
+  const[historyEx,setHistoryEx]=useState(null);
+  const[confirmCancel,setConfirmCancel]=useState(false);
+  const[localEx,setLocalEx]=useState(initEx);const[localCM,setLocalCM]=useState(initCM);
+  const[vzMap,setVzMap]=useState({});
+  const dragRef=useRef(null);const listRef=useRef(null);
+  const[restStarts,setRestStarts]=useState({});const[,tick]=useState(0);
+  useEffect(()=>{if(!Object.keys(restStarts).length)return;const iv=setInterval(()=>tick(t=>t+1),1000);return()=>clearInterval(iv)},[Object.keys(restStarts).length>0]);
+  const curRestStart=restStarts[activeAth];const curRestElapsed=curRestStart?Math.floor((Date.now()-curRestStart)/1000):0;
+  const startRest=()=>setRestStarts(p=>({...p,[activeAth]:Date.now()}));
+  const stopRest=()=>setRestStarts(p=>{const n={...p};delete n[activeAth];return n});
+  const elapsed=useElapsed(workout.startTime);const curAth=athletes.find(a=>a.id===activeAth);
+  const needsCheckin=!checkedIn.has(activeAth);
+  useEffect(()=>{if(needsCheckin)setShowCheckin(true)},[activeAth]);
+  useEffect(()=>{const a=athletes.find(a=>a.id===activeAth);applyTheme(a?.color||'#3b82f6')},[activeAth]);
+
+  const makeEmpty=(ex,aId)=>{const prev=getPrevSets(ex.id,aId,workouts);
+    return Array.from({length:3},(_,i)=>{const s={values:{},completed:false};
+      ex.metrics.forEach(mid=>{s.values[mid]=prev?.[i]?.values[mid]??''});return s})};
+  const addEx=ex=>{setWorkout(w=>{const ids=[...w.exerciseIds,ex.id];const na={};
+    Object.keys(w.athletes).forEach(aId=>{na[aId]={...w.athletes[aId],sets:{...w.athletes[aId].sets,[ex.id]:makeEmpty(ex,aId)}}});
+    return{...w,exerciseIds:ids,athletes:na}});setShowPicker(false)};
+  const replaceEx=newEx=>{if(replacingIdx==null)return;setWorkout(w=>{const oldId=w.exerciseIds[replacingIdx];
+    const ids=[...w.exerciseIds];ids[replacingIdx]=newEx.id;const na={};
+    Object.keys(w.athletes).forEach(aId=>{const ns={...w.athletes[aId].sets};delete ns[oldId];
+      ns[newEx.id]=makeEmpty(newEx,aId);na[aId]={...w.athletes[aId],sets:ns}});
+    return{...w,exerciseIds:ids,athletes:na}});setReplacingIdx(null);setShowPicker(false)};
+  const delEx=idx=>{setWorkout(w=>{const eid=w.exerciseIds[idx];const ids=w.exerciseIds.filter((_,i)=>i!==idx);
+    const na={};Object.keys(w.athletes).forEach(aId=>{const ns={...w.athletes[aId].sets};delete ns[eid];
+      na[aId]={...w.athletes[aId],sets:ns}});return{...w,exerciseIds:ids,athletes:na}})};
+  const moveEx=(idx,dir)=>{setWorkout(w=>{const ids=[...w.exerciseIds];[ids[idx],ids[idx+dir]]=[ids[idx+dir],ids[idx]];return{...w,exerciseIds:ids}})};
+  const updateSet=(exId,si,mid,val)=>{setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
+    sets:{...w.athletes[activeAth].sets,[exId]:w.athletes[activeAth].sets[exId].map((s,i)=>i===si?{...s,values:{...s.values,[mid]:val}}:s)}}}}))};
+  const toggleSet=(exId,si)=>{setWorkout(w=>{const s=w.athletes[activeAth].sets[exId][si];const was=s.completed;
+    if(!was&&Object.values(s.values).every(v=>v===''||v==null))return w;if(!was)startRest();
+    return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
+      sets:{...w.athletes[activeAth].sets,[exId]:w.athletes[activeAth].sets[exId].map((s,i)=>i===si?{...s,completed:!s.completed}:s)}}}}})};
+  const deleteSet=(exId,si)=>{setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
+    sets:{...w.athletes[activeAth].sets,[exId]:w.athletes[activeAth].sets[exId].filter((_,i)=>i!==si)}}}}))};
+  const addSet=exId=>{setWorkout(w=>{const sets=w.athletes[activeAth].sets[exId];const last=sets[sets.length-1];
+    const ex=localEx.find(e=>e.id===exId);const ns={values:{},completed:false};
+    ex.metrics.forEach(mid=>{ns.values[mid]=last?.values[mid]??''});
+    return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],sets:{...w.athletes[activeAth].sets,[exId]:[...sets,ns]}}}}})};
+  const changeMetrics=(exId,newMetrics,newCustom)=>{
+    if(newCustom)setLocalCM(p=>[...p,newCustom]);
+    setLocalEx(p=>p.map(ex=>ex.id===exId?{...ex,metrics:newMetrics}:ex));
+    setWorkout(w=>{const na={...w.athletes};Object.keys(na).forEach(aId=>{if(na[aId].sets[exId]){
+      na[aId]={...na[aId],sets:{...na[aId].sets,[exId]:na[aId].sets[exId].map(s=>{
+        const nv={};newMetrics.forEach(mid=>{nv[mid]=s.values[mid]??''});return{...s,values:nv}})}}}});
+      return{...w,athletes:na}})};
+  const handleFinishSave=({name,weather,tag,athData,customDuration})=>{
+    const endTime=customDuration!=null?workout.startTime+customDuration:Date.now();
+    const fin={...workout,name:name||workout.name,endTime,weather,tag,color:tag?.color||'var(--primary)'};
+    const cleanA={};Object.entries(fin.athletes).forEach(([aId,ad])=>{const cs={};
+      Object.entries(ad.sets).forEach(([eid,sets])=>{const done=sets.filter(s=>s.completed);if(done.length>0)cs[eid]=done});
+      if(Object.keys(cs).length>0||ad.readiness)cleanA[aId]={...ad,sets:cs,rpe:athData[aId]?.rpe||null,notes:athData[aId]?.notes||''}});
+    fin.athletes=cleanA;fin.exerciseIds=fin.exerciseIds.filter(eid=>Object.values(cleanA).some(a=>a.sets[eid]?.length>0));
+    onFinish(fin,localEx,localCM)};
+  const athSets=workout.athletes[activeAth]?.sets||{};
+
+  if(showFinish)return<WorkoutFinishForm workout={workout} athletes={athletes} exercises={localEx} cm={localCM} elapsed={elapsed}
+    onSave={handleFinishSave} onCancel={()=>setShowFinish(false)}/>;
+
+  return(<><div className="hdr"><button className="hdr-btn" onClick={()=>setConfirmCancel(true)}><Icon name="x" size={20}/></button>
+    <span className="hdr-title">Workout</span><span className="hdr-time">{fmtTime(Math.floor(elapsed/1000))}</span></div>
+    <AthleteBar athletes={athletes} active={activeAth} onSelect={setActiveAth}/>
+    <div className="screen pad" ref={listRef} style={{paddingBottom:curRestStart?'calc(var(--nav-h) + 80px)':undefined}}>
+      {workout.exerciseIds.map((eid,idx)=>{const ex=localEx.find(e=>e.id===eid);
+        const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
+        return<ExerciseAccordion key={eid} exId={eid} exercise={ex} sets={athSets[eid]||[]}
+          prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
+          velocityZone={vzMap[eid]||null} onSetVZ={vz=>setVzMap(p=>({...p,[eid]:vz}))}
+          onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
+          onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
+          onReplace={()=>{setReplacingIdx(idx);setShowPicker(true)}} onDelete={()=>delEx(idx)}
+          onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===eid))}
+          onChangeMetrics={changeMetrics}
+          onGripTouch={e=>{
+            const touch=e.touches?e.touches[0]:e;if(!touch)return;
+            const accEl=e.target.closest('.acc');if(!accEl)return;
+            const rect=accEl.getBoundingClientRect();
+            const ghost=accEl.cloneNode(true);
+            ghost.style.cssText=`position:fixed;left:${rect.left}px;width:${rect.width}px;top:${rect.top}px;z-index:100;opacity:.85;box-shadow:0 12px 40px rgba(0,0,0,.25);pointer-events:none;border-radius:16px;transform:scale(1.03);transition:box-shadow .2s`;
+            document.body.appendChild(ghost);
+            accEl.style.opacity='0.25';accEl.style.transition='opacity .15s';
+            const offsetY=touch.clientY-rect.top;
+            const d={idx,el:accEl,ghost,offsetY,startY:touch.clientY,overIdx:idx};
+            dragRef.current=d;
+            const cards=()=>listRef.current?[...listRef.current.querySelectorAll('.acc')]:[];
+            const calcOver=(cy)=>{const cs=cards();let best=idx;let minDist=Infinity;
+              cs.forEach((c,i)=>{if(c===accEl){c.style.opacity='0.25';return}
+                const r=c.getBoundingClientRect();const mid=r.top+r.height/2;const dist=Math.abs(cy-mid);
+                if(dist<minDist){minDist=dist;best=i}});return best};
+            const onMove=ev=>{ev.preventDefault();const t=ev.touches?ev.touches[0]:ev;
+              const y=t.clientY-offsetY;ghost.style.top=y+'px';
+              const newOver=calcOver(t.clientY);
+              cards().forEach((c,i)=>{if(c===accEl)return;
+                if(d.idx<newOver&&i>d.idx&&i<=newOver)c.style.transform='translateY(-'+rect.height+'px)';
+                else if(d.idx>newOver&&i>=newOver&&i<d.idx)c.style.transform='translateY('+rect.height+'px)';
+                else c.style.transform='';c.style.transition='transform .2s ease'});
+              d.overIdx=newOver};
+            const onEnd=()=>{document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',onEnd);
+              document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onEnd);
+              ghost.remove();accEl.style.opacity='';accEl.style.transition='';
+              cards().forEach(c=>{c.style.transform='';c.style.transition=''});
+              if(d.idx!==d.overIdx)setWorkout(w=>{const ids=[...w.exerciseIds];
+                const[item]=ids.splice(d.idx,1);ids.splice(d.overIdx,0,item);return{...w,exerciseIds:ids}});
+              dragRef.current=null};
+            document.addEventListener('touchmove',onMove,{passive:false});document.addEventListener('touchend',onEnd);
+            document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onEnd)}}/>})}
+      <button className="btn btn-secondary" style={{marginBottom:12}} onClick={()=>{setReplacingIdx(null);setShowPicker(true)}}>
+        <Icon name="plus" size={16}/> Add Exercise</button>
+      {workout.exerciseIds.length>0&&<button className="btn btn-primary" onClick={()=>{
+        const any=Object.values(workout.athletes).some(a=>Object.values(a.sets).some(sets=>sets.some(s=>s.completed)));
+        if(any)setShowFinish(true);else setConfirmCancel(true)}}>Finish Workout</button>}</div>
+    {showCheckin&&needsCheckin&&<ReadinessCheckIn athleteName={curAth?.name}
+      onSubmit={r=>{setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],readiness:r}}}));
+        setCheckedIn(p=>new Set(p).add(activeAth));setShowCheckin(false)}}
+      onSkip={()=>{setCheckedIn(p=>new Set(p).add(activeAth));setShowCheckin(false)}}/>}
+    {showPicker&&<ExercisePicker exercises={localEx} cm={localCM}
+      onSelect={replacingIdx!=null?replaceEx:addEx}
+      onClose={()=>{setShowPicker(false);setReplacingIdx(null)}}
+      onCreateNew={()=>{setShowPicker(false);setShowEditor(true)}}/>}
+    {showEditor&&<ExerciseEditor exercise={null} cm={localCM}
+      onSave={ex=>{setLocalEx(p=>[...p,ex]);setShowEditor(false);if(replacingIdx!=null)replaceEx(ex);else addEx(ex)}}
+      onClose={()=>{setShowEditor(false);setReplacingIdx(null)}} onAddMetric={m=>setLocalCM(p=>[...p,m])}/>}
+    {curRestStart&&<RestTimerBar timer={{active:true,elapsed:curRestElapsed}} onStop={stopRest}/>}
+    {historyEx&&(()=>{const hw=historyEx.metrics.includes('weight'),ht=historyEx.metrics.includes('time')||historyEx.metrics.includes('tf-time'),
+      hd=historyEx.metrics.includes('tf-dist')||historyEx.metrics.includes('distance'),hh=historyEx.metrics.includes('height');
+      let bestVal=null,bestDate=null,bestLabel='',bestUnit='';
+      workouts.forEach(w=>{(w.athletes?.[activeAth]?.sets?.[historyEx.id]||[]).filter(s=>s.completed).forEach(s=>{
+        if(hw){const v=s.values.weight||0;if(v>=(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel='Best Weight';bestUnit='kg'}}
+        else if(ht){const mid=historyEx.metrics.includes('tf-time')?'tf-time':'time';const v=s.values[mid]||0;
+          if(v>0&&(!bestVal||v<bestVal)){bestVal=v;bestDate=w.startTime;bestLabel='Best Time';bestUnit='s'}}
+        else if(hd||hh){const mid=hh?'height':(historyEx.metrics.includes('tf-dist')?'tf-dist':'distance');const v=s.values[mid]||0;
+          if(v>(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel=hh?'Best Height':'Best Distance';bestUnit='m'}}})});
+      return<div className="overlay" onClick={e=>e.target===e.currentTarget&&setHistoryEx(null)}><div className="modal">
+      <div className="modal-hdr"><span className="modal-title">{historyEx.name}</span>
+        <button className="hdr-btn" onClick={()=>setHistoryEx(null)}><Icon name="x" size={20}/></button></div>
+      <div className="modal-body">
+        {bestVal&&<div style={{display:'flex',alignItems:'center',gap:14,padding:16,background:'var(--primary-dim)',
+          borderRadius:'var(--radius)',marginBottom:16}}>
+          <div style={{fontSize:28,fontWeight:900,color:'var(--primary)'}}>{bestVal} {bestUnit}</div>
+          <div><div style={{fontSize:12,fontWeight:800,color:'var(--primary)',textTransform:'uppercase',letterSpacing:'.5px'}}>{bestLabel}</div>
+            <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{new Date(bestDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div></div></div>}
+        <div className="section-title">Sessions</div>
+        {workouts.filter(w=>w.athletes?.[activeAth]?.sets?.[historyEx.id]?.some(s=>s.completed)).reverse().slice(0,10).map(w=>{
+          const sets=w.athletes[activeAth].sets[historyEx.id].filter(s=>s.completed);
+          return<div key={w.id} style={{marginBottom:16}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>{w.name||'Workout'} <span style={{color:'var(--text3)',fontWeight:500}}>
+              {new Date(w.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>
+            {sets.map((s,j)=><div key={j} style={{display:'flex',gap:10,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
+              <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
+              {historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
+                return<span key={mid}>{s.values[mid]??'-'}{md.unit?` ${md.unit}`:''}</span>})}</div>)}</div>})}
+        {!workouts.some(w=>w.athletes?.[activeAth]?.sets?.[historyEx.id]?.some(s=>s.completed))&&
+          <div style={{textAlign:'center',color:'var(--text3)',padding:20}}>No history yet</div>}
+      </div></div></div>})()}
+    {confirmCancel&&<ConfirmDialog title="Discard Workout?" message="All progress will be lost."
+      confirmText="Discard" danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}</>)}
+
+function ProgressScreen({workouts,planned,athletes,activeAth,exercises,cm,competitions,onView,onPlan,onDeletePlan,onViewExercise}){
+  const[selectedDay,setSelectedDay]=useState(null);
+  const dayWk=selectedDay?workouts.filter(w=>dateKey(w.startTime)===selectedDay):[];
+  const dayPl=selectedDay?(planned||[]).filter(p=>p.date===selectedDay):[];
+  const usedExIds=[...new Set(workouts.flatMap(w=>(w.athletes?.[activeAth]?Object.keys(w.athletes[activeAth].sets||{}):[])
+    .filter(eid=>(w.athletes[activeAth].sets[eid]||[]).some(s=>s.completed))))];
+  const topExercises=usedExIds.slice(0,6).map(eid=>exercises.find(e=>e.id===eid)).filter(Boolean);
+
+  return(<div className="screen pad">
+    <h2 style={{fontSize:24,fontWeight:900,letterSpacing:'-.5px',marginBottom:16}}>Progress</h2>
+    <div className="card" style={{padding:16,marginBottom:20}}><MonthCalendar workouts={workouts} planned={planned} competitions={competitions} onSelectDay={setSelectedDay}/></div>
+    {selectedDay&&<div style={{marginBottom:20}}>
+      <div className="section-title">{new Date(selectedDay+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</div>
+      <div className="card-list">{dayWk.map(wk=>
+        <WorkoutCard key={wk.id} wk={wk} onClick={()=>onView(wk)}/>)}</div>
+      {dayPl.map(pl=>(<div key={pl.id} className="recent-card">
+        <div className="recent-dot" style={{background:pl.color}}/><div className="recent-info">
+          <div className="recent-name">{pl.name}</div><div className="recent-meta">Planned</div></div>
+        <button className="hdr-btn" style={{color:'var(--danger)',width:32,height:32}} onClick={()=>onDeletePlan(pl.id)}><Icon name="trash" size={14}/></button></div>))}
+      {!dayWk.length&&!dayPl.length&&<div style={{textAlign:'center',color:'var(--text3)',fontSize:13,padding:12}}>No workouts</div>}
+      <button className="btn btn-secondary btn-sm" style={{marginTop:8}} onClick={()=>onPlan(selectedDay)}>
+        <Icon name="plus" size={14}/> Plan Workout</button></div>}
+    {topExercises.length>0&&<><div className="section-title">Your Exercises</div>
+      <div className="card-list">{topExercises.map(ex=>{const prs=computePRs(ex.id,activeAth,workouts,ex);const best=prs.maxWeight?`${prs.maxWeight} kg`:prs.maxReps?`${prs.maxReps} reps`:'';
+        const cc=catColor(ex.category);
+        return(<button key={ex.id} className="ex-card" onClick={()=>onViewExercise(ex)}>
+          <div className="ex-card-icon" style={{background:cc,color:'#fff'}}><Icon name="dumbbell" size={18}/></div>
+          <div className="ex-card-info">
+            <div className="ex-card-name">{ex.name}</div>
+            <div className="ex-card-meta"><span style={{color:cc,fontWeight:700}}>{ex.category}</span>{best&&<><span>·</span><span>PR: {best}</span></>}</div>
+          </div>
+          <div style={{color:'var(--text3)'}}><Icon name="chevRight" size={16}/></div></button>)})}</div></>}
+  </div>)}
+
+function ProfileScreen({athletes,activeAth,onSelectAth,exercises,cm,workouts,onUpdateAthletes,
+  onUpdateExercises,onUpdateCM,competitions,onUpdateCompetitions}){
+  const[view,setView]=useState('main');const[editAth,setEditAth]=useState(null);const[athName,setAthName]=useState('');
+  const[athColor,setAthColor]=useState('');const[athPhoto,setAthPhoto]=useState('');const[showEditor,setShowEditor]=useState(false);const[editing,setEditing]=useState(null);
+  const[search,setSearch]=useState('');const[cat,setCat]=useState('All');
+  const[editComp,setEditComp]=useState(null);const[showCompModal,setShowCompModal]=useState(false);
+  const ath=athletes.find(a=>a.id===activeAth);
+  const totalWk=workouts.filter(w=>w.athletes?.[activeAth]).length;
+  const monthWk=workouts.filter(w=>w.athletes?.[activeAth]&&Date.now()-w.startTime<30*864e5).length;
+
+  if(view==='exercises'){
+    const filtered=exercises.filter(ex=>(cat==='All'||ex.category===cat)&&(!search||ex.name.toLowerCase().includes(search.toLowerCase())));
+    return(<div className="screen pad">
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+        <button className="hdr-btn" onClick={()=>setView('main')}><Icon name="chevLeft" size={20}/></button>
+        <h2 style={{fontSize:22,fontWeight:900,flex:1}}>Exercises</h2>
+        <button className="hdr-btn primary" onClick={()=>{setEditing(null);setShowEditor(true)}}><Icon name="plus" size={20}/></button></div>
+      <div className="search-bar"><span className="search-icon"><Icon name="search" size={16}/></span>
+        <input className="input" placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+      <div className="cat-chips" style={{marginBottom:12}}>{CATEGORIES.map(c=><button key={c} className={`chip ${cat===c?'active':''}`} onClick={()=>setCat(c)}>{c}</button>)}</div>
+      <div className="card-list">{filtered.map(ex=>{const cc=catColor(ex.category);
+        return(<button key={ex.id} className="ex-card" onClick={()=>{setEditing(ex);setShowEditor(true)}}>
+          <div className="ex-card-icon" style={{background:cc,color:'#fff'}}><Icon name="dumbbell" size={18}/></div>
+          <div className="ex-card-info">
+            <div className="ex-card-name">{ex.name}</div>
+            <div className="ex-card-meta"><span style={{color:cc}}>{ex.category}</span>{ex.isCustom&&<><span>·</span><span>Custom</span></>}</div></div>
+          {ex.isCustom?<button style={{color:'var(--danger)',padding:4,flexShrink:0}}
+            onClick={e=>{e.stopPropagation();onUpdateExercises(exercises.filter(e2=>e2.id!==ex.id))}}><Icon name="trash" size={14}/></button>
+            :<div style={{color:'var(--text3)',flexShrink:0}}><Icon name="chevRight" size={16}/></div>}
+        </button>)})}</div>
+      {showEditor&&<ExerciseEditor exercise={editing} cm={cm}
+        onSave={ex=>{const i=exercises.findIndex(e=>e.id===ex.id);
+          onUpdateExercises(i>=0?exercises.map((e,j)=>j===i?ex:e):[...exercises,ex]);setShowEditor(false)}}
+        onClose={()=>setShowEditor(false)} onAddMetric={m=>onUpdateCM([...cm,m])}/>}
+    </div>)}
+
+  if(view==='competitions'){
+    const sorted=[...(competitions||[])].sort((a,b)=>a.date.localeCompare(b.date));
+    const upcoming=sorted.filter(c=>c.date>=dateKey(new Date()));const past=sorted.filter(c=>c.date<dateKey(new Date())).reverse();
+    const saveComp=comp=>{const i=(competitions||[]).findIndex(c=>c.id===comp.id);
+      onUpdateCompetitions(i>=0?competitions.map((c,j)=>j===i?comp:c):[...competitions,comp]);setShowCompModal(false);setEditComp(null)};
+    const delComp=id=>{onUpdateCompetitions(competitions.filter(c=>c.id!==id));setShowCompModal(false);setEditComp(null)};
+    return(<div className="screen pad">
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+        <button className="hdr-btn" onClick={()=>setView('main')}><Icon name="chevLeft" size={20}/></button>
+        <h2 style={{fontSize:22,fontWeight:900,flex:1}}>Competitions</h2>
+        <button className="hdr-btn primary" onClick={()=>{setEditComp(null);setShowCompModal(true)}}><Icon name="plus" size={20}/></button></div>
+      {upcoming.length>0&&<><div className="section-title">Upcoming</div>
+        <div className="card-list">{upcoming.map(c=>{const diff=Math.ceil((new Date(c.date+'T12:00:00')-new Date())/864e5);
+          return<button key={c.id} className="comp-upcoming" onClick={()=>{setEditComp(c);setShowCompModal(true)}}>
+            <div className="comp-icon" style={{background:'rgba(245,158,11,.1)',color:'#f59e0b'}}><Icon name="trophy" size={20}/></div>
+            <div className="comp-info"><div className="comp-title">{c.name}</div>
+              <div className="comp-sub">{fmtDisc(c.discipline)?fmtDisc(c.discipline)+' · ':''}{c.location?c.location+' · ':''}{new Date(c.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div>
+            <div className="comp-days" style={{background:'rgba(245,158,11,.1)',color:'#f59e0b'}}>{diff<=0?'Today':`${diff}d`}</div></button>})}</div></>}
+      {past.length>0&&<><div className="section-title" style={{marginTop:16}}>Past</div>
+        <div className="card-list">{past.map(c=><button key={c.id} className="comp-upcoming" onClick={()=>{setEditComp(c);setShowCompModal(true)}}>
+          <div className="comp-icon" style={{background:'var(--border-light)',color:'var(--text3)'}}><Icon name="trophy" size={20}/></div>
+          <div className="comp-info"><div className="comp-title">{c.name}</div>
+            <div className="comp-sub">{fmtDisc(c.discipline)?fmtDisc(c.discipline)+' · ':''}
+              {c.results&&Object.entries(c.results).filter(([,v])=>v).map(([d,v])=>`${d}: ${v}`).join(', ')+(Object.values(c.results||{}).some(Boolean)?' · ':'')
+              ||(c.result?c.result+' · ':'')}{c.location?c.location+' · ':''}{new Date(c.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div></button>)}</div></>}
+      {!upcoming.length&&!past.length&&<div className="empty"><div className="empty-icon">🏟️</div>
+        <div className="empty-text">No competitions yet</div>
+        <button className="btn btn-primary btn-sm" onClick={()=>{setEditComp(null);setShowCompModal(true)}}>Add Competition</button></div>}
+      {showCompModal&&<CompetitionModal competition={editComp} onSave={saveComp} onDelete={delComp}
+        onClose={()=>{setShowCompModal(false);setEditComp(null)}}/>}
+    </div>)}
+
+  if(view==='athletes'){
+    const startEdit=a=>{setEditAth(a);setAthName(a?.name||'');setAthColor(a?.color||ATHLETE_COLORS[0]);setAthPhoto(a?.photo||'')};
+    const saveAth=()=>{if(!athName.trim())return;
+      if(editAth?.id)onUpdateAthletes(athletes.map(a=>a.id===editAth.id?{...a,name:athName.trim(),color:athColor,photo:athPhoto||null}:a));
+      else onUpdateAthletes([...athletes,{id:'ath-'+uid(),name:athName.trim(),color:athColor,photo:athPhoto||null}]);setEditAth(null)};
+    const handlePhotoFile=file=>{if(!file)return;const reader=new FileReader();
+      reader.onload=ev=>{const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');
+        const sz=160;canvas.width=sz;canvas.height=sz;const ctx=canvas.getContext('2d');
+        const sc=Math.max(sz/img.width,sz/img.height);const w=img.width*sc,h=img.height*sc;
+        ctx.drawImage(img,(sz-w)/2,(sz-h)/2,w,h);setAthPhoto(canvas.toDataURL('image/jpeg',0.75))};
+        img.src=ev.target.result};reader.readAsDataURL(file)};
+    return(<div className="screen pad">
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+        <button className="hdr-btn" onClick={()=>setView('main')}><Icon name="chevLeft" size={20}/></button>
+        <h2 style={{fontSize:22,fontWeight:900}}>Athletes</h2></div>
+      <div className="card-list">{athletes.map(a=>(<div key={a.id} className="menu-item">
+        <div className="menu-item-left">
+          {a.photo?<img src={a.photo} style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',flexShrink:0}} alt={a.name}/>
+            :<div style={{width:40,height:40,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:14,fontWeight:800,background:a.color+'18',color:a.color,flexShrink:0}}>{initials(a.name)}</div>}
+          <div><div className="menu-item-label">{a.name}</div></div></div>
+        <div style={{display:'flex',gap:4}}>
+          <button className="hdr-btn" style={{width:32,height:32}} onClick={()=>startEdit(a)}><Icon name="edit" size={14}/></button>
+          {athletes.length>1&&<button className="hdr-btn" style={{color:'var(--danger)',width:32,height:32}}
+            onClick={()=>onUpdateAthletes(athletes.filter(at=>at.id!==a.id))}><Icon name="trash" size={14}/></button>}</div></div>))}</div>
+      <button className="btn btn-secondary btn-sm" style={{marginTop:12}} onClick={()=>startEdit({})}>
+        <Icon name="plus" size={14}/> Add Athlete</button>
+      {editAth&&<div className="overlay" onClick={e=>e.target===e.currentTarget&&setEditAth(null)}><div className="modal" style={{borderRadius:'var(--radius)'}}>
+        <div className="modal-hdr"><span className="modal-title">{editAth.id?'Edit':'New'} Athlete</span>
+          <button className="hdr-btn" onClick={()=>setEditAth(null)}><Icon name="x" size={20}/></button></div>
+        <div className="modal-body">
+          <div className="form-group"><label className="form-label">Photo</label>
+            <div style={{display:'flex',alignItems:'center',gap:14}}>
+              {athPhoto?<img src={athPhoto} style={{width:60,height:60,borderRadius:'50%',objectFit:'cover'}} alt=""/>
+                :<div style={{width:60,height:60,borderRadius:'50%',background:athColor+'22',color:athColor,display:'flex',
+                  alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:20}}>{initials(athName||'?')}</div>}
+              <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                <label style={{padding:'8px 16px',borderRadius:10,fontSize:13,fontWeight:700,background:'var(--primary-dim)',
+                  color:'var(--primary)',cursor:'pointer',display:'inline-block',textAlign:'center'}}>
+                  Choose Photo<input type="file" accept="image/*" style={{display:'none'}}
+                    onChange={e=>handlePhotoFile(e.target.files[0])}/></label>
+                {athPhoto&&<button style={{fontSize:12,color:'var(--danger)',fontWeight:600,background:'none',border:'none',cursor:'pointer'}}
+                  onClick={()=>setAthPhoto('')}>Remove</button>}</div></div></div>
+          <div className="form-group"><label className="form-label">Name</label>
+            <input className="input" placeholder="Name" value={athName} onChange={e=>setAthName(e.target.value)}/></div>
+          <div className="form-group"><label className="form-label">Color</label>
+            <div className="color-dots">{ATHLETE_COLORS.map(c=><button key={c} className={`color-dot ${athColor===c?'active':''}`}
+              style={{background:c}} onClick={()=>setAthColor(c)}/>)}</div></div>
+          <button className="btn btn-primary" onClick={saveAth} disabled={!athName.trim()}>Save</button></div></div></div>}
+    </div>)}
+
+  return(<div className="screen pad">
+    <div className="profile-hero">
+      {ath?.photo?<img className="profile-photo" src={ath.photo} alt={ath.name}/>
+        :<div className="profile-avatar" style={{background:ath?.color||'#10b981',color:'#fff'}}>
+        {initials(ath?.name||'?')}</div>}
+      <div className="profile-name">{ath?.name}</div>
+      <div className="profile-stats">{totalWk} workouts · {monthWk} this month</div>
+    </div>
+    <AthleteBar athletes={athletes} active={activeAth} onSelect={onSelectAth}/>
+    <div style={{padding:'8px 0 0'}}>
+      <div className="card-list">
+        <button className="menu-item" onClick={()=>setView('exercises')}>
+          <div className="menu-item-left">
+            <div className="menu-item-icon" style={{background:'#10b981',color:'#fff'}}><Icon name="dumbbell" size={20}/></div>
+            <div><div className="menu-item-label">Exercises</div><div className="menu-item-sub">{exercises.length} exercises</div></div></div>
+          <div className="menu-item-right"><Icon name="chevRight" size={16}/></div></button>
+        <button className="menu-item" onClick={()=>setView('athletes')}>
+          <div className="menu-item-left">
+            <div className="menu-item-icon" style={{background:'#3b82f6',color:'#fff'}}><Icon name="user" size={20}/></div>
+            <div><div className="menu-item-label">Athletes</div><div className="menu-item-sub">{athletes.length} athletes</div></div></div>
+          <div className="menu-item-right"><Icon name="chevRight" size={16}/></div></button>
+        <button className="menu-item" onClick={()=>setView('competitions')}>
+          <div className="menu-item-left">
+            <div className="menu-item-icon" style={{background:'#f59e0b',color:'#fff'}}><Icon name="trophy" size={20}/></div>
+            <div><div className="menu-item-label">Competitions</div><div className="menu-item-sub">{(competitions||[]).length} {(competitions||[]).length===1?'event':'events'}</div></div></div>
+          <div className="menu-item-right"><Icon name="chevRight" size={16}/></div></button>
+      </div>
+    </div></div>)}
+
+function CompetitionModal({competition,onSave,onDelete,onClose}){
+  const[name,setName]=useState(competition?.name||'');const[date,setDate]=useState(competition?.date||dateKey(Date.now()));
+  const[location,setLoc]=useState(competition?.location||'');const[notes,setNotes]=useState(competition?.notes||'');
+  const[isPeak,setIsPeak]=useState(competition?.isPeak||false);
+  const[disciplines,setDisciplines]=useState(()=>{const d=competition?.discipline;if(!d)return[];if(Array.isArray(d))return d;return d?[d]:[]});
+  const toggleDisc=d=>setDisciplines(p=>p.includes(d)?p.filter(x=>x!==d):[...p,d]);
+  const[results,setResults]=useState(()=>{const r=competition?.results;if(r&&typeof r==='object')return r;
+    if(competition?.result&&competition?.discipline){const d=competition.discipline;
+      if(typeof d==='string')return{[d]:competition.result};if(Array.isArray(d)&&d.length===1)return{[d[0]]:competition.result}}return{}});
+  const setDiscResult=(d,v)=>setResults(p=>({...p,[d]:v}));
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
+    <div className="modal-hdr"><span className="modal-title">{competition?'Edit':'New'} Competition</span>
+      <button className="hdr-btn" onClick={onClose}><Icon name="x" size={20}/></button></div>
+    <div className="modal-body">
+      <div className="form-group"><label className="form-label">Name</label>
+        <input className="input" placeholder="e.g. National Championships" value={name} onChange={e=>setName(e.target.value)}/></div>
+      <div className="form-group"><label className="form-label">Date</label>
+        <input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
+      <div className="form-group"><label className="form-label">Location</label>
+        <input className="input" placeholder="City, Venue" value={location} onChange={e=>setLoc(e.target.value)}/></div>
+      <div className="form-group"><label className="form-label">Disciplines</label>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+          {COMP_DISCIPLINES.map(d=><button key={d} onClick={()=>toggleDisc(d)}
+            style={{padding:'8px 14px',borderRadius:20,fontSize:13,fontWeight:700,cursor:'pointer',
+              background:disciplines.includes(d)?'#f59e0b':'var(--border-light)',
+              color:disciplines.includes(d)?'#fff':'var(--text2)',border:'none',transition:'all .2s'}}>{d}</button>)}</div></div>
+      {disciplines.length>0&&<div className="form-group"><label className="form-label">Results</label>
+        {disciplines.map(d=><div key={d} style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+          <span style={{fontSize:13,fontWeight:700,color:'#f59e0b',minWidth:80}}>{d}</span>
+          <input className="input" placeholder={d.includes('Jump')||d.includes('Triple')?'e.g. 6.85m':'e.g. 11.2s'}
+            value={results[d]||''} onChange={e=>setDiscResult(d,e.target.value)}
+            style={{flex:1,padding:'10px 14px',fontSize:14}}/></div>)}</div>}
+      <div className="form-group">
+        <button style={{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',background:isPeak?'rgba(245,158,11,.1)':'var(--border-light)',
+          borderRadius:'var(--radius-sm)',border:isPeak?'2px solid #f59e0b':'2px solid transparent',width:'100%',fontWeight:700,fontSize:14,
+          color:isPeak?'#f59e0b':'var(--text2)'}} onClick={()=>setIsPeak(!isPeak)}>
+          ⭐ Peak Competition{isPeak&&<span style={{marginLeft:'auto',fontSize:11}}>✓</span>}</button></div>
+      <div className="form-group"><label className="form-label">Notes</label>
+        <textarea className="input" placeholder="Events, goals..." value={notes} onChange={e=>setNotes(e.target.value)}/></div>
+      <button className="btn btn-primary" disabled={!name.trim()||!date} onClick={()=>onSave({
+        id:competition?.id||'comp-'+uid(),name:name.trim(),date,location:location.trim(),notes:notes.trim(),isPeak,
+        discipline:disciplines,results,result:Object.values(results).filter(Boolean).join(', ')})}>Save</button>
+      {competition&&<button className="btn btn-danger" style={{marginTop:8}} onClick={()=>onDelete(competition.id)}>Delete</button>}
+    </div></div></div>)}
+
+function PlanWorkoutModal({date,exercises,onSave,onClose}){
+  const[name,setName]=useState('');const[color,setColor]=useState(WORKOUT_COLORS[0]);
+  const[selEx,setSelEx]=useState([]);const[showPicker,setShowPicker]=useState(false);
+  return(<><div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
+    <div className="modal-hdr"><span className="modal-title">Plan Workout</span>
+      <button className="hdr-btn" onClick={onClose}><Icon name="x" size={20}/></button></div>
+    <div className="modal-body">
+      <div style={{fontSize:13,color:'var(--text2)',marginBottom:14,fontWeight:500}}>
+        {new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
+      <div className="form-group"><label className="form-label">Name</label>
+        <input className="input" placeholder="e.g. Push Day" value={name} onChange={e=>setName(e.target.value)}/></div>
+      <div className="form-group"><label className="form-label">Color</label>
+        <div className="color-dots">{WORKOUT_COLORS.map(c=><button key={c} className={`color-dot ${color===c?'active':''}`}
+          style={{background:c}} onClick={()=>setColor(c)}/>)}</div></div>
+      <div className="form-group"><label className="form-label">Exercises ({selEx.length})</label>
+        {selEx.map((eid,i)=>{const ex=exercises.find(e=>e.id===eid);
+          return<div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--border-light)'}}>
+            <span style={{fontWeight:600}}>{ex?.name||'?'}</span>
+            <button className="hdr-btn" style={{width:28,height:28,color:'var(--danger)'}}
+              onClick={()=>setSelEx(p=>p.filter((_,j)=>j!==i))}><Icon name="x" size={14}/></button></div>})}
+        <button className="btn btn-secondary btn-sm" style={{marginTop:8}} onClick={()=>setShowPicker(true)}>
+          <Icon name="plus" size={14}/> Add Exercise</button></div>
+      <button className="btn btn-primary" onClick={()=>{if(!name.trim())return;
+        onSave({id:'pl-'+uid(),date,name:name.trim(),color,exerciseIds:selEx})}} disabled={!name.trim()}>Save Plan</button>
+    </div></div></div>
+    {showPicker&&<ExercisePicker exercises={exercises} cm={[]} onSelect={ex=>{setSelEx(p=>[...p,ex.id]);setShowPicker(false)}}
+      onClose={()=>setShowPicker(false)} onCreateNew={()=>{}}/>}</>)}
+
+// ── App ──
+function App(){
+  const[tab,setTab]=useState('today');const[inWorkout,setInWorkout]=useState(false);const[activePlan,setActivePlan]=useState(null);
+  const[activeAth,setActiveAth]=useState('ath-1');
+  const[athletes,setAthletes]=useStore('athletes',DEFAULT_ATHLETES);
+  const[exercises,setExercises]=useStore('exercises',DEFAULT_EXERCISES);
+  const[cm,setCM]=useStore('customMetrics',[]);
+  const[workouts,setWorkouts]=useStore('workouts2',[]);
+  const[planned,setPlanned]=useStore('planned2',[]);
+  const[competitions,setCompetitions]=useStore('competitions',[]);
+  const[viewing,setViewing]=useState(null);const[planDate,setPlanDate]=useState(null);
+  const[viewExercise,setViewExercise]=useState(null);
+  useEffect(()=>{if(!inWorkout){const a=athletes.find(a=>a.id===activeAth);applyTheme(a?.color||'#3b82f6')}},[activeAth,athletes,inWorkout]);
+
+  const finishWorkout=(wk,localEx,localCM)=>{
+    if(wk.exerciseIds.length>0)setWorkouts(p=>[...p,wk]);
+    setExercises(localEx);setCM(localCM);setInWorkout(false);setActivePlan(null);setTab('today')};
+  const cancelWorkout=()=>{setInWorkout(false);setActivePlan(null);setTab('today')};
+  const deleteWorkout=id=>{setWorkouts(p=>p.filter(w=>w.id!==id));setViewing(null)};
+  const startPlan=plan=>{setActivePlan(plan);setInWorkout(true)};
+
+  if(inWorkout)return(<div id="root" style={{height:'100%',display:'flex',flexDirection:'column'}}>
+    <ActiveWorkoutScreen athletes={athletes} exercises={exercises} customMetrics={cm}
+      workouts={workouts} onFinish={finishWorkout} onCancel={cancelWorkout} initialPlan={activePlan}/></div>);
+
+  return(<>
+    {tab==='today'&&<TodayScreen athletes={athletes} activeAth={activeAth} onSelectAth={setActiveAth}
+      workouts={workouts} planned={planned} exercises={exercises} competitions={competitions}
+      onStartEmpty={()=>setInWorkout(true)} onStartPlan={startPlan} onView={setViewing}/>}
+    {tab==='calendar'&&<CalendarScreen workouts={workouts} planned={planned} exercises={exercises}
+      competitions={competitions} onView={setViewing}/>}
+    {tab==='progress'&&<ProgressScreen workouts={workouts} planned={planned} athletes={athletes} activeAth={activeAth}
+      exercises={exercises} cm={cm} competitions={competitions} onView={setViewing} onPlan={setPlanDate}
+      onDeletePlan={id=>setPlanned(p=>p.filter(pl=>pl.id!==id))} onViewExercise={setViewExercise}/>}
+    {tab==='profile'&&<ProfileScreen athletes={athletes} activeAth={activeAth} onSelectAth={setActiveAth}
+      exercises={exercises} cm={cm} workouts={workouts} onUpdateAthletes={setAthletes}
+      onUpdateExercises={setExercises} onUpdateCM={setCM}
+      competitions={competitions} onUpdateCompetitions={setCompetitions}/>}
+
+    <nav className="nav">
+      {[{id:'today',icon:'home',l:'Today'},{id:'calendar',icon:'calendar',l:'Calendar'},{id:'progress',icon:'barChart',l:'Progress'},{id:'profile',icon:'user',l:'Profile'}
+      ].map(t=>(<button key={t.id} className={`nav-item ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>
+        <Icon name={t.icon} size={24}/><span>{t.l}</span></button>))}</nav>
+
+    {viewing&&<WorkoutDetail workout={viewing} athletes={athletes} exercises={exercises} cm={cm}
+      onClose={()=>setViewing(null)} onDelete={deleteWorkout}
+      onUpdate={wk=>{setWorkouts(p=>p.map(w=>w.id===wk.id?wk:w));setViewing(wk)}}/>}
+    {planDate&&<PlanWorkoutModal date={planDate} exercises={exercises}
+      onSave={p=>{setPlanned(prev=>[...prev,p]);setPlanDate(null)}} onClose={()=>setPlanDate(null)}/>}
+    {viewExercise&&<ExerciseStats exercise={viewExercise} athletes={athletes} workouts={workouts} cm={cm}
+      onClose={()=>setViewExercise(null)}/>}
+  </>)}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
+</script>
+</body>
+</html>
