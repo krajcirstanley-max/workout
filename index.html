@@ -373,8 +373,14 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useRef,useCallback,useMemo}=React;
+
+// ── Supabase ──
+const SB_URL="https://ulrblhxyrkdpvgsyoesf.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscmJsaHh5cmtkcHZnc3lvZXNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzY1MzAsImV4cCI6MjA5MjY1MjUzMH0.cVXpHtA-7E6pvltUOvdaUf_7vxGyHW5RpqKXjjM5La8";
+const sb=window.supabase?.createClient(SB_URL,SB_KEY);
 
 const Icon=({name,size=24})=>{const d={
   home:<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/>,
@@ -478,10 +484,18 @@ const VELOCITY_ZONES=[
 const isGymEx=ex=>ex&&['Chest','Back','Shoulders','Arms','Legs'].includes(ex.category);
 const DEFAULT_ATHLETES=[{id:'ath-1',name:'Stanley',color:'#3b82f6'},{id:'ath-2',name:'Miška',color:'#ec4899'}];
 
-// ── Storage ──
-const st={get(k,f){try{const v=localStorage.getItem('wk2_'+k);return v?JSON.parse(v):f}catch{return f}},set(k,v){localStorage.setItem('wk2_'+k,JSON.stringify(v))}};
+// ── Storage (localStorage + Supabase sync) ──
+const st={
+  get(k,f){try{const v=localStorage.getItem('wk2_'+k);return v?JSON.parse(v):f}catch{return f}},
+  set(k,v){localStorage.setItem('wk2_'+k,JSON.stringify(v));
+    if(sb)sb.from('wk_store').upsert({key:k,value:v,updated_at:new Date().toISOString()}).then(()=>{})},
+  async pull(k){if(!sb)return null;const{data}=await sb.from('wk_store').select('value').eq('key',k).single();return data?.value??null}
+};
 function useStore(k,f){const[v,setV]=useState(()=>st.get(k,f));
-  const up=useCallback(fn=>{const n=typeof fn==='function'?fn(st.get(k,f)):fn;st.set(k,n);setV(n)},[k]);return[v,up]}
+  const up=useCallback(fn=>{const n=typeof fn==='function'?fn(st.get(k,f)):fn;st.set(k,n);setV(n)},[k]);
+  useEffect(()=>{st.pull(k).then(remote=>{if(remote!==null){const local=st.get(k,f);
+    if(JSON.stringify(remote)!==JSON.stringify(local)){localStorage.setItem('wk2_'+k,JSON.stringify(remote));setV(remote)}}})},[]);
+  return[v,up]}
 
 // ── Helpers ──
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
