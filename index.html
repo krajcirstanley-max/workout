@@ -541,6 +541,9 @@ const fmtWeather=w=>{if(!w)return'';if(Array.isArray(w))return w.map(k=>WEATHER_
 const toggleWeather=(cur,k)=>{const arr=Array.isArray(cur)?[...cur]:cur?[cur]:[];return arr.includes(k)?arr.filter(x=>x!==k):[...arr,k]};
 const hasWeather=(cur,k)=>Array.isArray(cur)?cur.includes(k):cur===k;
 const getMetric=(id,cm)=>BUILTIN_METRICS.find(m=>m.id===id)||(cm||[]).find(m=>m.id===id)||{id,name:id,unit:'',step:1};
+async function fetchTemp(){try{const pos=await new Promise((ok,fail)=>navigator.geolocation.getCurrentPosition(ok,fail,{timeout:5000}));
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current=temperature_2m`);
+  const d=await r.json();return Math.round(d.current.temperature_2m)}catch{return null}}
 const initials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 const greeting=()=>{const h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening'};
 const fullDate=()=>new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
@@ -609,7 +612,7 @@ function WorkoutCard({wk,onClick}){
         <div className="wk-card-date">{fmtDate(wk.startTime)}</div>
       </div>
       <div className="wk-card-bottom">
-        <div className="wk-card-meta">{fmtDur(dur)} · {wk.exerciseIds.length} exercises{wk.weather?` · ${fmtWeather(wk.weather)}`:''}</div>
+        <div className="wk-card-meta">{fmtDur(dur)} · {wk.exerciseIds.length} exercises{wk.tempC!=null?` · ${wk.tempC}°C`:''}{wk.weather?` · ${fmtWeather(wk.weather)}`:''}</div>
         {wk.tag&&<div className="wk-card-tag" style={{background:wk.tag.color+'18',color:wk.tag.color}}>{wk.tag.name}</div>}
       </div>
     </div></button>)}
@@ -755,8 +758,8 @@ function InlineMetricEditor({current,cm,onChange}){
           setNm('');setNu('');setShowNew(false)}}>Add</button></div>}
   </div>)}
 
-function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics}){
-  const[open,setOpen]=useState(false);const[showVZ,setShowVZ]=useState(false);const[showMetrics,setShowMetrics]=useState(false);if(!exercise)return null;
+function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics,note,onUpdateNote}){
+  const[open,setOpen]=useState(false);const[showVZ,setShowVZ]=useState(false);const[showMetrics,setShowMetrics]=useState(false);const[showNote,setShowNote]=useState(!!note);if(!exercise)return null;
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
   const gc=exercise.metrics.length>=4?`24px ${exercise.metrics.map(()=>'68px').join(' ')} 36px 28px`:`24px ${'1fr '.repeat(exercise.metrics.length)}36px 28px`;
   const done=sets.filter(s=>s.completed).length;const gym=isGymEx(exercise);
@@ -789,8 +792,12 @@ function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSe
       <div className="ex-actions">
         {gym&&<button className="ex-act-btn" onClick={()=>setShowVZ(!showVZ)}>⚡ VZ</button>}
         <button className="ex-act-btn" onClick={()=>setShowMetrics(!showMetrics)}>📏 Metrics</button>
+        <button className="ex-act-btn" onClick={()=>setShowNote(!showNote)}>📝 Note</button>
         <button className="ex-act-btn" onClick={onReplace}><Icon name="swap" size={12}/>Replace</button>
         <div style={{flex:1}}/><button className="ex-act-btn danger" onClick={onDelete}><Icon name="trash" size={12}/></button></div>
+      {showNote&&<textarea className="input" value={note||''} onChange={e=>onUpdateNote&&onUpdateNote(exId,e.target.value)}
+        placeholder="Add a note for this exercise..." rows={2}
+        style={{fontSize:13,marginBottom:8,resize:'vertical',minHeight:36}}/>}
       <div className="set-table">
         <div className="set-row header" style={{gridTemplateColumns:gc,...(exercise.metrics.length>=4?{minWidth:'max-content'}:{})}}><div style={{textAlign:'center'}}>#</div>
           {mds.map(m=>{const showUnit=m.unit&&!m.name.toLowerCase().includes(m.unit.toLowerCase());
@@ -971,7 +978,7 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
       <AthleteBar athletes={athletes.filter(a=>wk.athletes?.[a.id])} active={selAth} onSelect={setSelAth}/>
       <div style={{textAlign:'center',margin:'12px 0',fontSize:12,color:'var(--text3)',fontWeight:500}}>
         {new Date(wk.startTime).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
-        {wk.weather&&` · ${fmtWeather(wk.weather)}`}</div>
+        {wk.tempC!=null&&` · ${wk.tempC}°C`}{wk.weather&&` · ${fmtWeather(wk.weather)}`}</div>
 
       {editing&&<div style={{marginBottom:12}}>
         <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
@@ -1019,6 +1026,7 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
             <div className="detail-ex-name">{ex?.name||'?'}</div>
             {editing&&<button style={{color:'var(--danger)',padding:4}} onClick={()=>delEx(eid)}><Icon name="trash" size={14}/></button>}
           </div>
+          {wk.exNotes?.[eid]&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',marginBottom:4}}>{wk.exNotes[eid]}</div>}
           {!editing?sets.map((s,j)=>(<div key={j} className="detail-set"><span className="detail-set-num">{j+1}</span>
             {mds.map(md=><span key={md.id}>{s.values[md.id]??'-'}{md.unit?` ${md.unit}`:''}</span>)}</div>))
           :<>{sets.map((s,j)=>(<div key={j} className="detail-set" style={{gap:6}}>
@@ -1290,6 +1298,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const needsCheckin=!checkedIn.has(activeAth);
   useEffect(()=>{if(needsCheckin)setShowCheckin(true)},[activeAth]);
   useEffect(()=>{const a=athletes.find(a=>a.id===activeAth);applyTheme(a?.color||'#3b82f6')},[activeAth]);
+  useEffect(()=>{if(workout.tempC!=null)return;fetchTemp().then(t=>{if(t!=null)setWorkout(w=>({...w,tempC:t}))})},[]);
 
   const makeEmpty=(ex,aId)=>{const prev=getPrevSets(ex.id,aId,workouts);
     return Array.from({length:3},(_,i)=>{const s={values:{},completed:false};
@@ -1326,6 +1335,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
       na[aId]={...na[aId],sets:{...na[aId].sets,[exId]:na[aId].sets[exId].map(s=>{
         const nv={};newMetrics.forEach(mid=>{nv[mid]=s.values[mid]??''});return{...s,values:nv}})}}}});
       return{...w,athletes:na}})};
+  const updateNote=(exId,text)=>{setWorkout(w=>({...w,exNotes:{...w.exNotes,[exId]:text}}))};
   const handleFinishSave=({name,weather,tag,athData,customDuration})=>{
     const endTime=customDuration!=null?workout.startTime+customDuration:Date.now();
     const fin={...workout,name:name||workout.name,endTime,weather,tag,color:tag?.color||'var(--primary)'};
@@ -1390,7 +1400,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                     onDeleteSet={si2=>deleteSet(seid,si2)} onAddSet={()=>addSet(seid)}
                     onReplace={()=>{setReplacingIdx(si);setShowPicker(true)}} onDelete={()=>delEx(si)}
                     onShowHistory={()=>setHistoryEx(sex)}
-                    onChangeMetrics={changeMetrics} onGripTouch={()=>{}}/>})}</div>);return}}
+                    onChangeMetrics={changeMetrics} note={workout.exNotes?.[seid]} onUpdateNote={updateNote} onGripTouch={()=>{}}/>})}</div>);return}}
           const ex=localEx.find(e=>e.id===eid);
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
           items.push(<ExerciseAccordion key={eid} exId={eid} exercise={ex} sets={athSets[eid]||[]}
@@ -1400,7 +1410,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
           onReplace={()=>{setReplacingIdx(idx);setShowPicker(true)}} onDelete={()=>delEx(idx)}
           onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===eid))}
-          onChangeMetrics={changeMetrics}
+          onChangeMetrics={changeMetrics} note={workout.exNotes?.[eid]} onUpdateNote={updateNote}
           onGripTouch={e=>{
             const touch=e.touches?e.touches[0]:e;if(!touch)return;
             const accEl=e.target.closest('.acc');if(!accEl)return;
