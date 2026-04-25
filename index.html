@@ -1086,12 +1086,25 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text1)'}}>{w.name||'Workout'}</div>
               <div style={{fontSize:12,fontWeight:600,color:'var(--text3)'}}>{d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div>
-            <div style={{display:'flex',flexDirection:'column',gap:3}}>
+            <div style={{display:'flex',flexDirection:'column',gap:4}}>
               {sets.map((s,j)=>{const usedMids=Object.keys(s.values).filter(k=>s.values[k]!==''&&s.values[k]!=null);
-                const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
-                return(<div key={j} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}}>
-                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
-                {showMds.map(md=><span key={md.id} style={{fontWeight:600}}>{s.values[md.id]}{md.unit?' '+md.unit:''}</span>)}
+                const hasDist=usedMids.includes('distance');const hasTime=usedMids.includes('tf-time');
+                const hasWeight=usedMids.includes('weight');const hasReps=usedMids.includes('reps');
+                const secondaryIds=usedMids.filter(k=>!['distance','tf-time','weight','reps'].includes(k));
+                const secondaryMds=secondaryIds.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
+                return(<div key={j} style={{display:'flex',alignItems:'baseline',gap:6,fontSize:13,padding:'3px 0'}}>
+                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)',flexShrink:0}}>{j+1}</span>
+                <div style={{display:'flex',alignItems:'baseline',gap:6,flexWrap:'wrap'}}>
+                  {hasDist&&<span style={{fontWeight:900,fontSize:14,color:'var(--text1)'}}>{s.values.distance}m</span>}
+                  {hasDist&&hasTime&&<span style={{color:'var(--text3)'}}>→</span>}
+                  {hasTime&&<span style={{fontWeight:900,fontSize:14,color:'var(--primary)'}}>{s.values['tf-time']}s</span>}
+                  {hasWeight&&<span style={{fontWeight:900,fontSize:14,color:'var(--text1)'}}>{s.values.weight}kg</span>}
+                  {hasWeight&&hasReps&&<span style={{color:'var(--text3)'}}>×</span>}
+                  {hasReps&&<span style={{fontWeight:900,fontSize:14,color:hasWeight?'var(--text1)':'var(--primary)'}}>{s.values.reps}</span>}
+                  {secondaryMds.length>0&&<span style={{fontSize:12,color:'var(--text3)',fontWeight:600}}>
+                    ({secondaryMds.map((md,k)=><React.Fragment key={md.id}>{k>0&&'  '}<span style={{color:'var(--text3)'}}>{md.name.replace(' Split','')}: </span>
+                      <span style={{color:'var(--text2)',fontWeight:700}}>{s.values[md.id]}</span></React.Fragment>})</span>}
+                </div>
               </div>)})}
             </div></div>)})}</div></>}
     </div></div></div>)}
@@ -1135,7 +1148,7 @@ function DateStrip({workouts,planned,competitions,selectedDate,onSelectDate}){
 function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView}){
   const athlete=athletes.find(a=>a.id===activeAth);
   const today=dateKey(Date.now());
-  const todayPlans=(planned||[]).filter(p=>p.date===today);
+  const todayPlans=(planned||[]).filter(p=>p.date===today&&!todayWorkouts.some(w=>w.name===p.name));
   const weekCount=workouts.filter(w=>Date.now()-w.startTime<7*864e5).length;
   const monthCount=workouts.filter(w=>Date.now()-w.startTime<30*864e5).length;
   const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
@@ -1202,7 +1215,7 @@ function CalendarScreen({workouts,planned,exercises,competitions,onView}){
   const[selDate,setSelDate]=useState(new Date());
   const selKey=dateKey(selDate.getTime());
   const dayWks=workouts.filter(w=>dateKey(w.startTime)===selKey);
-  const dayPlans=(planned||[]).filter(p=>p.date===selKey);
+  const dayPlans=(planned||[]).filter(p=>p.date===selKey&&!dayWks.some(w=>w.name===p.name));
   const selLabel=selDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 
   return(<div className="screen pad">
@@ -1495,11 +1508,25 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           return<div key={w.id} style={{marginBottom:16}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>{w.name||'Workout'} <span style={{color:'var(--text3)',fontWeight:500}}>
               {new Date(w.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>
-            {sets.map((s,j)=><div key={j} style={{display:'flex',gap:10,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
-              <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
-              {historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
-                return<span key={mid}>{s.values[mid]??'-'}{md.unit?` ${md.unit}`:''}</span>})}</div>)}</div>})}
-        {!workouts.some(w=>w.athletes?.[activeAth]?.sets?.[historyEx.id]?.some(s=>s.completed))&&
+            {sets.map((s,j)=>{const usedMids=Object.keys(s.values).filter(k=>s.values[k]!==''&&s.values[k]!=null);
+              const hasDist=usedMids.includes('distance');const hasTime=usedMids.includes('tf-time');
+              const hasWeight=usedMids.includes('weight');const hasReps=usedMids.includes('reps');
+              const secondaryIds=usedMids.filter(k=>!['distance','tf-time','weight','reps'].includes(k));
+              const secondaryMds=secondaryIds.map(id=>[...BUILTIN_METRICS,...localCM].find(m=>m.id===id)).filter(Boolean);
+              return<div key={j} style={{display:'flex',alignItems:'baseline',gap:6,fontSize:13,padding:'3px 0'}}>
+                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)',flexShrink:0}}>{j+1}</span>
+                <div style={{display:'flex',alignItems:'baseline',gap:6,flexWrap:'wrap'}}>
+                  {hasDist&&<span style={{fontWeight:900,fontSize:14,color:'var(--text1)'}}>{s.values.distance}m</span>}
+                  {hasDist&&hasTime&&<span style={{color:'var(--text3)'}}>→</span>}
+                  {hasTime&&<span style={{fontWeight:900,fontSize:14,color:'var(--primary)'}}>{s.values['tf-time']}s</span>}
+                  {hasWeight&&<span style={{fontWeight:900,fontSize:14,color:'var(--text1)'}}>{s.values.weight}kg</span>}
+                  {hasWeight&&hasReps&&<span style={{color:'var(--text3)'}}>×</span>}
+                  {hasReps&&<span style={{fontWeight:900,fontSize:14,color:hasWeight?'var(--text1)':'var(--primary)'}}>{s.values.reps}</span>}
+                  {secondaryMds.length>0&&<span style={{fontSize:12,color:'var(--text3)',fontWeight:600}}>
+                    ({secondaryMds.map((md,k)=><React.Fragment key={md.id}>{k>0&&'  '}<span>{md.name.replace(' Split','')}: </span>
+                      <span style={{color:'var(--text2)',fontWeight:700}}>{s.values[md.id]}</span></React.Fragment>})</span>}
+                </div></div>})}</div>})}
+        {!workouts.some(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))})&&
           <div style={{textAlign:'center',color:'var(--text3)',padding:20}}>No history yet</div>}
       </div></div></div>})()}
     {confirmCancel&&<ConfirmDialog title="Discard Workout?" message="All progress will be lost."
