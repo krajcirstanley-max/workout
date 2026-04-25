@@ -1704,7 +1704,7 @@ function App(){
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js');
+  navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
   navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
 }
 let _lastHash=null;
