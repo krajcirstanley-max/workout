@@ -549,14 +549,20 @@ const applyTheme=color=>{const{r,g,b}=hexRgb(color);const s=document.documentEle
   s.setProperty('--primary',color);s.setProperty('--primary-dark',`rgb(${Math.max(0,r-30)},${Math.max(0,g-30)},${Math.max(0,b-30)})`);
   s.setProperty('--primary-dim',`rgba(${r},${g},${b},.1)`);s.setProperty('--primary-glow',`rgba(${r},${g},${b},.06)`)};
 
+function baseExId(id){return id.replace(/__\d+$/,'')}
+
 function getPrevSets(exId,athId,workouts){
-  for(let i=workouts.length-1;i>=0;i--){const a=workouts[i].athletes?.[athId];if(a?.sets?.[exId]?.length>0)return a.sets[exId]}return null}
+  const base=baseExId(exId);
+  for(let i=workouts.length-1;i>=0;i--){const a=workouts[i].athletes?.[athId];if(!a)continue;
+    const k=Object.keys(a.sets||{}).find(k=>baseExId(k)===base&&a.sets[k]?.length>0);
+    if(k)return a.sets[k]}return null}
 
 const TIME_METRICS=['tf-time','split-10m','split-20m','time'];
 const DIST_METRICS=['tf-dist','distance','height'];
 function computePRs(exId,athId,workouts,exercise){
-  const prs={};if(!exercise)return prs;
-  workouts.forEach(w=>{(w.athletes?.[athId]?.sets?.[exId]||[]).filter(s=>s.completed).forEach(s=>{
+  const prs={};if(!exercise)return prs;const base=baseExId(exId);
+  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;
+    Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
     const hw=exercise.metrics.includes('weight'),hr=exercise.metrics.includes('reps');
     if(hw&&(s.values.weight||0)>(prs.maxWeight||0))prs.maxWeight=s.values.weight;
     if(hr&&(s.values.reps||0)>(prs.maxReps||0))prs.maxReps=s.values.reps;
@@ -565,25 +571,27 @@ function computePRs(exId,athId,workouts,exercise){
     exercise.metrics.forEach(mid=>{const v=Number(s.values[mid]);if(!v)return;
       if(TIME_METRICS.includes(mid)){if(!prs[mid]||v<prs[mid])prs[mid]=v}
       else if(DIST_METRICS.includes(mid)){if(!prs[mid]||v>prs[mid])prs[mid]=v}});
-  })});return prs}
+  })})});return prs}
 
 function computeSprintPRs(exId,athId,workouts){
-  const byKey={};
-  workouts.forEach(w=>{(w.athletes?.[athId]?.sets?.[exId]||[]).filter(s=>s.completed).forEach(s=>{
+  const byKey={};const base=baseExId(exId);
+  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;
+    Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
     const dist=Number(s.values.distance)||0;if(!dist)return;
     const time=Number(s.values['tf-time']);if(!time)return;
     const eg=s.values['eg-setting'];
     const key=eg?`${dist}m @ EG#${eg}`:`${dist}m`;
     const entry={time,dist,eg:eg||null,splits:{},date:w.startTime,wkName:w.name||'Workout'};
-    Object.keys(s.values).forEach(k=>{if(k!=='distance'&&k!=='tf-time'&&k!=='eg-setting'&&s.values[k]!==''&&s.values[k]!=null)
-      entry.splits[k]=Number(s.values[k])});
-    if(!byKey[key]||time<byKey[key].time)byKey[key]=entry})});
+    Object.keys(s.values).forEach(k2=>{if(k2!=='distance'&&k2!=='tf-time'&&k2!=='eg-setting'&&s.values[k2]!==''&&s.values[k2]!=null)
+      entry.splits[k2]=Number(s.values[k2])});
+    if(!byKey[key]||time<byKey[key].time)byKey[key]=entry})})});
   return byKey}
 
 function getProgressData(exId,athId,workouts,metric){
-  return workouts.filter(w=>w.athletes?.[athId]?.sets?.[exId]?.some(s=>s.completed))
-    .map(w=>{const sets=w.athletes[athId].sets[exId].filter(s=>s.completed);
-      return{x:new Date(w.startTime),y:Math.max(...sets.map(s=>s.values[metric]||0))}}).filter(d=>d.y>0)}
+  const base=baseExId(exId);
+  return workouts.filter(w=>{const ad=w.athletes?.[athId];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===base&&ad.sets[k]?.some(s=>s.completed))})
+    .map(w=>{const ad=w.athletes[athId];const allSets=Object.keys(ad.sets).filter(k=>baseExId(k)===base).flatMap(k=>ad.sets[k]).filter(s=>s.completed);
+      return{x:new Date(w.startTime),y:Math.max(...allSets.map(s=>s.values[metric]||0))}}).filter(d=>d.y>0)}
 
 // ── Hooks ──
 function useRestTimer(){const[t,setT]=useState({active:false,elapsed:0});const iv=useRef(null);
@@ -938,20 +946,20 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
 
   const up=fn=>{const c=JSON.parse(JSON.stringify(wk));const n=fn(c);setWk(n)};
   const setVal=(eid,si,mid,val)=>up(w=>{w.athletes[selAth].sets[eid][si].values[mid]=val===''?val:Number(val);return w});
-  const addSet=eid=>up(w=>{const ex=exercises.find(e=>e.id===eid);const ns={values:{},completed:true};
+  const addSet=eid=>up(w=>{const ex=exercises.find(e=>e.id===baseExId(eid));const ns={values:{},completed:true};
     (ex?.metrics||[]).forEach(mid=>{ns.values[mid]=''});w.athletes[selAth].sets[eid].push(ns);return w});
   const delSet=(eid,si)=>up(w=>{w.athletes[selAth].sets[eid].splice(si,1);
     if(!w.athletes[selAth].sets[eid].length){delete w.athletes[selAth].sets[eid];
       w.exerciseIds=w.exerciseIds.filter(id=>id!==eid)}return w});
   const delEx=eid=>up(w=>{w.exerciseIds=w.exerciseIds.filter(id=>id!==eid);
     Object.keys(w.athletes).forEach(aId=>{delete w.athletes[aId].sets[eid]});return w});
-  const addExToWk=ex=>{up(w=>{if(!w.exerciseIds.includes(ex.id)){w.exerciseIds.push(ex.id);
+  const addExToWk=ex=>{up(w=>{const count=w.exerciseIds.filter(id=>baseExId(id)===ex.id).length;
+    const iid=count===0?ex.id:`${ex.id}__${count+1}`;
+    w.exerciseIds.push(iid);
     Object.keys(w.athletes).forEach(aId=>{if(!w.athletes[aId].sets)w.athletes[aId].sets={};
-      w.athletes[aId].sets[ex.id]=[{values:{},completed:true}];
-      ex.metrics.forEach(mid=>{w.athletes[aId].sets[ex.id][0].values[mid]=''})})
-    }else{Object.keys(w.athletes).forEach(aId=>{if(!w.athletes[aId].sets[ex.id])w.athletes[aId].sets[ex.id]=[];
-      const ns={values:{},completed:true};ex.metrics.forEach(mid=>{ns.values[mid]=''});
-      w.athletes[aId].sets[ex.id].push(ns)})}return w});setShowAddEx(false)};
+      w.athletes[aId].sets[iid]=[{values:{},completed:true}];
+      ex.metrics.forEach(mid=>{w.athletes[aId].sets[iid][0].values[mid]=''})});
+    return w});setShowAddEx(false)};
 
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
     <div className="modal-hdr">
@@ -1006,7 +1014,7 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
         <textarea className="input" value={ad?.notes||''} placeholder="Notes..."
           onChange={e=>up(w=>{w.athletes[selAth].notes=e.target.value;return w})}/></div>}
 
-      {wk.exerciseIds.map((eid,i)=>{const ex=exercises.find(e=>e.id===eid);
+      {wk.exerciseIds.map((eid,i)=>{const ex=exercises.find(e=>e.id===baseExId(eid));
         const sets=ad?.sets?.[eid]||[];if(!sets.length&&!editing)return null;
         const mds=(ex?.metrics||[]).map(id=>getMetric(id,cm));
         return(<div key={eid} className="detail-ex">
@@ -1046,7 +1054,7 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
   const chartData=getProgressData(exercise.id,selAth,workouts,chartMetric);
   const allMds=[...BUILTIN_METRICS,...cm];
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
-  const history=[...workouts].reverse().filter(w=>w.athletes?.[selAth]?.sets?.[exercise.id]?.some(s=>s.completed)).slice(0,15);
+  const history=[...workouts].reverse().filter(w=>{const ad=w.athletes?.[selAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===exercise.id&&ad.sets[k]?.some(s=>s.completed))}).slice(0,15);
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
     <div className="modal-hdr"><span className="modal-title">{exercise.name}</span>
       <button className="hdr-btn" onClick={onClose}><Icon name="x" size={20}/></button></div>
@@ -1072,7 +1080,7 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
       <div className="section-title">Progress</div>
       <div className="card" style={{padding:10,marginBottom:16}}><MiniChart data={chartData}/></div>
       {history.length>0&&<><div className="section-title">History</div>
-        <div className="card-list">{history.map(w=>{const sets=w.athletes[selAth].sets[exercise.id].filter(s=>s.completed);
+        <div className="card-list">{history.map(w=>{const ad=w.athletes[selAth];const sets=Object.keys(ad.sets).filter(k=>baseExId(k)===exercise.id).flatMap(k=>ad.sets[k]).filter(s=>s.completed);
           const d=new Date(w.startTime);
           return(<div key={w.id} style={{padding:'12px 16px',borderBottom:'1px solid var(--border-light)'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
@@ -1271,13 +1279,18 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const makeEmpty=(ex,aId)=>{const prev=getPrevSets(ex.id,aId,workouts);
     return Array.from({length:3},(_,i)=>{const s={values:{},completed:false};
       ex.metrics.forEach(mid=>{s.values[mid]=prev?.[i]?.values[mid]??''});return s})};
-  const addEx=ex=>{setWorkout(w=>{const ids=[...w.exerciseIds,ex.id];const na={};
-    Object.keys(w.athletes).forEach(aId=>{na[aId]={...w.athletes[aId],sets:{...w.athletes[aId].sets,[ex.id]:makeEmpty(ex,aId)}}});
+  const addEx=ex=>{setWorkout(w=>{const count=w.exerciseIds.filter(id=>baseExId(id)===ex.id).length;
+    const iid=count===0?ex.id:`${ex.id}__${count+1}`;
+    const ids=[...w.exerciseIds,iid];const na={};
+    Object.keys(w.athletes).forEach(aId=>{na[aId]={...w.athletes[aId],sets:{...w.athletes[aId].sets,[iid]:makeEmpty(ex,aId)}}});
     return{...w,exerciseIds:ids,athletes:na}});setShowPicker(false)};
   const replaceEx=newEx=>{if(replacingIdx==null)return;setWorkout(w=>{const oldId=w.exerciseIds[replacingIdx];
-    const ids=[...w.exerciseIds];ids[replacingIdx]=newEx.id;const na={};
+    const others=w.exerciseIds.filter((_,i)=>i!==replacingIdx);
+    const count=others.filter(id=>baseExId(id)===newEx.id).length;
+    const iid=count===0?newEx.id:`${newEx.id}__${count+1}`;
+    const ids=[...w.exerciseIds];ids[replacingIdx]=iid;const na={};
     Object.keys(w.athletes).forEach(aId=>{const ns={...w.athletes[aId].sets};delete ns[oldId];
-      ns[newEx.id]=makeEmpty(newEx,aId);na[aId]={...w.athletes[aId],sets:ns}});
+      ns[iid]=makeEmpty(newEx,aId);na[aId]={...w.athletes[aId],sets:ns}});
     return{...w,exerciseIds:ids,athletes:na}});setReplacingIdx(null);setShowPicker(false)};
   const delEx=idx=>{setWorkout(w=>{const eid=w.exerciseIds[idx];const ids=w.exerciseIds.filter((_,i)=>i!==idx);
     const na={};Object.keys(w.athletes).forEach(aId=>{const ns={...w.athletes[aId].sets};delete ns[eid];
@@ -1292,12 +1305,12 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const deleteSet=(exId,si)=>{setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[exId]:w.athletes[activeAth].sets[exId].filter((_,i)=>i!==si)}}}}))};
   const addSet=exId=>{setWorkout(w=>{const sets=w.athletes[activeAth].sets[exId];const last=sets[sets.length-1];
-    const ex=localEx.find(e=>e.id===exId);const ns={values:{},completed:false};
+    const ex=localEx.find(e=>e.id===baseExId(exId));const ns={values:{},completed:false};
     ex.metrics.forEach(mid=>{ns.values[mid]=last?.values[mid]??''});
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],sets:{...w.athletes[activeAth].sets,[exId]:[...sets,ns]}}}}})};
   const changeMetrics=(exId,newMetrics,newCustom)=>{
     if(newCustom)setLocalCM(p=>[...p,newCustom]);
-    setLocalEx(p=>p.map(ex=>ex.id===exId?{...ex,metrics:newMetrics}:ex));
+    setLocalEx(p=>p.map(ex=>ex.id===baseExId(exId)?{...ex,metrics:newMetrics}:ex));
     setWorkout(w=>{const na={...w.athletes};Object.keys(na).forEach(aId=>{if(na[aId].sets[exId]){
       na[aId]={...na[aId],sets:{...na[aId].sets,[exId]:na[aId].sets[exId].map(s=>{
         const nv={};newMetrics.forEach(mid=>{nv[mid]=s.values[mid]??''});return{...s,values:nv}})}}}});
@@ -1357,7 +1370,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                 <div className="superset-label">Superset</div>
                 <div className="superset-grip" onTouchStart={onSSGrip} onMouseDown={onSSGrip}><Icon name="grip" size={14}/></div>
                 <button className="superset-unlink" onClick={()=>setSupersets(p=>p.filter(s=>s!==ss))}>Unlink</button>
-                {ssIdxs.map(si=>{const seid=ids[si];const sex=localEx.find(e=>e.id===seid);
+                {ssIdxs.map(si=>{const seid=ids[si];const sex=localEx.find(e=>e.id===baseExId(seid));
                   const sPrs=sex?computePRs(seid,activeAth,workouts,sex):{};
                   return<ExerciseAccordion key={seid} exId={seid} exercise={sex} sets={athSets[seid]||[]}
                     prevSets={getPrevSets(seid,activeAth,workouts)} cm={localCM} prs={sPrs}
@@ -1367,7 +1380,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                     onReplace={()=>{setReplacingIdx(si);setShowPicker(true)}} onDelete={()=>delEx(si)}
                     onShowHistory={()=>setHistoryEx(sex)}
                     onChangeMetrics={changeMetrics} onGripTouch={()=>{}}/>})}</div>);return}}
-          const ex=localEx.find(e=>e.id===eid);
+          const ex=localEx.find(e=>e.id===baseExId(eid));
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
           items.push(<ExerciseAccordion key={eid} exId={eid} exercise={ex} sets={athSets[eid]||[]}
           prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
@@ -1375,7 +1388,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
           onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
           onReplace={()=>{setReplacingIdx(idx);setShowPicker(true)}} onDelete={()=>delEx(idx)}
-          onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===eid))}
+          onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}
           onChangeMetrics={changeMetrics}
           onGripTouch={e=>{
             const touch=e.touches?e.touches[0]:e;if(!touch)return;
@@ -1460,12 +1473,13 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     {historyEx&&(()=>{const hw=historyEx.metrics.includes('weight'),ht=historyEx.metrics.includes('time')||historyEx.metrics.includes('tf-time'),
       hd=historyEx.metrics.includes('tf-dist')||historyEx.metrics.includes('distance'),hh=historyEx.metrics.includes('height');
       let bestVal=null,bestDate=null,bestLabel='',bestUnit='';
-      workouts.forEach(w=>{(w.athletes?.[activeAth]?.sets?.[historyEx.id]||[]).filter(s=>s.completed).forEach(s=>{
+      workouts.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;
+        Object.keys(ad.sets||{}).filter(k=>baseExId(k)===historyEx.id).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
         if(hw){const v=s.values.weight||0;if(v>=(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel='Best Weight';bestUnit='kg'}}
         else if(ht){const mid=historyEx.metrics.includes('tf-time')?'tf-time':'time';const v=s.values[mid]||0;
           if(v>0&&(!bestVal||v<bestVal)){bestVal=v;bestDate=w.startTime;bestLabel='Best Time';bestUnit='s'}}
         else if(hd||hh){const mid=hh?'height':(historyEx.metrics.includes('tf-dist')?'tf-dist':'distance');const v=s.values[mid]||0;
-          if(v>(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel=hh?'Best Height':'Best Distance';bestUnit='m'}}})});
+          if(v>(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel=hh?'Best Height':'Best Distance';bestUnit='m'}}})})});
       return<div className="overlay" onClick={e=>e.target===e.currentTarget&&setHistoryEx(null)}><div className="modal">
       <div className="modal-hdr"><span className="modal-title">{historyEx.name}</span>
         <button className="hdr-btn" onClick={()=>setHistoryEx(null)}><Icon name="x" size={20}/></button></div>
@@ -1476,8 +1490,8 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           <div><div style={{fontSize:12,fontWeight:800,color:'var(--primary)',textTransform:'uppercase',letterSpacing:'.5px'}}>{bestLabel}</div>
             <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{new Date(bestDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div></div></div>}
         <div className="section-title">Sessions</div>
-        {workouts.filter(w=>w.athletes?.[activeAth]?.sets?.[historyEx.id]?.some(s=>s.completed)).reverse().slice(0,10).map(w=>{
-          const sets=w.athletes[activeAth].sets[historyEx.id].filter(s=>s.completed);
+        {workouts.filter(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))}).reverse().slice(0,10).map(w=>{
+          const ad=w.athletes[activeAth];const sets=Object.keys(ad.sets).filter(k=>baseExId(k)===historyEx.id).flatMap(k=>ad.sets[k]).filter(s=>s.completed);
           return<div key={w.id} style={{marginBottom:16}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>{w.name||'Workout'} <span style={{color:'var(--text3)',fontWeight:500}}>
               {new Date(w.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>
@@ -1493,7 +1507,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
 
 function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,onView,onViewExercise}){
   const usedExIds=[...new Set(workouts.flatMap(w=>(w.athletes?.[activeAth]?Object.keys(w.athletes[activeAth].sets||{}):[])
-    .filter(eid=>(w.athletes[activeAth].sets[eid]||[]).some(s=>s.completed))))];
+    .filter(eid=>(w.athletes[activeAth].sets[eid]||[]).some(s=>s.completed))).map(baseExId))];
   const topExercises=usedExIds.slice(0,6).map(eid=>exercises.find(e=>e.id===eid)).filter(Boolean);
 
   return(<div className="screen pad">
