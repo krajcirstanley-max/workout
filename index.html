@@ -550,7 +550,6 @@ const applyTheme=color=>{const{r,g,b}=hexRgb(color);const s=document.documentEle
   s.setProperty('--primary-dim',`rgba(${r},${g},${b},.1)`);s.setProperty('--primary-glow',`rgba(${r},${g},${b},.06)`)};
 
 function baseExId(id){return id.replace(/__\d+$/,'')}
-
 function getPrevSets(exId,athId,workouts){
   const base=baseExId(exId);
   for(let i=workouts.length-1;i>=0;i--){const a=workouts[i].athletes?.[athId];if(!a)continue;
@@ -561,8 +560,7 @@ const TIME_METRICS=['tf-time','split-10m','split-20m','time'];
 const DIST_METRICS=['tf-dist','distance','height'];
 function computePRs(exId,athId,workouts,exercise){
   const prs={};if(!exercise)return prs;const base=baseExId(exId);
-  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;
-    Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
+  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
     const hw=exercise.metrics.includes('weight'),hr=exercise.metrics.includes('reps');
     if(hw&&(s.values.weight||0)>(prs.maxWeight||0))prs.maxWeight=s.values.weight;
     if(hr&&(s.values.reps||0)>(prs.maxReps||0))prs.maxReps=s.values.reps;
@@ -575,8 +573,7 @@ function computePRs(exId,athId,workouts,exercise){
 
 function computeSprintPRs(exId,athId,workouts){
   const byKey={};const base=baseExId(exId);
-  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;
-    Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
+  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
     const dist=Number(s.values.distance)||0;if(!dist)return;
     const time=Number(s.values['tf-time']);if(!time)return;
     const eg=s.values['eg-setting'];
@@ -1086,28 +1083,15 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text1)'}}>{w.name||'Workout'}</div>
               <div style={{fontSize:12,fontWeight:600,color:'var(--text3)'}}>{d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div>
-            <div style={{display:'flex',flexDirection:'column',gap:4}}>
+            <div style={{display:'flex',flexDirection:'column',gap:3}}>
               {sets.map((s,j)=>{const usedMids=Object.keys(s.values).filter(k=>s.values[k]!==''&&s.values[k]!=null);
-                const hasDist=usedMids.includes('distance');const hasTime=usedMids.includes('tf-time');
-                const hasWeight=usedMids.includes('weight');const hasReps=usedMids.includes('reps');
-                const secondaryIds=usedMids.filter(k=>!['distance','tf-time','weight','reps'].includes(k));
-                const secondaryMds=secondaryIds.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
-                return(<div key={j} style={{display:'flex',alignItems:'baseline',gap:6,fontSize:13,padding:'3px 0'}}>
-                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)',flexShrink:0}}>{j+1}</span>
-                <div style={{display:'flex',alignItems:'baseline',gap:6,flexWrap:'wrap'}}>
-                  {hasDist&&<span style={{fontWeight:900,fontSize:14,color:'var(--text1)'}}>{s.values.distance}m</span>}
-                  {hasDist&&hasTime&&<span style={{color:'var(--text3)'}}>→</span>}
-                  {hasTime&&<span style={{fontWeight:900,fontSize:14,color:'var(--primary)'}}>{s.values['tf-time']}s</span>}
-                  {hasWeight&&<span style={{fontWeight:900,fontSize:14,color:'var(--text1)'}}>{s.values.weight}kg</span>}
-                  {hasWeight&&hasReps&&<span style={{color:'var(--text3)'}}>×</span>}
-                  {hasReps&&<span style={{fontWeight:900,fontSize:14,color:hasWeight?'var(--text1)':'var(--primary)'}}>{s.values.reps}</span>}
-                  {secondaryMds.length>0&&<span style={{fontSize:12,color:'var(--text3)',fontWeight:600}}>
-                    ({secondaryMds.map((md,k)=><React.Fragment key={md.id}>{k>0&&'  '}<span style={{color:'var(--text3)'}}>{md.name.replace(' Split','')}: </span>
-                      <span style={{color:'var(--text2)',fontWeight:700}}>{s.values[md.id]}</span></React.Fragment>})</span>}
-                </div>
+                const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
+                return(<div key={j} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}}>
+                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                {showMds.map(md=><span key={md.id} style={{fontWeight:600}}>{s.values[md.id]}{md.unit?' '+md.unit:''}</span>)}
               </div>)})}
             </div></div>)})}</div></>}
-    </div></div></div>))}
+    </div></div></div>)}
 
 // ── Screens ──
 
@@ -1148,7 +1132,7 @@ function DateStrip({workouts,planned,competitions,selectedDate,onSelectDate}){
 function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView}){
   const athlete=athletes.find(a=>a.id===activeAth);
   const today=dateKey(Date.now());
-  const todayPlans=(planned||[]).filter(p=>p.date===today&&!todayWorkouts.some(w=>w.name===p.name));
+  const todayPlans=(planned||[]).filter(p=>p.date===today);
   const weekCount=workouts.filter(w=>Date.now()-w.startTime<7*864e5).length;
   const monthCount=workouts.filter(w=>Date.now()-w.startTime<30*864e5).length;
   const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
@@ -1215,7 +1199,7 @@ function CalendarScreen({workouts,planned,exercises,competitions,onView}){
   const[selDate,setSelDate]=useState(new Date());
   const selKey=dateKey(selDate.getTime());
   const dayWks=workouts.filter(w=>dateKey(w.startTime)===selKey);
-  const dayPlans=(planned||[]).filter(p=>p.date===selKey&&!dayWks.some(w=>w.name===p.name));
+  const dayPlans=(planned||[]).filter(p=>p.date===selKey);
   const selLabel=selDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 
   return(<div className="screen pad">
@@ -1292,15 +1276,11 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const makeEmpty=(ex,aId)=>{const prev=getPrevSets(ex.id,aId,workouts);
     return Array.from({length:3},(_,i)=>{const s={values:{},completed:false};
       ex.metrics.forEach(mid=>{s.values[mid]=prev?.[i]?.values[mid]??''});return s})};
-  const addEx=ex=>{setWorkout(w=>{const count=w.exerciseIds.filter(id=>baseExId(id)===ex.id).length;
-    const iid=count===0?ex.id:`${ex.id}__${count+1}`;
-    const ids=[...w.exerciseIds,iid];const na={};
+  const addEx=ex=>{setWorkout(w=>{const count=w.exerciseIds.filter(id=>baseExId(id)===ex.id).length;const iid=count===0?ex.id:`${ex.id}__${count+1}`;const ids=[...w.exerciseIds,iid];const na={};
     Object.keys(w.athletes).forEach(aId=>{na[aId]={...w.athletes[aId],sets:{...w.athletes[aId].sets,[iid]:makeEmpty(ex,aId)}}});
     return{...w,exerciseIds:ids,athletes:na}});setShowPicker(false)};
   const replaceEx=newEx=>{if(replacingIdx==null)return;setWorkout(w=>{const oldId=w.exerciseIds[replacingIdx];
-    const others=w.exerciseIds.filter((_,i)=>i!==replacingIdx);
-    const count=others.filter(id=>baseExId(id)===newEx.id).length;
-    const iid=count===0?newEx.id:`${newEx.id}__${count+1}`;
+    const others=w.exerciseIds.filter((_,i)=>i!==replacingIdx);const count=others.filter(id=>baseExId(id)===newEx.id).length;const iid=count===0?newEx.id:`${newEx.id}__${count+1}`;
     const ids=[...w.exerciseIds];ids[replacingIdx]=iid;const na={};
     Object.keys(w.athletes).forEach(aId=>{const ns={...w.athletes[aId].sets};delete ns[oldId];
       ns[iid]=makeEmpty(newEx,aId);na[aId]={...w.athletes[aId],sets:ns}});
@@ -1383,7 +1363,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                 <div className="superset-label">Superset</div>
                 <div className="superset-grip" onTouchStart={onSSGrip} onMouseDown={onSSGrip}><Icon name="grip" size={14}/></div>
                 <button className="superset-unlink" onClick={()=>setSupersets(p=>p.filter(s=>s!==ss))}>Unlink</button>
-                {ssIdxs.map(si=>{const seid=ids[si];const sex=localEx.find(e=>e.id===baseExId(seid));
+                {ssIdxs.map(si=>{const seid=ids[si];const sex=localEx.find(e=>e.id===seid);
                   const sPrs=sex?computePRs(seid,activeAth,workouts,sex):{};
                   return<ExerciseAccordion key={seid} exId={seid} exercise={sex} sets={athSets[seid]||[]}
                     prevSets={getPrevSets(seid,activeAth,workouts)} cm={localCM} prs={sPrs}
@@ -1393,7 +1373,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                     onReplace={()=>{setReplacingIdx(si);setShowPicker(true)}} onDelete={()=>delEx(si)}
                     onShowHistory={()=>setHistoryEx(sex)}
                     onChangeMetrics={changeMetrics} onGripTouch={()=>{}}/>})}</div>);return}}
-          const ex=localEx.find(e=>e.id===baseExId(eid));
+          const ex=localEx.find(e=>e.id===eid);
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
           items.push(<ExerciseAccordion key={eid} exId={eid} exercise={ex} sets={athSets[eid]||[]}
           prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
@@ -1401,7 +1381,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
           onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
           onReplace={()=>{setReplacingIdx(idx);setShowPicker(true)}} onDelete={()=>delEx(idx)}
-          onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}
+          onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===eid))}
           onChangeMetrics={changeMetrics}
           onGripTouch={e=>{
             const touch=e.touches?e.touches[0]:e;if(!touch)return;
@@ -1486,13 +1466,12 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     {historyEx&&(()=>{const hw=historyEx.metrics.includes('weight'),ht=historyEx.metrics.includes('time')||historyEx.metrics.includes('tf-time'),
       hd=historyEx.metrics.includes('tf-dist')||historyEx.metrics.includes('distance'),hh=historyEx.metrics.includes('height');
       let bestVal=null,bestDate=null,bestLabel='',bestUnit='';
-      workouts.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;
-        Object.keys(ad.sets||{}).filter(k=>baseExId(k)===historyEx.id).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
+      workouts.forEach(w=>{(w.athletes?.[activeAth]?.sets?.[historyEx.id]||[]).filter(s=>s.completed).forEach(s=>{
         if(hw){const v=s.values.weight||0;if(v>=(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel='Best Weight';bestUnit='kg'}}
         else if(ht){const mid=historyEx.metrics.includes('tf-time')?'tf-time':'time';const v=s.values[mid]||0;
           if(v>0&&(!bestVal||v<bestVal)){bestVal=v;bestDate=w.startTime;bestLabel='Best Time';bestUnit='s'}}
         else if(hd||hh){const mid=hh?'height':(historyEx.metrics.includes('tf-dist')?'tf-dist':'distance');const v=s.values[mid]||0;
-          if(v>(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel=hh?'Best Height':'Best Distance';bestUnit='m'}}})})});
+          if(v>(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel=hh?'Best Height':'Best Distance';bestUnit='m'}}})});
       return<div className="overlay" onClick={e=>e.target===e.currentTarget&&setHistoryEx(null)}><div className="modal">
       <div className="modal-hdr"><span className="modal-title">{historyEx.name}</span>
         <button className="hdr-btn" onClick={()=>setHistoryEx(null)}><Icon name="x" size={20}/></button></div>
@@ -1503,34 +1482,20 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           <div><div style={{fontSize:12,fontWeight:800,color:'var(--primary)',textTransform:'uppercase',letterSpacing:'.5px'}}>{bestLabel}</div>
             <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{new Date(bestDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div></div></div>}
         <div className="section-title">Sessions</div>
-        {workouts.filter(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))}).reverse().slice(0,10).map(w=>{
-          const ad=w.athletes[activeAth];const sets=Object.keys(ad.sets).filter(k=>baseExId(k)===historyEx.id).flatMap(k=>ad.sets[k]).filter(s=>s.completed);
+        {workouts.filter(w=>w.athletes?.[activeAth]?.sets?.[historyEx.id]?.some(s=>s.completed)).reverse().slice(0,10).map(w=>{
+          const sets=w.athletes[activeAth].sets[historyEx.id].filter(s=>s.completed);
           return<div key={w.id} style={{marginBottom:16}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>{w.name||'Workout'} <span style={{color:'var(--text3)',fontWeight:500}}>
               {new Date(w.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>
-            {sets.map((s,j)=>{const usedMids=Object.keys(s.values).filter(k=>s.values[k]!==''&&s.values[k]!=null);
-              const hasDist=usedMids.includes('distance');const hasTime=usedMids.includes('tf-time');
-              const hasWeight=usedMids.includes('weight');const hasReps=usedMids.includes('reps');
-              const secondaryIds=usedMids.filter(k=>!['distance','tf-time','weight','reps'].includes(k));
-              const secondaryMds=secondaryIds.map(id=>[...BUILTIN_METRICS,...localCM].find(m=>m.id===id)).filter(Boolean);
-              return<div key={j} style={{display:'flex',alignItems:'baseline',gap:6,fontSize:13,padding:'3px 0'}}>
-                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)',flexShrink:0}}>{j+1}</span>
-                <div style={{display:'flex',alignItems:'baseline',gap:6,flexWrap:'wrap'}}>
-                  {hasDist&&<span style={{fontWeight:900,fontSize:14,color:'var(--text1)'}}>{s.values.distance}m</span>}
-                  {hasDist&&hasTime&&<span style={{color:'var(--text3)'}}>→</span>}
-                  {hasTime&&<span style={{fontWeight:900,fontSize:14,color:'var(--primary)'}}>{s.values['tf-time']}s</span>}
-                  {hasWeight&&<span style={{fontWeight:900,fontSize:14,color:'var(--text1)'}}>{s.values.weight}kg</span>}
-                  {hasWeight&&hasReps&&<span style={{color:'var(--text3)'}}>×</span>}
-                  {hasReps&&<span style={{fontWeight:900,fontSize:14,color:hasWeight?'var(--text1)':'var(--primary)'}}>{s.values.reps}</span>}
-                  {secondaryMds.length>0&&<span style={{fontSize:12,color:'var(--text3)',fontWeight:600}}>
-                    ({secondaryMds.map((md,k)=><React.Fragment key={md.id}>{k>0&&'  '}<span>{md.name.replace(' Split','')}: </span>
-                      <span style={{color:'var(--text2)',fontWeight:700}}>{s.values[md.id]}</span></React.Fragment>})</span>}
-                </div></div>})}</div>})}
-        {!workouts.some(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))})&&
+            {sets.map((s,j)=><div key={j} style={{display:'flex',gap:10,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
+              <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
+              {historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
+                return<span key={mid}>{s.values[mid]??'-'}{md.unit?` ${md.unit}`:''}</span>})}</div>)}</div>})}
+        {!workouts.some(w=>w.athletes?.[activeAth]?.sets?.[historyEx.id]?.some(s=>s.completed))&&
           <div style={{textAlign:'center',color:'var(--text3)',padding:20}}>No history yet</div>}
       </div></div></div>})()}
     {confirmCancel&&<ConfirmDialog title="Discard Workout?" message="All progress will be lost."
-      confirmText="Discard" danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}</>))}
+      confirmText="Discard" danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}</>)}
 
 function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,onView,onViewExercise}){
   const usedExIds=[...new Set(workouts.flatMap(w=>(w.athletes?.[activeAth]?Object.keys(w.athletes[activeAth].sets||{}):[])
