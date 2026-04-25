@@ -1090,32 +1090,24 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
                 const hasR=v.reps!=null&&v.reps!=='';
                 const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
                 const egV=v['eg-setting'];const hasEg=egV!=null&&egV!=='';
+                let primary=null,extra=null;
                 if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
                   if(hasEg)extras.push('EG: '+egV);
-                  return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}}>
-                    <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
-                    <span style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>
-                    <span style={{color:'var(--text3)'}}>→</span>
-                    <span style={{fontWeight:700,color:'var(--primary)'}}>{v['tf-time']}s</span>
-                    {extras.length>0&&<span style={{color:'var(--text3)',fontSize:11}}>({extras.join('  ')})</span>}
-                  </div>)}
-                if(hasTfT)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)'}}>
-                  <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
-                  <span style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-time']}s</span></div>);
-                if(hasTfD)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)'}}>
-                  <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
-                  <span style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-dist']}m</span></div>);
-                if(hasW)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)'}}>
-                  <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
-                  <span style={{fontWeight:800,color:'var(--text1)'}}>{v.weight}kg</span>
-                  {hasR&&<><span style={{color:'var(--text3)'}}>×</span><span style={{fontWeight:700,color:'var(--primary)'}}>{v.reps}</span></>}
-                </div>);
-                const usedMids=Object.keys(v).filter(k=>v[k]!==''&&v[k]!=null);
-                const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
+                  primary=[<span key="d" style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>,
+                    <span key="a" style={{color:'var(--text3)'}}>→</span>,
+                    <span key="t" style={{fontWeight:700,color:'var(--primary)'}}>{v['tf-time']}s</span>];
+                  if(extras.length)extra=<span key="e" style={{color:'var(--text3)',fontSize:11}}>({extras.join('  ')})</span>;
+                }else if(hasTfT){primary=<span key="t" style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-time']}s</span>;
+                }else if(hasTfD){primary=<span key="d" style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-dist']}m</span>;
+                }else if(hasW){primary=[<span key="w" style={{fontWeight:800,color:'var(--text1)'}}>{v.weight}kg</span>];
+                  if(hasR)primary.push(<span key="x" style={{color:'var(--text3)'}}>×</span>,<span key="r" style={{fontWeight:700,color:'var(--primary)'}}>{v.reps}</span>);
+                }else{const usedMids=Object.keys(v).filter(k=>v[k]!==''&&v[k]!=null);
+                  const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
+                  primary=showMds.map(md=><span key={md.id} style={{fontWeight:600}}>{v[md.id]}{md.unit?' '+md.unit:''}</span>);}
                 return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}}>
-                  <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
-                  {showMds.map(md=><span key={md.id} style={{fontWeight:600}}>{v[md.id]}{md.unit?' '+md.unit:''}</span>)}
-                </div>)})}
+                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
+                {primary}{extra}
+              </div>)})}
             </div></div>)})}</div></>}
     </div></div></div>)}
 
@@ -1158,10 +1150,10 @@ function DateStrip({workouts,planned,competitions,selectedDate,onSelectDate}){
 function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView}){
   const athlete=athletes.find(a=>a.id===activeAth);
   const today=dateKey(Date.now());
+  const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
   const todayPlans=(planned||[]).filter(p=>p.date===today&&!todayWorkouts.some(w=>w.name===p.name));
   const weekCount=workouts.filter(w=>Date.now()-w.startTime<7*864e5).length;
   const monthCount=workouts.filter(w=>Date.now()-w.startTime<30*864e5).length;
-  const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
   const recent=[...workouts].reverse().slice(0,5);
 
   return(<div className="screen pad">
@@ -1519,30 +1511,22 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
               const hasRp=v.reps!=null&&v.reps!=='';
               const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
               const egV=v['eg-setting'];const hasEg=egV!=null&&egV!=='';
+              let primary=null,extra=null;
               if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
                 if(hasEg)extras.push('EG: '+egV);
-                return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0',flexWrap:'wrap'}}>
-                  <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
-                  <span style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>
-                  <span style={{color:'var(--text3)'}}>→</span>
-                  <span style={{fontWeight:700,color:'var(--primary)'}}>{v['tf-time']}s</span>
-                  {extras.length>0&&<span style={{color:'var(--text3)',fontSize:11}}>({extras.join('  ')})</span>}
-                </div>)}
-              if(hasTfT)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
-                <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
-                <span style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-time']}s</span></div>);
-              if(hasTfD)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
-                <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
-                <span style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-dist']}m</span></div>);
-              if(hasWt)return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
-                <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
-                <span style={{fontWeight:800,color:'var(--text1)'}}>{v.weight}kg</span>
-                {hasRp&&<><span style={{color:'var(--text3)'}}>×</span><span style={{fontWeight:700,color:'var(--primary)'}}>{v.reps}</span></>}
-              </div>);
+                primary=[<span key="d" style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>,
+                  <span key="a" style={{color:'var(--text3)'}}>→</span>,
+                  <span key="t" style={{fontWeight:700,color:'var(--primary)'}}>{v['tf-time']}s</span>];
+                if(extras.length)extra=<span key="e" style={{color:'var(--text3)',fontSize:11}}>({extras.join('  ')})</span>;
+              }else if(hasTfT){primary=<span key="t" style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-time']}s</span>;
+              }else if(hasTfD){primary=<span key="d" style={{fontWeight:800,color:'var(--primary)'}}>{v['tf-dist']}m</span>;
+              }else if(hasWt){primary=[<span key="w" style={{fontWeight:800,color:'var(--text1)'}}>{v.weight}kg</span>];
+                if(hasRp)primary.push(<span key="x" style={{color:'var(--text3)'}}>×</span>,<span key="r" style={{fontWeight:700,color:'var(--primary)'}}>{v.reps}</span>);
+              }else{primary=historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
+                return<span key={mid}>{v[mid]!=null?v[mid]:'-'}{md.unit?' '+md.unit:''}</span>});}
               return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0',flexWrap:'wrap'}}>
                 <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
-                {historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
-                  return<span key={mid}>{v[mid]??'-'}{md.unit?' '+md.unit:''}</span>})}</div>)})}</div>})}
+                {primary}{extra}</div>)})}</div>})}
         {!workouts.some(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))})&&
           <div style={{textAlign:'center',color:'var(--text3)',padding:20}}>No history yet</div>}
       </div></div></div>})()}
