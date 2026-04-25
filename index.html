@@ -1084,12 +1084,32 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
               <div style={{fontSize:13,fontWeight:700,color:'var(--text1)'}}>{w.name||'Workout'}</div>
               <div style={{fontSize:12,fontWeight:600,color:'var(--text3)'}}>{d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div>
             <div style={{display:'flex',flexDirection:'column',gap:3}}>
-              {sets.map((s,j)=>{const usedMids=Object.keys(s.values).filter(k=>s.values[k]!==''&&s.values[k]!=null);
-                const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
-                return(<div key={j} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}}>
-                <span style={{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
-                {showMds.map(md=><span key={md.id} style={{fontWeight:600}}>{s.values[md.id]}{md.unit?' '+md.unit:''}</span>)}
-              </div>)})}
+              {sets.map((s,j)=>{const v=s.values;
+                const hasDist=v.distance!=null&&v.distance!=='';const hasTfT=v['tf-time']!=null&&v['tf-time']!=='';
+                const hasTfD=v['tf-dist']!=null&&v['tf-dist']!=='';const hasW=v.weight!=null&&v.weight!=='';
+                const hasR=v.reps!=null&&v.reps!=='';
+                const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
+                const egV=v['eg-setting'];const hasEg=egV!=null&&egV!=='';
+                let content;
+                if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
+                  if(hasEg)extras.push('EG: '+egV);
+                  content=React.createElement(React.Fragment,null,
+                    React.createElement('span',{style:{fontWeight:800,color:'var(--text1)'}},v.distance+'m'),
+                    React.createElement('span',{style:{color:'var(--text3)',margin:'0 3px'}},'→'),
+                    React.createElement('span',{style:{fontWeight:700,color:'var(--primary)'}},v['tf-time']+'s'),
+                    extras.length?React.createElement('span',{style:{color:'var(--text3)',fontSize:11,marginLeft:4}},'('+extras.join('  ')+')'):null);
+                }else if(hasTfT){content=React.createElement('span',{style:{fontWeight:800,color:'var(--primary)'}},v['tf-time']+'s');
+                }else if(hasTfD){content=React.createElement('span',{style:{fontWeight:800,color:'var(--primary)'}},v['tf-dist']+'m');
+                }else if(hasW){content=React.createElement(React.Fragment,null,
+                    React.createElement('span',{style:{fontWeight:800,color:'var(--text1)'}},v.weight+'kg'),
+                    hasR?React.createElement(React.Fragment,null,
+                      React.createElement('span',{style:{color:'var(--text3)',margin:'0 4px'}},'×'),
+                      React.createElement('span',{style:{fontWeight:700,color:'var(--primary)'}},v.reps)):null);
+                }else{const usedMids=Object.keys(v).filter(k=>v[k]!==''&&v[k]!=null);
+                  const showMds=usedMids.map(id=>allMds.find(m=>m.id===id)).filter(Boolean);
+                  content=showMds.map(md=>React.createElement('span',{key:md.id,style:{fontWeight:600}},v[md.id]+(md.unit?' '+md.unit:'')));}
+                return React.createElement('div',{key:j,style:{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)',flexWrap:'wrap'}},
+                  React.createElement('span',{style:{width:18,fontSize:11,fontWeight:700,color:'var(--text3)'}},j+1),content)})}
             </div></div>)})}</div></>}
     </div></div></div>)}
 
@@ -1132,7 +1152,7 @@ function DateStrip({workouts,planned,competitions,selectedDate,onSelectDate}){
 function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView}){
   const athlete=athletes.find(a=>a.id===activeAth);
   const today=dateKey(Date.now());
-  const todayPlans=(planned||[]).filter(p=>p.date===today);
+  const todayPlans=(planned||[]).filter(p=>p.date===today&&!todayWorkouts.some(w=>w.name===p.name));
   const weekCount=workouts.filter(w=>Date.now()-w.startTime<7*864e5).length;
   const monthCount=workouts.filter(w=>Date.now()-w.startTime<30*864e5).length;
   const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
@@ -1199,7 +1219,7 @@ function CalendarScreen({workouts,planned,exercises,competitions,onView}){
   const[selDate,setSelDate]=useState(new Date());
   const selKey=dateKey(selDate.getTime());
   const dayWks=workouts.filter(w=>dateKey(w.startTime)===selKey);
-  const dayPlans=(planned||[]).filter(p=>p.date===selKey);
+  const dayPlans=(planned||[]).filter(p=>p.date===selKey&&!dayWks.some(w=>w.name===p.name));
   const selLabel=selDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 
   return(<div className="screen pad">
@@ -1466,7 +1486,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     {historyEx&&(()=>{const hw=historyEx.metrics.includes('weight'),ht=historyEx.metrics.includes('time')||historyEx.metrics.includes('tf-time'),
       hd=historyEx.metrics.includes('tf-dist')||historyEx.metrics.includes('distance'),hh=historyEx.metrics.includes('height');
       let bestVal=null,bestDate=null,bestLabel='',bestUnit='';
-      workouts.forEach(w=>{(w.athletes?.[activeAth]?.sets?.[historyEx.id]||[]).filter(s=>s.completed).forEach(s=>{
+      workouts.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===historyEx.id).flatMap(k=>ad.sets[k]).filter(s=>s.completed).forEach(s=>{
         if(hw){const v=s.values.weight||0;if(v>=(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel='Best Weight';bestUnit='kg'}}
         else if(ht){const mid=historyEx.metrics.includes('tf-time')?'tf-time':'time';const v=s.values[mid]||0;
           if(v>0&&(!bestVal||v<bestVal)){bestVal=v;bestDate=w.startTime;bestLabel='Best Time';bestUnit='s'}}
@@ -1482,16 +1502,37 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           <div><div style={{fontSize:12,fontWeight:800,color:'var(--primary)',textTransform:'uppercase',letterSpacing:'.5px'}}>{bestLabel}</div>
             <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{new Date(bestDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div></div></div>}
         <div className="section-title">Sessions</div>
-        {workouts.filter(w=>w.athletes?.[activeAth]?.sets?.[historyEx.id]?.some(s=>s.completed)).reverse().slice(0,10).map(w=>{
-          const sets=w.athletes[activeAth].sets[historyEx.id].filter(s=>s.completed);
+        {workouts.filter(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))}).reverse().slice(0,10).map(w=>{
+          const sets=Object.keys(w.athletes[activeAth].sets).filter(k=>baseExId(k)===historyEx.id).flatMap(k=>w.athletes[activeAth].sets[k]).filter(s=>s.completed);
           return<div key={w.id} style={{marginBottom:16}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>{w.name||'Workout'} <span style={{color:'var(--text3)',fontWeight:500}}>
               {new Date(w.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>
-            {sets.map((s,j)=><div key={j} style={{display:'flex',gap:10,fontSize:14,color:'var(--text2)',padding:'2px 0'}}>
-              <span style={{color:'var(--text3)',width:18,fontWeight:700}}>{j+1}</span>
-              {historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
-                return<span key={mid}>{s.values[mid]??'-'}{md.unit?` ${md.unit}`:''}</span>})}</div>)}</div>})}
-        {!workouts.some(w=>w.athletes?.[activeAth]?.sets?.[historyEx.id]?.some(s=>s.completed))&&
+            {sets.map((s,j)=>{const v=s.values;
+              const hasDist=v.distance!=null&&v.distance!=='';const hasTfT=v['tf-time']!=null&&v['tf-time']!=='';
+              const hasTfD=v['tf-dist']!=null&&v['tf-dist']!=='';const hasWt=v.weight!=null&&v.weight!=='';
+              const hasRp=v.reps!=null&&v.reps!=='';
+              const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
+              const egV=v['eg-setting'];const hasEg=egV!=null&&egV!=='';
+              let content;
+              if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
+                if(hasEg)extras.push('EG: '+egV);
+                content=React.createElement(React.Fragment,null,
+                  React.createElement('span',{style:{fontWeight:800,color:'var(--text1)'}},v.distance+'m'),
+                  React.createElement('span',{style:{color:'var(--text3)',margin:'0 3px'}},'→'),
+                  React.createElement('span',{style:{fontWeight:700,color:'var(--primary)'}},v['tf-time']+'s'),
+                  extras.length?React.createElement('span',{style:{color:'var(--text3)',fontSize:11,marginLeft:4}},'('+extras.join('  ')+')'):null);
+              }else if(hasTfT){content=React.createElement('span',{style:{fontWeight:800,color:'var(--primary)'}},v['tf-time']+'s');
+              }else if(hasTfD){content=React.createElement('span',{style:{fontWeight:800,color:'var(--primary)'}},v['tf-dist']+'m');
+              }else if(hasWt){content=React.createElement(React.Fragment,null,
+                  React.createElement('span',{style:{fontWeight:800,color:'var(--text1)'}},v.weight+'kg'),
+                  hasRp?React.createElement(React.Fragment,null,
+                    React.createElement('span',{style:{color:'var(--text3)',margin:'0 4px'}},'×'),
+                    React.createElement('span',{style:{fontWeight:700,color:'var(--primary)'}},v.reps)):null);
+              }else{content=historyEx.metrics.map(mid=>{const md=getMetric(mid,localCM);
+                  return React.createElement('span',{key:mid},(v[mid]??'-')+(md.unit?' '+md.unit:''))});}
+              return React.createElement('div',{key:j,style:{display:'flex',alignItems:'center',gap:6,fontSize:14,color:'var(--text2)',padding:'2px 0'}},
+                React.createElement('span',{style:{color:'var(--text3)',width:18,fontWeight:700}},j+1),content)})}</div>})}
+        {!workouts.some(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))})&&
           <div style={{textAlign:'center',color:'var(--text3)',padding:20}}>No history yet</div>}
       </div></div></div>})()}
     {confirmCancel&&<ConfirmDialog title="Discard Workout?" message="All progress will be lost."
