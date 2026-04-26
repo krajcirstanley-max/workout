@@ -1912,7 +1912,7 @@ function App(){
   useEffect(()=>{
     if(!plannedSynced) return;
     setPlanned(p=>{
-      let r=p.filter(x=>!x.id.startsWith('pl-sprint-'));
+      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&x.id!=='pl-lj-drills-2');
       if(!r.find(x=>x.id==='pl-sprint-5'))r=[...r,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
           'mb-overhead-back','mb-chest-pass','mb-rotational'],
@@ -1930,7 +1930,7 @@ function App(){
         },
         notes:'Contrast: Resisted 20m → Free 20m/25m/30m (4 min rest). Free sprints 3×30m (5 min rest). Freelap on free sprints.'
       }];
-      if(!r.find(x=>x.id==='pl-lj-drills-1'))r=[...r,{id:'pl-lj-drills-1',date:'2026-04-26',name:'LJ Drills',color:'#8b5cf6',
+      if(!r.find(x=>x.id==='pl-lj-drills-2'))r=[...r,{id:'pl-lj-drills-2',date:'2026-04-26',name:'LJ Drills',color:'#8b5cf6',
         exerciseIds:['ankle-dribble','calf-dribble','knee-dribble','free-leg-b-skip',
           'continuous-takeoffs','stride-long-short','3-step-drill','1-step-drill-hurdle','box-ground-box','skipping-height',
           'hj-mat-popup','build-ups','heel-drops','tibialis-raise'],
