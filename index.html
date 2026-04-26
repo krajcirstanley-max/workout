@@ -497,10 +497,11 @@ const DEFAULT_EXERCISES=[
   {id:'ankle-dribble',name:'Ankle Dribble',category:'T&F',metrics:['distance']},
   {id:'calf-dribble',name:'Calf Dribble',category:'T&F',metrics:['distance']},
   {id:'knee-dribble',name:'Knee Dribble',category:'T&F',metrics:['distance']},
-  {id:'free-leg-a-skip',name:'Free Leg A-Skip',category:'T&F',metrics:['distance']},
+  {id:'free-leg-b-skip',name:'Free Leg B-Skip',category:'T&F',metrics:['distance']},
   {id:'continuous-takeoffs',name:'Continuous Takeoffs',category:'T&F',metrics:['distance']},
   {id:'stride-long-short',name:'Stride-Stride-LONG-SHORT',category:'T&F',metrics:['reps']},
   {id:'3-step-drill',name:'3-Step Drill',category:'T&F',metrics:['tf-dist']},
+  {id:'1-step-drill-hurdle',name:'1-Step Drill over Hurdle',category:'T&F',metrics:['reps']},
   {id:'box-ground-box',name:'Box-Ground-Box',category:'T&F',metrics:['reps']},
   {id:'skipping-height',name:'Skipping for Height',category:'T&F',metrics:['distance']},
   {id:'hj-mat-popup',name:'HJ Mat Pop-up',category:'T&F',metrics:['reps']},
@@ -535,10 +536,12 @@ const st={
   async pull(k){if(!sb)return null;const{data}=await sb.from('wk_store').select('value').eq('key',k).single();return data?.value??null}
 };
 function useStore(k,f){const[v,setV]=useState(()=>st.get(k,f));
+  const[synced,setSynced]=useState(false);
   const up=useCallback(fn=>{const n=typeof fn==='function'?fn(st.get(k,f)):fn;st.set(k,n);setV(n)},[k]);
   useEffect(()=>{st.pull(k).then(remote=>{if(remote!==null){const local=st.get(k,f);
-    if(JSON.stringify(remote)!==JSON.stringify(local)){localStorage.setItem('wk2_'+k,JSON.stringify(remote));setV(remote)}}})},[]);
-  return[v,up]}
+    if(JSON.stringify(remote)!==JSON.stringify(local)){localStorage.setItem('wk2_'+k,JSON.stringify(remote));setV(remote)}}
+    setSynced(true)}).catch(()=>setSynced(true))},[]);
+  return[v,up,synced]}
 
 // ── Helpers ──
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -1880,7 +1883,7 @@ function App(){
   const[exercises,setExercises]=useStore('exercises',DEFAULT_EXERCISES);
   const[cm,setCM]=useStore('customMetrics',[]);
   const[workouts,setWorkouts]=useStore('workouts2',[]);
-  const[planned,setPlanned]=useStore('planned2',[]);
+  const[planned,setPlanned,plannedSynced]=useStore('planned2',[]);
   const[competitions,setCompetitions]=useStore('competitions',[]);
   const[viewing,setViewing]=useState(null);const[planDate,setPlanDate]=useState(null);
   const[viewExercise,setViewExercise]=useState(null);const[summaryWk,setSummaryWk]=useState(null);
@@ -1906,49 +1909,52 @@ function App(){
       return nw}))},[]);
   useEffect(()=>{const photoMap={};DEFAULT_ATHLETES.forEach(da=>{if(da.photo)photoMap[da.id]=da.photo});
     if(athletes.some(a=>photoMap[a.id]&&!a.photo))setAthletes(prev=>prev.map(a=>photoMap[a.id]&&!a.photo?{...a,photo:photoMap[a.id]}:a))},[]);
-  useEffect(()=>{setPlanned(p=>p.filter(x=>!x.id.startsWith('pl-sprint-')));
-    if(!planned.find(p=>p.id==='pl-sprint-5')){
-    setPlanned(p=>[...p,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
-      exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
-        'mb-overhead-back','mb-chest-pass','mb-rotational'],
-      supersets:[['resisted-sprint','free-sprint']],
-      setConfigs:{
-        'wall-drills':[{reps:8},{reps:8},{reps:8}],
-        'falling-starts':[{reps:5},{reps:5},{reps:5},{reps:5},{reps:5}],
-        'eg-marches':[{distance:20},{distance:20},{distance:20}],
-        'waterbag-sprint':[{distance:10},{distance:10},{distance:10}],
-        'resisted-sprint':[{distance:20},{distance:20},{distance:20}],
-        'free-sprint':[{distance:20},{distance:25},{distance:30},{distance:30},{distance:30},{distance:30}],
-        'mb-overhead-back':[{reps:5}],
-        'mb-chest-pass':[{reps:5}],
-        'mb-rotational':[{reps:5}]
-      },
-      notes:'Contrast: Resisted 20m → Free 20m/25m/30m (4 min rest). Free sprints 3×30m (5 min rest). Freelap on free sprints.'
-    }]);}
-    if(!planned.find(p=>p.id==='pl-lj-drills-1')){
-    setPlanned(p=>[...p,{id:'pl-lj-drills-1',date:'2026-04-26',name:'LJ Drills',color:'#8b5cf6',
-      exerciseIds:['ankle-dribble','calf-dribble','knee-dribble','free-leg-a-skip',
-        'continuous-takeoffs','stride-long-short','3-step-drill','box-ground-box','skipping-height',
-        'hj-mat-popup','build-ups','heel-drops','tibialis-raise'],
-      supersets:[],
-      setConfigs:{
-        'ankle-dribble':[{distance:20},{distance:20}],
-        'calf-dribble':[{distance:20},{distance:20}],
-        'knee-dribble':[{distance:20},{distance:20}],
-        'free-leg-a-skip':[{distance:20},{distance:20}],
-        'continuous-takeoffs':[{distance:40},{distance:40},{distance:40}],
-        'stride-long-short':[{},{},{},{},{},{},{},{}],
-        '3-step-drill':[{},{},{},{},{},{}],
-        'box-ground-box':[{},{},{},{},{},{}],
-        'skipping-height':[{distance:20},{distance:20},{distance:20}],
-        'hj-mat-popup':[{},{},{},{},{},{}],
-        'build-ups':[{distance:60},{distance:60},{distance:60}],
-        'heel-drops':[{reps:15},{reps:15}],
-        'tibialis-raise':[{reps:15},{reps:15}]
-      },
-      notes:'Sprint drills → LJ drills → Pop-ups (HJ mat, 4-6 krokov) → Rovinky 70% → Prevencia'
-    }])}
-    },[]);
+  useEffect(()=>{
+    if(!plannedSynced) return;
+    setPlanned(p=>{
+      let r=p.filter(x=>!x.id.startsWith('pl-sprint-'));
+      if(!r.find(x=>x.id==='pl-sprint-5'))r=[...r,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
+        exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
+          'mb-overhead-back','mb-chest-pass','mb-rotational'],
+        supersets:[['resisted-sprint','free-sprint']],
+        setConfigs:{
+          'wall-drills':[{reps:8},{reps:8},{reps:8}],
+          'falling-starts':[{reps:5},{reps:5},{reps:5},{reps:5},{reps:5}],
+          'eg-marches':[{distance:20},{distance:20},{distance:20}],
+          'waterbag-sprint':[{distance:10},{distance:10},{distance:10}],
+          'resisted-sprint':[{distance:20},{distance:20},{distance:20}],
+          'free-sprint':[{distance:20},{distance:25},{distance:30},{distance:30},{distance:30},{distance:30}],
+          'mb-overhead-back':[{reps:5}],
+          'mb-chest-pass':[{reps:5}],
+          'mb-rotational':[{reps:5}]
+        },
+        notes:'Contrast: Resisted 20m → Free 20m/25m/30m (4 min rest). Free sprints 3×30m (5 min rest). Freelap on free sprints.'
+      }];
+      if(!r.find(x=>x.id==='pl-lj-drills-1'))r=[...r,{id:'pl-lj-drills-1',date:'2026-04-26',name:'LJ Drills',color:'#8b5cf6',
+        exerciseIds:['ankle-dribble','calf-dribble','knee-dribble','free-leg-b-skip',
+          'continuous-takeoffs','stride-long-short','3-step-drill','1-step-drill-hurdle','box-ground-box','skipping-height',
+          'hj-mat-popup','build-ups','heel-drops','tibialis-raise'],
+        supersets:[],
+        setConfigs:{
+          'ankle-dribble':[{distance:20},{distance:20}],
+          'calf-dribble':[{distance:20},{distance:20}],
+          'knee-dribble':[{distance:20},{distance:20}],
+          'free-leg-b-skip':[{distance:20},{distance:20}],
+          'continuous-takeoffs':[{distance:40},{distance:40},{distance:40}],
+          'stride-long-short':[{},{},{},{},{},{},{},{}],
+          '3-step-drill':[{},{},{},{},{},{}],
+          '1-step-drill-hurdle':[{},{},{},{},{},{}],
+          'box-ground-box':[{},{},{},{},{},{}],
+          'skipping-height':[{distance:20},{distance:20},{distance:20}],
+          'hj-mat-popup':[{},{},{},{},{},{}],
+          'build-ups':[{distance:60},{distance:60},{distance:60}],
+          'heel-drops':[{reps:15},{reps:15}],
+          'tibialis-raise':[{reps:15},{reps:15}]
+        },
+        notes:'Sprint drills → LJ drills → Pop-ups (HJ mat, 4-6 krokov) → Rovinky 70% → Prevencia'
+      }];
+      return r});
+    },[plannedSynced]);
 
   const _clearActiveSession=()=>{['activeSession','activePlan','activeWorkout','activeSupersets','activeCheckedIn'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}})};
   const finishWorkout=(wk,localEx,localCM)=>{_clearActiveSession();
