@@ -494,6 +494,18 @@ const DEFAULT_EXERCISES=[
   {id:'mb-chest-pass',name:'MB Chest Pass',category:'T&F',metrics:['weight','reps']},
   {id:'mb-rotational',name:'MB Rotational Throw',category:'T&F',metrics:['weight','reps']},
   {id:'waterbag-sprint',name:'Waterbag Sprint',category:'T&F',metrics:['distance','tf-time']},
+  {id:'ankle-dribble',name:'Ankle Dribble',category:'T&F',metrics:['distance']},
+  {id:'calf-dribble',name:'Calf Dribble',category:'T&F',metrics:['distance']},
+  {id:'knee-dribble',name:'Knee Dribble',category:'T&F',metrics:['distance']},
+  {id:'free-leg-a-skip',name:'Free Leg A-Skip',category:'T&F',metrics:['distance']},
+  {id:'continuous-takeoffs',name:'Continuous Takeoffs',category:'T&F',metrics:['distance']},
+  {id:'stride-long-short',name:'Stride-Stride-LONG-SHORT',category:'T&F',metrics:['reps']},
+  {id:'3-step-drill',name:'3-Step Drill',category:'T&F',metrics:['tf-dist']},
+  {id:'box-ground-box',name:'Box-Ground-Box',category:'T&F',metrics:['reps']},
+  {id:'skipping-height',name:'Skipping for Height',category:'T&F',metrics:['distance']},
+  {id:'hj-mat-popup',name:'HJ Mat Pop-up',category:'T&F',metrics:['reps']},
+  {id:'heel-drops',name:'Heel Drops',category:'T&F',metrics:['reps']},
+  {id:'tibialis-raise',name:'Tibialis Raise',category:'T&F',metrics:['reps']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
 const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -1912,7 +1924,31 @@ function App(){
         'mb-rotational':[{reps:5}]
       },
       notes:'Contrast: Resisted 20m → Free 20m/25m/30m (4 min rest). Free sprints 3×30m (5 min rest). Freelap on free sprints.'
-    }])}},[]);
+    }]);}
+    if(!planned.find(p=>p.id==='pl-lj-drills-1')){
+    setPlanned(p=>[...p,{id:'pl-lj-drills-1',date:'2026-04-26',name:'LJ Drills',color:'#8b5cf6',
+      exerciseIds:['ankle-dribble','calf-dribble','knee-dribble','free-leg-a-skip',
+        'continuous-takeoffs','stride-long-short','3-step-drill','box-ground-box','skipping-height',
+        'hj-mat-popup','build-ups','heel-drops','tibialis-raise'],
+      supersets:[],
+      setConfigs:{
+        'ankle-dribble':[{distance:20},{distance:20}],
+        'calf-dribble':[{distance:20},{distance:20}],
+        'knee-dribble':[{distance:20},{distance:20}],
+        'free-leg-a-skip':[{distance:20},{distance:20}],
+        'continuous-takeoffs':[{distance:40},{distance:40},{distance:40}],
+        'stride-long-short':[{},{},{},{},{},{},{},{}],
+        '3-step-drill':[{},{},{},{},{},{}],
+        'box-ground-box':[{},{},{},{},{},{}],
+        'skipping-height':[{distance:20},{distance:20},{distance:20}],
+        'hj-mat-popup':[{},{},{},{},{},{}],
+        'build-ups':[{distance:60},{distance:60},{distance:60}],
+        'heel-drops':[{reps:15},{reps:15}],
+        'tibialis-raise':[{reps:15},{reps:15}]
+      },
+      notes:'Sprint drills → LJ drills → Pop-ups (HJ mat, 4-6 krokov) → Rovinky 70% → Prevencia'
+    }])}
+    },[]);
 
   const _clearActiveSession=()=>{['activeSession','activePlan','activeWorkout','activeSupersets','activeCheckedIn'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}})};
   const finishWorkout=(wk,localEx,localCM)=>{_clearActiveSession();
