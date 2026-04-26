@@ -1887,6 +1887,10 @@ function App(){
   const[competitions,setCompetitions]=useStore('competitions',[]);
   const[viewing,setViewing]=useState(null);const[planDate,setPlanDate]=useState(null);
   const[viewExercise,setViewExercise]=useState(null);const[summaryWk,setSummaryWk]=useState(null);
+  const[offline,setOffline]=useState(!navigator.onLine);
+  useEffect(()=>{const on=()=>setOffline(false);const off=()=>setOffline(true);
+    window.addEventListener('online',on);window.addEventListener('offline',off);
+    return()=>{window.removeEventListener('online',on);window.removeEventListener('offline',off)}},[]);
   useEffect(()=>{if(!inWorkout){const a=athletes.find(a=>a.id===activeAth);applyTheme(a?.color||'#3b82f6')}},[activeAth,athletes,inWorkout]);
   useEffect(()=>{const ids=new Set(exercises.map(e=>e.id));
     const missing=DEFAULT_EXERCISES.filter(e=>!ids.has(e.id));
@@ -1976,6 +1980,8 @@ function App(){
       workouts={workouts} onFinish={finishWorkout} onCancel={cancelWorkout} initialPlan={activePlan}/></div>);
 
   return(<>
+    {offline&&<div style={{background:'#f59e0b',color:'#fff',textAlign:'center',padding:'6px 16px',
+      fontSize:13,fontWeight:600,letterSpacing:'.3px'}}>OFFLINE</div>}
     {tab==='today'&&<TodayScreen athletes={athletes} activeAth={activeAth} onSelectAth={setActiveAth}
       workouts={workouts} planned={planned} exercises={exercises} competitions={competitions}
       onStartEmpty={startEmpty} onStartPlan={startPlan} onView={setViewing}/>}
