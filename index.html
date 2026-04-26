@@ -947,7 +947,7 @@ function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onS
             onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],notes:e.target.value}}))}/></div></div>))}
       <button className="btn btn-primary" onClick={()=>onSave({name:wkName,weather,tag,athData,customDuration:customElapsed})}>Save Workout</button></div></div>)}
 
-function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,onUpdate,onRepeat,allTags}){
+function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,onUpdate,onRepeat,allTags,onSaveTemplate}){
   const[wk,setWk]=useState(JSON.parse(JSON.stringify(initWk)));
   const[selAth,setSelAth]=useState(athletes[0]?.id);
   const[editing,setEditing]=useState(false);
@@ -1060,6 +1060,7 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
 
       {dirty&&<button className="btn btn-primary" style={{marginTop:8}} onClick={()=>{onUpdate(wk);setEditing(false)}}>Save Changes</button>}
       {onRepeat&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>onRepeat(wk)}>🔁 Repeat Workout</button>}
+      {onSaveTemplate&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>{onSaveTemplate(wk);onClose()}}>Save as Template</button>}
       <button className="btn btn-danger" style={{marginTop:8}} onClick={()=>onDelete(wk.id)}>Delete Workout</button>
     </div>
     {showAddEx&&<ExercisePicker exercises={exercises} cm={cm} onSelect={addExToWk} onClose={()=>setShowAddEx(false)}
@@ -1172,7 +1173,7 @@ function DateStrip({workouts,planned,competitions,selectedDate,onSelectDate}){
       onSelectDay={d=>{onSelectDate(new Date(d));setCalOpen(false)}}/></div>}
   </div>)}
 
-function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView}){
+function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView,templates}){
   const athlete=athletes.find(a=>a.id===activeAth);
   const today=dateKey(Date.now());
   const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
@@ -1220,6 +1221,15 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
 
       {todayPlans.length>0&&<><div className="or-divider">or</div>
         <button className="btn btn-secondary" style={{marginBottom:16}} onClick={onStartEmpty}>Start Empty Workout</button></>}
+
+      {templates&&templates.length>0&&<><div className="section-title">Templates</div>
+        <div className="card-list" style={{marginBottom:16}}>{templates.map(tpl=>
+          <button key={tpl.id} className="wk-card" onClick={()=>onStartPlan(tpl)} style={{textAlign:'left',width:'100%'}}>
+            <div className="wk-card-bar" style={{background:tpl.color||'var(--primary)'}}/>
+            <div className="wk-card-body">
+              <div className="wk-card-top"><div className="wk-card-name">{tpl.name}</div></div>
+              <div className="wk-card-bottom"><div className="wk-card-meta">{tpl.exerciseIds.length} exercises</div></div>
+            </div></button>)}</div></>}
 
       {todayWorkouts.length>0&&<><div className="section-title">Today</div>
         <div className="card-list">{todayWorkouts.map(wk=>
@@ -1561,6 +1571,44 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     {confirmCancel&&<ConfirmDialog title="Discard Workout?" message="All progress will be lost."
       confirmText="Discard" danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}</>)}
 
+function TrainingLoadChart({workouts,activeAth}){
+  const data=useMemo(()=>{
+    const now=new Date();const weeks=12;const result=[];
+    for(let i=weeks-1;i>=0;i--){
+      const ws=new Date(now);ws.setDate(ws.getDate()-i*7-(ws.getDay()||7)+1);ws.setHours(0,0,0,0);
+      const we=new Date(ws);we.setDate(we.getDate()+7);
+      const ww=workouts.filter(w=>w.athletes?.[activeAth]&&w.startTime>=ws.getTime()&&w.startTime<we.getTime());
+      const byTag={};ww.forEach(w=>{const tn=w.tag?.name||'Other';const tc=w.tag?.color||'#94a3b8';
+        if(!byTag[tn])byTag[tn]={count:0,color:tc};byTag[tn].count++});
+      result.push({label:`${ws.getDate()}/${ws.getMonth()+1}`,total:ww.length,byTag})}
+    return result},[workouts,activeAth]);
+  const max=Math.max(...data.map(d=>d.total),1);
+  const W=340,H=160,pT=20,pB=32,pL=4,pR=4;
+  const bW=(W-pL-pR)/data.length*0.65,gap=(W-pL-pR)/data.length*0.35;
+  return(<div className="card" style={{padding:'16px 12px',marginBottom:16}}>
+    <div className="section-title" style={{marginBottom:12}}>Training Load — 12 Weeks</div>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',display:'block'}}>
+      {[1,2,3,4,5].map(n=>n<=max&&<line key={n} x1={pL} x2={W-pR} y1={H-pB-(n/max)*(H-pT-pB)} y2={H-pB-(n/max)*(H-pT-pB)}
+        stroke="var(--border-light)" strokeWidth="0.5"/>)}
+      {data.map((wk,i)=>{const x=pL+i*(bW+gap)+gap/2;let y=H-pB;
+        const tags=Object.entries(wk.byTag);
+        return(<g key={i}>
+          {wk.total===0&&<rect x={x} y={H-pB-3} width={bW} height={3} rx={1.5} fill="var(--border-light)"/>}
+          {tags.map(([name,{count,color}])=>{const segH=(count/max)*(H-pT-pB);y-=segH;
+            return <rect key={name} x={x} y={y} width={bW} height={segH} rx={3} fill={color} opacity={0.85}/>})}
+          {wk.total>0&&<text x={x+bW/2} y={H-pB-(wk.total/max)*(H-pT-pB)-4} textAnchor="middle"
+            fontSize="8" fontWeight="800" fill="var(--text2)">{wk.total}</text>}
+          <text x={x+bW/2} y={H-pB+11} textAnchor="middle" fontSize="6.5" fontWeight="600"
+            fill="var(--text3)">{wk.label}</text>
+        </g>)})}</svg>
+    {(()=>{const tags={};data.forEach(w=>Object.entries(w.byTag).forEach(([n,{color}])=>{if(!tags[n])tags[n]=color}));
+      const entries=Object.entries(tags);
+      return entries.length>0&&<div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:10,justifyContent:'center'}}>
+        {entries.map(([n,c])=><div key={n} style={{display:'flex',alignItems:'center',gap:4}}>
+          <div style={{width:8,height:8,borderRadius:4,background:c}}/>
+          <span style={{fontSize:11,fontWeight:600,color:'var(--text2)'}}>{n}</span></div>)}</div>})()}
+  </div>)}
+
 function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,onView,onViewExercise}){
   const usedExIds=[...new Set(workouts.flatMap(w=>(w.athletes?.[activeAth]?Object.keys(w.athletes[activeAth].sets||{}):[])
     .filter(eid=>(w.athletes[activeAth].sets[eid]||[]).some(s=>s.completed))).map(baseExId))];
@@ -1568,6 +1616,7 @@ function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,o
 
   return(<div className="screen pad">
     <h2 style={{fontSize:24,fontWeight:900,letterSpacing:'-.5px',marginBottom:16}}>Progress</h2>
+    <TrainingLoadChart workouts={workouts} activeAth={activeAth}/>
     {topExercises.length>0&&<><div className="section-title">Your Exercises</div>
       <div className="card-list">{topExercises.map(ex=>{const prs=computePRs(ex.id,activeAth,workouts,ex);const best=prs.maxWeight?`${prs.maxWeight} kg`:prs.maxReps?`${prs.maxReps} reps`:'';
         const cc=catColor(ex.category);
@@ -1581,7 +1630,7 @@ function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,o
   </div>)}
 
 function ProfileScreen({athletes,activeAth,onSelectAth,exercises,cm,workouts,onUpdateAthletes,
-  onUpdateExercises,onUpdateCM,competitions,onUpdateCompetitions}){
+  onUpdateExercises,onUpdateCM,competitions,onUpdateCompetitions,templates,onUpdateTemplates,onStartPlan}){
   const[view,setView]=useState('main');const[editAth,setEditAth]=useState(null);const[athName,setAthName]=useState('');
   const[athColor,setAthColor]=useState('');const[athPhoto,setAthPhoto]=useState('');const[showEditor,setShowEditor]=useState(false);const[editing,setEditing]=useState(null);
   const[search,setSearch]=useState('');const[cat,setCat]=useState('All');
@@ -1614,6 +1663,25 @@ function ProfileScreen({athletes,activeAth,onSelectAth,exercises,cm,workouts,onU
         onSave={ex=>{const i=exercises.findIndex(e=>e.id===ex.id);
           onUpdateExercises(i>=0?exercises.map((e,j)=>j===i?ex:e):[...exercises,ex]);setShowEditor(false)}}
         onClose={()=>setShowEditor(false)} onAddMetric={m=>onUpdateCM([...cm,m])}/>}
+    </div>)}
+
+  if(view==='templates'){
+    return(<div className="screen pad">
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+        <button className="hdr-btn" onClick={()=>setView('main')}><Icon name="chevLeft" size={20}/></button>
+        <h2 style={{fontSize:22,fontWeight:900,flex:1}}>Templates</h2></div>
+      {templates&&templates.length>0?<div className="card-list">{templates.map(tpl=>
+        <div key={tpl.id} className="wk-card" style={{position:'relative'}}>
+          <div className="wk-card-bar" style={{background:tpl.color||'var(--primary)'}}/>
+          <div className="wk-card-body" onClick={()=>onStartPlan(tpl)} style={{cursor:'pointer'}}>
+            <div className="wk-card-top"><div className="wk-card-name">{tpl.name}</div></div>
+            <div className="wk-card-bottom"><div className="wk-card-meta">{tpl.exerciseIds.length} exercises</div></div>
+          </div>
+          <button onClick={()=>onUpdateTemplates(templates.filter(t=>t.id!==tpl.id))}
+            style={{position:'absolute',top:8,right:8,color:'var(--text3)',padding:4}}><Icon name="trash" size={14}/></button>
+        </div>)}</div>
+        :<div style={{textAlign:'center',color:'var(--text3)',padding:'40px 0',fontSize:14}}>
+          No templates yet. Save a workout as template from workout details.</div>}
     </div>)}
 
   if(view==='competitions'){
@@ -1717,6 +1785,11 @@ function ProfileScreen({athletes,activeAth,onSelectAth,exercises,cm,workouts,onU
           <div className="menu-item-left">
             <div className="menu-item-icon" style={{background:'#10b981',color:'#fff'}}><Icon name="dumbbell" size={20}/></div>
             <div><div className="menu-item-label">Exercises</div><div className="menu-item-sub">{exercises.length} exercises</div></div></div>
+          <div className="menu-item-right"><Icon name="chevRight" size={16}/></div></button>
+        <button className="menu-item" onClick={()=>setView('templates')}>
+          <div className="menu-item-left">
+            <div className="menu-item-icon" style={{background:'#8b5cf6',color:'#fff'}}><Icon name="edit" size={20}/></div>
+            <div><div className="menu-item-label">Templates</div><div className="menu-item-sub">{templates?.length||0} templates</div></div></div>
           <div className="menu-item-right"><Icon name="chevRight" size={16}/></div></button>
         <button className="menu-item" onClick={()=>setView('athletes')}>
           <div className="menu-item-left">
@@ -1887,6 +1960,7 @@ function App(){
   const[planned,setPlanned,plannedSynced]=useStore('planned2',[]);
   const[competitions,setCompetitions]=useStore('competitions',[]);
   const[customTags,setCustomTags]=useStore('customTags',[]);
+  const[templates,setTemplates]=useStore('templates',[]);
   const allTags=[...DEFAULT_TAGS,...customTags];
   const addCustomTag=t=>{if(!customTags.find(x=>x.id===t.id))setCustomTags(p=>[...p,t])};
   const[viewing,setViewing]=useState(null);const[planDate,setPlanDate]=useState(null);
@@ -1967,7 +2041,7 @@ function App(){
   const _clearActiveSession=()=>{['activeSession','activePlan','activeWorkout','activeSupersets','activeCheckedIn'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}})};
   const finishWorkout=(wk,localEx,localCM)=>{_clearActiveSession();
     if(wk.exerciseIds.length>0){setWorkouts(p=>[...p,wk]);setSummaryWk(wk)}
-    if(activePlan)setPlanned(p=>p.filter(pl=>pl.id!==activePlan.id));
+    if(activePlan&&!activePlan.id?.startsWith('tpl-'))setPlanned(p=>p.filter(pl=>pl.id!==activePlan.id));
     setExercises(localEx);setCM(localCM);setInWorkout(false);setActivePlan(null);setTab('today')};
   const cancelWorkout=()=>{_clearActiveSession();setInWorkout(false);setActivePlan(null);setTab('today')};
   const deleteWorkout=id=>{setWorkouts(p=>p.filter(w=>w.id!==id));setViewing(null)};
@@ -1978,6 +2052,13 @@ function App(){
     const sets=Object.values(wk.athletes).flatMap(a=>(a.sets[eid]||[]).filter(s=>s.completed));
     if(sets.length)plan.setConfigs[base]=sets.map(s=>{const cfg={};Object.entries(s.values).forEach(([k,v])=>{if(v!==''&&v!=null)cfg[k]=v});return cfg})});
     setViewing(null);startPlan(plan)};
+  const saveAsTemplate=wk=>{const tpl={id:'tpl-'+uid(),name:wk.name||'Template',
+    color:wk.tag?.color||wk.color||'#3b82f6',createdAt:Date.now(),
+    exerciseIds:[...new Set(wk.exerciseIds.map(baseExId))],supersets:[],
+    setConfigs:Object.fromEntries(wk.exerciseIds.map(eid=>{const base=baseExId(eid);
+      const cnt=Math.max(...Object.values(wk.athletes).map(a=>(a.sets[eid]||[]).filter(s=>s.completed).length),0);
+      return[base,Array(cnt||3).fill({})]}))};
+    setTemplates(p=>[...p,tpl])};
 
   if(inWorkout)return(<div id="root" style={{height:'100%',display:'flex',flexDirection:'column'}}>
     <ActiveWorkoutScreen athletes={athletes} exercises={exercises} customMetrics={cm}
@@ -1989,7 +2070,7 @@ function App(){
       fontSize:13,fontWeight:600,letterSpacing:'.3px'}}>OFFLINE</div>}
     {tab==='today'&&<TodayScreen athletes={athletes} activeAth={activeAth} onSelectAth={setActiveAth}
       workouts={workouts} planned={planned} exercises={exercises} competitions={competitions}
-      onStartEmpty={startEmpty} onStartPlan={startPlan} onView={setViewing}/>}
+      onStartEmpty={startEmpty} onStartPlan={startPlan} onView={setViewing} templates={templates}/>}
     {tab==='calendar'&&<CalendarScreen workouts={workouts} planned={planned} exercises={exercises}
       competitions={competitions} onView={setViewing}/>}
     {tab==='progress'&&<ProgressScreen workouts={workouts} athletes={athletes} activeAth={activeAth}
@@ -1997,7 +2078,8 @@ function App(){
     {tab==='profile'&&<ProfileScreen athletes={athletes} activeAth={activeAth} onSelectAth={setActiveAth}
       exercises={exercises} cm={cm} workouts={workouts} onUpdateAthletes={setAthletes}
       onUpdateExercises={setExercises} onUpdateCM={setCM}
-      competitions={competitions} onUpdateCompetitions={setCompetitions}/>}
+      competitions={competitions} onUpdateCompetitions={setCompetitions}
+      templates={templates} onUpdateTemplates={setTemplates} onStartPlan={startPlan}/>}
 
     <nav className="nav">
       {[{id:'today',icon:'home',l:'Today'},{id:'calendar',icon:'calendar',l:'Calendar'},{id:'progress',icon:'barChart',l:'Progress'},{id:'profile',icon:'user',l:'Profile'}
@@ -2007,7 +2089,7 @@ function App(){
     {viewing&&<WorkoutDetail workout={viewing} athletes={athletes} exercises={exercises} cm={cm}
       onClose={()=>setViewing(null)} onDelete={deleteWorkout}
       onUpdate={wk=>{setWorkouts(p=>p.map(w=>w.id===wk.id?wk:w));setViewing(wk)}}
-      onRepeat={repeatWorkout} allTags={allTags}/>}
+      onRepeat={repeatWorkout} allTags={allTags} onSaveTemplate={saveAsTemplate}/>}
     {summaryWk&&<WorkoutSummary workout={summaryWk} athletes={athletes} exercises={exercises} cm={cm}
       onClose={()=>setSummaryWk(null)}/>}
     {planDate&&<PlanWorkoutModal date={planDate} exercises={exercises}
