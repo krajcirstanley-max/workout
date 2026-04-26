@@ -1912,7 +1912,7 @@ function App(){
   useEffect(()=>{
     if(!plannedSynced) return;
     setPlanned(p=>{
-      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&x.id!=='pl-lj-drills-2');
+      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-'));
       if(!r.find(x=>x.id==='pl-sprint-5'))r=[...r,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
           'mb-overhead-back','mb-chest-pass','mb-rotational'],
