@@ -873,7 +873,7 @@ function ConfirmDialog({title,message,onConfirm,onCancel,confirmText='OK',danger
       <button className="btn btn-secondary" style={{flex:1}} onClick={onCancel}>Cancel</button>
       <button className={`btn ${danger?'btn-danger':'btn-primary'}`} style={{flex:1}} onClick={onConfirm}>{confirmText}</button></div></div></div></div>)}
 
-function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onSave,onCancel}){
+function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onSave,onCancel,allTags,onAddCustomTag}){
   const[weather,setWeather]=useState(null);const[tag,setTag]=useState(initialTag||null);
   const[showCustomTag,setShowCustomTag]=useState(false);const[ctName,setCtName]=useState('');const[ctColor,setCtColor]=useState('#8b5cf6');
   const[wkName,setWkName]=useState(workout.name||'');
@@ -911,7 +911,7 @@ function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onS
             <span className="emoji">{w.e}</span><span>{w.l}</span></button>))}</div></div>
       <div className="form-group"><label className="form-label">Tag</label>
         <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
-          {DEFAULT_TAGS.map(t=><button key={t.id} onClick={()=>setTag(tag?.id===t.id?null:t)}
+          {(allTags||DEFAULT_TAGS).map(t=><button key={t.id} onClick={()=>setTag(tag?.id===t.id?null:t)}
             style={{padding:'7px 14px',borderRadius:20,fontSize:13,fontWeight:700,cursor:'pointer',
               background:tag?.id===t.id?t.color:t.color+'18',color:tag?.id===t.id?'#fff':t.color,
               border:tag?.id===t.id?`2px solid ${t.color}`:'2px solid transparent'}}>{t.name}</button>)}
@@ -925,7 +925,7 @@ function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onS
             style={{width:36,height:36,border:'none',borderRadius:8,cursor:'pointer',padding:0}}/>
           <button style={{padding:'8px 12px',borderRadius:8,fontSize:13,fontWeight:800,background:'var(--primary)',color:'#fff',border:'none',cursor:'pointer'}}
             onClick={()=>{if(!ctName.trim())return;const t={id:'tag-'+uid(),name:ctName.trim(),color:ctColor};
-              setTag(t);setShowCustomTag(false);setCtName('')}}>Add</button></div>}</div>
+              setTag(t);if(onAddCustomTag)onAddCustomTag(t);setShowCustomTag(false);setCtName('')}}>Add</button></div>}</div>
       {athletes.filter(a=>workout.athletes[a.id]).map(a=>(<div key={a.id} style={{marginBottom:20}}>
         <div style={{fontWeight:800,fontSize:15,marginBottom:10,color:a.color}}>{a.name}</div>
         <div className="form-group"><label className="form-label">RPE {athData[a.id]?.rpe?`— ${athData[a.id].rpe}/10`:''}</label>
@@ -947,7 +947,7 @@ function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onS
             onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],notes:e.target.value}}))}/></div></div>))}
       <button className="btn btn-primary" onClick={()=>onSave({name:wkName,weather,tag,athData,customDuration:customElapsed})}>Save Workout</button></div></div>)}
 
-function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,onUpdate,onRepeat}){
+function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,onUpdate,onRepeat,allTags}){
   const[wk,setWk]=useState(JSON.parse(JSON.stringify(initWk)));
   const[selAth,setSelAth]=useState(athletes[0]?.id);
   const[editing,setEditing]=useState(false);
@@ -998,7 +998,7 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
 
       {editing&&<div style={{marginBottom:12}}>
         <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
-          {DEFAULT_TAGS.map(t=><button key={t.id} onClick={()=>setWk({...wk,tag:wk.tag?.id===t.id?null:t,color:t.color})}
+          {(allTags||DEFAULT_TAGS).map(t=><button key={t.id} onClick={()=>setWk({...wk,tag:wk.tag?.id===t.id?null:t,color:t.color})}
             style={{padding:'5px 12px',borderRadius:20,fontSize:12,fontWeight:700,cursor:'pointer',
               background:wk.tag?.id===t.id?t.color:t.color+'18',color:wk.tag?.id===t.id?'#fff':t.color,
               border:wk.tag?.id===t.id?`2px solid ${t.color}`:'2px solid transparent'}}>{t.name}</button>)}
@@ -1265,7 +1265,7 @@ function CalendarScreen({workouts,planned,exercises,competitions,onView}){
     </div></div>)}
 
 function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,workouts,
-  onFinish,onCancel,initialPlan}){
+  onFinish,onCancel,initialPlan,allTags,onAddCustomTag}){
   const[activeAth,setActiveAth]=useState(athletes[0]?.id);
   const[workout,setWorkout]=useState(()=>{try{const sv=localStorage.getItem('wk2_activeWorkout');if(sv){const w=JSON.parse(sv);if(w&&w.id)return w}}catch{}
     const a={};athletes.forEach(at=>{a[at.id]={readiness:null,sets:{}}});
@@ -1364,7 +1364,8 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const athSets=workout.athletes[activeAth]?.sets||{};
 
   if(showFinish)return<WorkoutFinishForm workout={workout} athletes={athletes} exercises={localEx} cm={localCM} elapsed={elapsed}
-    initialTag={wkTag} onSave={handleFinishSave} onCancel={()=>setShowFinish(false)}/>;
+    initialTag={wkTag} onSave={handleFinishSave} onCancel={()=>setShowFinish(false)}
+    allTags={allTags} onAddCustomTag={onAddCustomTag}/>;
 
   return(<><div className="hdr"><button className="hdr-btn" onClick={()=>setConfirmCancel(true)}><Icon name="x" size={20}/></button>
     <span className="hdr-title">Workout</span><span className="hdr-time">{fmtTime(Math.floor(elapsed/1000))}</span></div>
@@ -1487,7 +1488,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
       <button className="readiness-skip" onClick={()=>setShowTagPicker(false)}>Skip</button></div>
       <div className="readiness-body">
         <div style={{marginBottom:20}}><h3 style={{fontSize:15,fontWeight:800,marginBottom:12}}>Training Type</h3>
-          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>{DEFAULT_TAGS.map(t=>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>{(allTags||DEFAULT_TAGS).map(t=>
             <button key={t.id} onClick={()=>setWkTag(wkTag?.id===t.id?null:t)}
               style={{padding:'8px 16px',borderRadius:20,fontSize:14,fontWeight:700,
                 background:wkTag?.id===t.id?t.color:t.color+'18',color:wkTag?.id===t.id?'#fff':t.color,
@@ -1885,6 +1886,9 @@ function App(){
   const[workouts,setWorkouts]=useStore('workouts2',[]);
   const[planned,setPlanned,plannedSynced]=useStore('planned2',[]);
   const[competitions,setCompetitions]=useStore('competitions',[]);
+  const[customTags,setCustomTags]=useStore('customTags',[]);
+  const allTags=[...DEFAULT_TAGS,...customTags];
+  const addCustomTag=t=>{if(!customTags.find(x=>x.id===t.id))setCustomTags(p=>[...p,t])};
   const[viewing,setViewing]=useState(null);const[planDate,setPlanDate]=useState(null);
   const[viewExercise,setViewExercise]=useState(null);const[summaryWk,setSummaryWk]=useState(null);
   const[offline,setOffline]=useState(!navigator.onLine);
@@ -1977,7 +1981,8 @@ function App(){
 
   if(inWorkout)return(<div id="root" style={{height:'100%',display:'flex',flexDirection:'column'}}>
     <ActiveWorkoutScreen athletes={athletes} exercises={exercises} customMetrics={cm}
-      workouts={workouts} onFinish={finishWorkout} onCancel={cancelWorkout} initialPlan={activePlan}/></div>);
+      workouts={workouts} onFinish={finishWorkout} onCancel={cancelWorkout} initialPlan={activePlan}
+      allTags={allTags} onAddCustomTag={addCustomTag}/></div>);
 
   return(<>
     {offline&&<div style={{background:'#f59e0b',color:'#fff',textAlign:'center',padding:'6px 16px',
@@ -2002,7 +2007,7 @@ function App(){
     {viewing&&<WorkoutDetail workout={viewing} athletes={athletes} exercises={exercises} cm={cm}
       onClose={()=>setViewing(null)} onDelete={deleteWorkout}
       onUpdate={wk=>{setWorkouts(p=>p.map(w=>w.id===wk.id?wk:w));setViewing(wk)}}
-      onRepeat={repeatWorkout}/>}
+      onRepeat={repeatWorkout} allTags={allTags}/>}
     {summaryWk&&<WorkoutSummary workout={summaryWk} athletes={athletes} exercises={exercises} cm={cm}
       onClose={()=>setSummaryWk(null)}/>}
     {planDate&&<PlanWorkoutModal date={planDate} exercises={exercises}
