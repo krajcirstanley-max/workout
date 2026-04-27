@@ -593,7 +593,7 @@ function getPrevSets(exId,athId,workouts){
 
 const TIME_METRICS=['tf-time','split-10m','split-20m','split-30m','split-40m','split-50m','split-60m','split-70m','split-80m','time',
   'fly-10m-1','fly-10m-2','fly-10m-3','fly-10m-4','fly-20m-1','fly-20m-2','fly-30m-1'];
-const SPRINT_AUTO_METRICS_EX=new Set(['free-sprint','overspeed','resisted-sprint','waterbag-sprint']);
+const SPRINT_AUTO_METRICS_EX=new Set(['free-sprint']);
 const standardSprintMetrics=dist=>{const d=Number(dist);if(!d||d<30||d>120||d%10!==0)return null;
   return['distance','tf-time',`split-${d-20}m`,'fly-10m-1','fly-10m-2']};
 const FLY_FAMILIES={'fly-10m':['fly-10m-1','fly-10m-2','fly-10m-3','fly-10m-4'],
