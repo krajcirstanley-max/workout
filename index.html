@@ -507,6 +507,8 @@ const DEFAULT_EXERCISES=[
   {id:'hj-mat-popup',name:'HJ Mat Pop-up',category:'T&F',metrics:['reps']},
   {id:'heel-drops',name:'Heel Drops',category:'T&F',metrics:['reps']},
   {id:'tibialis-raise',name:'Tibialis Raise',category:'T&F',metrics:['reps']},
+  {id:'overspeed',name:'Overspeed',category:'T&F',metrics:['distance','tf-time']},
+  {id:'wickets',name:'Wickets',category:'T&F',metrics:['reps']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
 const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -1610,15 +1612,20 @@ function TrainingLoadChart({workouts,activeAth}){
   </div>)}
 
 function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,onView,onViewExercise}){
+  const[search,setSearch]=useState('');
   const usedExIds=[...new Set(workouts.flatMap(w=>(w.athletes?.[activeAth]?Object.keys(w.athletes[activeAth].sets||{}):[])
     .filter(eid=>(w.athletes[activeAth].sets[eid]||[]).some(s=>s.completed))).map(baseExId))];
-  const topExercises=usedExIds.slice(0,6).map(eid=>exercises.find(e=>e.id===eid)).filter(Boolean);
+  const topExercises=usedExIds.map(eid=>exercises.find(e=>e.id===eid)).filter(Boolean);
+  const allEx=search?exercises.filter(e=>e.name.toLowerCase().includes(search.toLowerCase())):null;
+  const displayEx=allEx||topExercises.slice(0,6);
 
   return(<div className="screen pad">
     <h2 style={{fontSize:24,fontWeight:900,letterSpacing:'-.5px',marginBottom:16}}>Progress</h2>
     <TrainingLoadChart workouts={workouts} activeAth={activeAth}/>
-    {topExercises.length>0&&<><div className="section-title">Your Exercises</div>
-      <div className="card-list">{topExercises.map(ex=>{const prs=computePRs(ex.id,activeAth,workouts,ex);const best=prs.maxWeight?`${prs.maxWeight} kg`:prs.maxReps?`${prs.maxReps} reps`:'';
+    <div className="search-bar" style={{marginBottom:12}}><span className="search-icon"><Icon name="search" size={16}/></span>
+      <input className="input" placeholder="Search exercises..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
+    <div className="section-title">{search?'Results':'Your Exercises'}</div>
+    {displayEx.length>0?<div className="card-list">{displayEx.map(ex=>{const prs=computePRs(ex.id,activeAth,workouts,ex);const best=prs.maxWeight?`${prs.maxWeight} kg`:prs.maxReps?`${prs.maxReps} reps`:'';
         const cc=catColor(ex.category);
         return(<button key={ex.id} className="ex-card" onClick={()=>onViewExercise(ex)}>
           <div className="ex-card-icon" style={{background:cc,color:'#fff'}}><Icon name="dumbbell" size={18}/></div>
@@ -1626,7 +1633,8 @@ function ProgressScreen({workouts,athletes,activeAth,exercises,cm,competitions,o
             <div className="ex-card-name">{ex.name}</div>
             <div className="ex-card-meta"><span style={{color:cc,fontWeight:700}}>{ex.category}</span>{best&&<><span>·</span><span>PR: {best}</span></>}</div>
           </div>
-          <div style={{color:'var(--text3)'}}><Icon name="chevRight" size={16}/></div></button>)})}</div></>}
+          <div style={{color:'var(--text3)'}}><Icon name="chevRight" size={16}/></div></button>)})}</div>
+      :<div style={{textAlign:'center',color:'var(--text3)',padding:'20px 0',fontSize:14}}>No exercises found</div>}
   </div>)}
 
 function ProfileScreen({athletes,activeAth,onSelectAth,exercises,cm,workouts,onUpdateAthletes,
@@ -2034,6 +2042,16 @@ function App(){
           'tibialis-raise':[{reps:15},{reps:15}]
         },
         notes:'Sprint drills → LJ drills → Pop-ups (HJ mat, 4-6 krokov) → Rovinky 70% → Prevencia'
+      }];
+      if(!r.find(x=>x.id==='pl-speed-1'))r=[...r,{id:'pl-speed-1',date:'2026-04-27',name:'Speed Session',color:'#ef4444',
+        exerciseIds:['overspeed','free-sprint','wickets'],
+        supersets:[],
+        setConfigs:{
+          'overspeed':[{distance:40},{distance:40},{distance:40},{distance:40}],
+          'free-sprint':[{distance:50},{distance:50},{distance:50},{distance:50},{distance:60},{distance:60},{distance:60}],
+          'wickets':[{reps:10},{reps:10},{reps:10},{reps:10},{reps:10}]
+        },
+        notes:'Overspeed 4×40m. 50m — 4× max effort, Freelap, 4-5 min pauzy. 60m — 3× max effort, Freelap, 4-5 min pauzy. Wickety 5×10.'
       }];
       return r});
     },[plannedSynced]);
