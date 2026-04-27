@@ -1278,34 +1278,39 @@ function CalendarScreen({workouts,planned,exercises,competitions,onView}){
 
 function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,workouts,
   onFinish,onCancel,initialPlan,allTags,onAddCustomTag}){
+  const _sv=(()=>{try{const s=localStorage.getItem('wk2_activeSnapshot');return s?JSON.parse(s):null}catch{return null}})();
   const[activeAth,setActiveAth]=useState(athletes[0]?.id);
   const[workout,setWorkout]=useState(()=>{
+    if(_sv?.workout)return _sv.workout;
     const a={};athletes.forEach(at=>{a[at.id]={readiness:null,sets:{}}});
     const w={id:uid(),name:initialPlan?.name||'',startTime:Date.now(),exerciseIds:[],athletes:a};
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
       const cfgs=initialPlan.setConfigs||{};
       Object.keys(a).forEach(aId=>{initialPlan.exerciseIds.forEach(eid=>{
-        const ex=initEx.find(e=>e.id===eid);if(ex){const prev=getPrevSets(eid,aId,workouts);
+        const ex=initEx.find(e=>e.id===baseExId(eid));if(ex){const prev=getPrevSets(eid,aId,workouts);
           const cfg=cfgs[eid];const numSets=cfg?cfg.length:3;
           a[aId].sets[eid]=Array.from({length:numSets},(_,i)=>{const s={values:{},completed:false};
             ex.metrics.forEach(mid=>{const prefill=cfg?.[i]?.[mid];
               s.values[mid]=prefill!=null?prefill:(prev?.[i]?.values[mid]??'')});return s})}})});
     }return w});
-  const[showCheckin,setShowCheckin]=useState(true);const[checkedIn,setCheckedIn]=useState(()=>new Set());
+  const[showCheckin,setShowCheckin]=useState(true);const[checkedIn,setCheckedIn]=useState(()=>new Set(_sv?.checkedIn||[]));
   const[showPicker,setShowPicker]=useState(false);const[showEditor,setShowEditor]=useState(false);
   const[replacingIdx,setReplacingIdx]=useState(null);const[showFinish,setShowFinish]=useState(false);
   const[historyEx,setHistoryEx]=useState(null);
   const[confirmCancel,setConfirmCancel]=useState(false);
-  const[wkTag,setWkTag]=useState(null);const[showTagPicker,setShowTagPicker]=useState(false);
+  const[wkTag,setWkTag]=useState(_sv?.wkTag||null);const[showTagPicker,setShowTagPicker]=useState(false);
   const getTagNotes=tag=>{if(!tag)return[];
     const tagged=workouts.filter(w=>w.exerciseIds?.length>0&&w.tag?.id===tag.id).sort((a,b)=>b.startTime-a.startTime);
     const last=tagged[0];if(!last)return[];
     return Object.entries(last.athletes||{}).map(([aId,ad])=>{
       if(!ad?.notes)return null;const ath=athletes.find(a=>a.id===aId);
       return{name:ath?.name||'?',notes:ad.notes}}).filter(Boolean)};
-  const[localEx,setLocalEx]=useState(initEx);const[localCM,setLocalCM]=useState(initCM);
-  const[vzMap,setVzMap]=useState({});
-  const[supersets,setSupersets]=useState(initialPlan?.supersets||[]);
+  const[localEx,setLocalEx]=useState(_sv?.localEx||initEx);const[localCM,setLocalCM]=useState(_sv?.localCM||initCM);
+  const[vzMap,setVzMap]=useState(_sv?.vzMap||{});
+  const[supersets,setSupersets]=useState(_sv?.supersets||initialPlan?.supersets||[]);
+  useEffect(()=>{try{localStorage.setItem('wk2_activeSnapshot',JSON.stringify({
+    workout,localEx,localCM,supersets,checkedIn:[...checkedIn],wkTag,vzMap}))}catch{}
+  },[workout,localEx,localCM,supersets,checkedIn,wkTag,vzMap]);
   const toggleSuperset=(eid1,eid2)=>setSupersets(prev=>{
     const existing=prev.findIndex(ss=>ss.includes(eid1)&&ss.includes(eid2));
     if(existing>=0)return prev.filter((_,i)=>i!==existing);
@@ -1418,7 +1423,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                 <div className="superset-label">Superset</div>
                 <div className="superset-grip" onTouchStart={onSSGrip} onMouseDown={onSSGrip}><Icon name="grip" size={14}/></div>
                 <button className="superset-unlink" onClick={()=>setSupersets(p=>p.filter(s=>s!==ss))}>Unlink</button>
-                {ssIdxs.map(si=>{const seid=ids[si];const sex=localEx.find(e=>e.id===seid);
+                {ssIdxs.map(si=>{const seid=ids[si];const sex=localEx.find(e=>e.id===baseExId(seid));
                   const sPrs=sex?computePRs(seid,activeAth,workouts,sex):{};
                   return<ExerciseAccordion key={seid} exId={seid} exercise={sex} sets={athSets[seid]||[]}
                     prevSets={getPrevSets(seid,activeAth,workouts)} cm={localCM} prs={sPrs}
@@ -1428,7 +1433,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                     onReplace={()=>{setReplacingIdx(si);setShowPicker(true)}} onDelete={()=>delEx(si)}
                     onShowHistory={()=>setHistoryEx(sex)}
                     onChangeMetrics={changeMetrics} note={workout.exNotes?.[seid]} onUpdateNote={updateNote} onGripTouch={()=>{}}/>})}</div>);return}}
-          const ex=localEx.find(e=>e.id===eid);
+          const ex=localEx.find(e=>e.id===baseExId(eid));
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
           items.push(<ExerciseAccordion key={eid} exId={eid} exercise={ex} sets={athSets[eid]||[]}
           prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
@@ -1436,7 +1441,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
           onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
           onReplace={()=>{setReplacingIdx(idx);setShowPicker(true)}} onDelete={()=>delEx(idx)}
-          onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===eid))}
+          onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}
           onChangeMetrics={changeMetrics} note={workout.exNotes?.[eid]} onUpdateNote={updateNote}
           onGripTouch={e=>{
             const touch=e.touches?e.touches[0]:e;if(!touch)return;
@@ -1956,7 +1961,9 @@ function WorkoutSummary({workout,athletes,exercises,cm,onClose}){
 
 // ── App ──
 function App(){
-  const[tab,setTab]=useState('today');const[inWorkout,setInWorkout]=useState(false);const[activePlan,setActivePlan]=useState(null);
+  const[tab,setTab]=useState('today');
+  const[inWorkout,setInWorkout]=useState(()=>{try{return localStorage.getItem('wk2_activeSession')==='1'}catch{return false}});
+  const[activePlan,setActivePlan]=useState(()=>{try{const v=localStorage.getItem('wk2_activePlan');return v?JSON.parse(v):null}catch{return null}});
   const[activeAth,setActiveAth]=useState('ath-1');
   const[athletes,setAthletes]=useStore('athletes',DEFAULT_ATHLETES);
   const[exercises,setExercises]=useStore('exercises',DEFAULT_EXERCISES);
@@ -2055,15 +2062,17 @@ function App(){
       return r});
     },[plannedSynced]);
 
-  const _clearActiveSession=()=>{['activeSession','activePlan','activeWorkout','activeSupersets','activeCheckedIn'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}})};
+  const _clearActiveSession=()=>{['activeSession','activePlan','activeSnapshot'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}})};
+  const _markActive=plan=>{try{localStorage.setItem('wk2_activeSession','1');
+    if(plan)localStorage.setItem('wk2_activePlan',JSON.stringify(plan));else localStorage.removeItem('wk2_activePlan')}catch{}};
   const finishWorkout=(wk,localEx,localCM)=>{_clearActiveSession();
     if(wk.exerciseIds.length>0){setWorkouts(p=>[...p,wk]);setSummaryWk(wk)}
     if(activePlan&&!activePlan.id?.startsWith('tpl-'))setPlanned(p=>p.filter(pl=>pl.id!==activePlan.id));
     setExercises(localEx);setCM(localCM);setInWorkout(false);setActivePlan(null);setTab('today')};
   const cancelWorkout=()=>{_clearActiveSession();setInWorkout(false);setActivePlan(null);setTab('today')};
   const deleteWorkout=id=>{setWorkouts(p=>p.filter(w=>w.id!==id));setViewing(null)};
-  const startPlan=plan=>{_clearActiveSession();setActivePlan(plan);setInWorkout(true)};
-  const startEmpty=()=>{_clearActiveSession();setInWorkout(true)};
+  const startPlan=plan=>{_clearActiveSession();_markActive(plan);setActivePlan(plan);setInWorkout(true)};
+  const startEmpty=()=>{_clearActiveSession();_markActive(null);setInWorkout(true)};
   const repeatWorkout=wk=>{const plan={id:'pl-'+uid(),name:wk.name||'Workout',exerciseIds:wk.exerciseIds.map(baseExId),
     supersets:[],setConfigs:{}};wk.exerciseIds.forEach(eid=>{const base=baseExId(eid);
     const sets=Object.values(wk.athletes).flatMap(a=>(a.sets[eid]||[]).filter(s=>s.completed));
@@ -2118,13 +2127,13 @@ function App(){
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
-  navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
+  let _swReloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(_swReloaded)return;_swReloaded=true;
+    if(localStorage.getItem('wk2_activeSession')==='1')return;
+    window.location.reload();
+  });
 }
-let _lastHash=null;
-document.addEventListener('visibilitychange',async()=>{if(document.hidden)return;
-  try{const r=await fetch('./index.html',{cache:'no-store'});const t=await r.text();
-    const h=t.length+'_'+t.slice(0,500).length;
-    if(_lastHash&&h!==_lastHash)window.location.reload();_lastHash=h}catch{}});
 </script>
 </body>
 </html>
