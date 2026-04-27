@@ -784,8 +784,10 @@ function InlineMetricEditor({current,cm,onChange}){
           setNm('');setNu('');setShowNew(false)}}>Add</button></div>}
   </div>)}
 
-function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics,note,onUpdateNote}){
+function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics,note,onUpdateNote,athletes,assignedAthletes,onToggleAthlete}){
   const[open,setOpen]=useState(false);const[showVZ,setShowVZ]=useState(false);const[showMetrics,setShowMetrics]=useState(false);const[showNote,setShowNote]=useState(!!note);if(!exercise)return null;
+  const showAthChips=athletes&&athletes.length>1&&onToggleAthlete;
+  const isAssigned=athId=>!assignedAthletes||assignedAthletes.length===0||assignedAthletes.length===athletes?.length||assignedAthletes.includes(athId);
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
   const gc=exercise.metrics.length>=4?`24px ${exercise.metrics.map(()=>'68px').join(' ')} 36px 28px`:`24px ${'1fr '.repeat(exercise.metrics.length)}36px 28px`;
   const done=sets.filter(s=>s.completed).length;const gym=isGymEx(exercise);
@@ -800,7 +802,13 @@ function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSe
         <div className="acc-hdr-name">{exercise.name}</div>
         <div className="acc-hdr-sub"><span>{exercise.category}</span><span>{done}/{sets.length} sets</span>
           {onShowHistory&&<button onClick={e=>{e.stopPropagation();onShowHistory()}}
-            style={{color:'var(--primary)',fontSize:11,fontWeight:700,marginLeft:4}}>History</button>}</div></div>
+            style={{color:'var(--primary)',fontSize:11,fontWeight:700,marginLeft:4}}>History</button>}
+          {showAthChips&&<span style={{display:'inline-flex',gap:4,marginLeft:'auto'}}>{athletes.map(a=>{const on=isAssigned(a.id);
+            return<button key={a.id} onClick={e=>{e.stopPropagation();onToggleAthlete(a.id)}}
+              title={`${on?'Remove from':'Add to'} ${a.name}`}
+              style={{width:20,height:20,borderRadius:10,border:`2px solid ${a.color}`,
+                background:on?a.color:'transparent',color:on?'#fff':a.color,
+                fontSize:9,fontWeight:800,display:'inline-flex',alignItems:'center',justifyContent:'center',padding:0,opacity:on?1:.55}}>{initials(a.name).slice(0,1)}</button>})}</span>}</div></div>
       <div className={`acc-chevron ${open?'open':''}`} onClick={()=>setOpen(!open)}><Icon name="chevDown" size={18}/></div></div>
     {open&&(lastStr!=='-'||prVal)&&<div className="ex-stats">
       <div className="ex-stat" style={{flex:2,textAlign:'left'}}><div className="ex-stat-label">Last</div><div className="ex-stat-val" style={{color:'var(--text)',whiteSpace:'pre-line',fontSize:12,lineHeight:1.5}}>{lastStr}</div></div>
@@ -1293,6 +1301,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     const a={};athletes.forEach(at=>{a[at.id]={readiness:null,sets:{}}});
     const w={id:uid(),name:initialPlan?.name||'',startTime:Date.now(),exerciseIds:[],athletes:a};
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
+      if(initialPlan.exerciseAthletes)w.exerciseAthletes={...initialPlan.exerciseAthletes};
       const cfgs=initialPlan.setConfigs||{};
       Object.keys(a).forEach(aId=>{initialPlan.exerciseIds.forEach(eid=>{
         const ex=initEx.find(e=>e.id===baseExId(eid));if(ex){const prev=getPrevSets(eid,aId,workouts);
@@ -1355,6 +1364,11 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     const na={};Object.keys(w.athletes).forEach(aId=>{const ns={...w.athletes[aId].sets};delete ns[eid];
       na[aId]={...w.athletes[aId],sets:ns}});return{...w,exerciseIds:ids,athletes:na}})};
   const moveEx=(idx,dir)=>{setWorkout(w=>{const ids=[...w.exerciseIds];[ids[idx],ids[idx+dir]]=[ids[idx+dir],ids[idx]];return{...w,exerciseIds:ids}})};
+  const toggleExAthlete=(eid,aId)=>setWorkout(w=>{const cur=w.exerciseAthletes?.[eid]||athletes.map(a=>a.id);
+    let next=cur.includes(aId)?cur.filter(x=>x!==aId):[...cur,aId];
+    if(next.length===0)next=athletes.map(a=>a.id);
+    return{...w,exerciseAthletes:{...(w.exerciseAthletes||{}),[eid]:next}}});
+  const exForAth=eid=>{const a=workout.exerciseAthletes?.[eid];return!a||a.length===0||a.includes(activeAth)};
   const updateSet=(exId,si,mid,val)=>{setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[exId]:w.athletes[activeAth].sets[exId].map((s,i)=>i===si?{...s,values:{...s.values,[mid]:val}}:s)}}}}))};
   const toggleSet=(exId,si)=>{setWorkout(w=>{const s=w.athletes[activeAth].sets[exId][si];const was=s.completed;
@@ -1396,9 +1410,10 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
       {(()=>{const renderedSet=new Set();const ids=workout.exerciseIds;const items=[];
         ids.forEach((eid,idx)=>{
           if(renderedSet.has(idx))return;
+          if(!exForAth(eid))return;
           const ss=supersets.find(s=>s.includes(eid));
-          if(ss){const ssIdxs=ss.map(sid=>ids.indexOf(sid)).filter(i=>i>=0).sort((a,b)=>a-b);
-            if(ssIdxs[0]===idx){ssIdxs.forEach(i=>renderedSet.add(i));
+          if(ss){const ssIdxs=ss.map(sid=>ids.indexOf(sid)).filter(i=>i>=0&&exForAth(ids[i])).sort((a,b)=>a-b);
+            if(ssIdxs[0]===idx&&ssIdxs.length>0){ssIdxs.forEach(i=>renderedSet.add(i));
               const ssEids=ssIdxs.map(i=>ids[i]);
               const onSSGrip=e=>{const touch=e.touches?e.touches[0]:e;if(!touch)return;
                 const groupEl=e.target.closest('.superset-group');if(!groupEl)return;
@@ -1440,6 +1455,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                     onDeleteSet={si2=>deleteSet(seid,si2)} onAddSet={()=>addSet(seid)}
                     onReplace={()=>{setReplacingIdx(si);setShowPicker(true)}} onDelete={()=>delEx(si)}
                     onShowHistory={()=>setHistoryEx(sex)}
+                    athletes={athletes} assignedAthletes={workout.exerciseAthletes?.[seid]} onToggleAthlete={aId=>toggleExAthlete(seid,aId)}
                     onChangeMetrics={changeMetrics} note={workout.exNotes?.[seid]} onUpdateNote={updateNote} onGripTouch={()=>{}}/>})}</div>);return}}
           const ex=localEx.find(e=>e.id===baseExId(eid));
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
@@ -1450,6 +1466,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
           onReplace={()=>{setReplacingIdx(idx);setShowPicker(true)}} onDelete={()=>delEx(idx)}
           onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}
+          athletes={athletes} assignedAthletes={workout.exerciseAthletes?.[eid]} onToggleAthlete={aId=>toggleExAthlete(eid,aId)}
           onChangeMetrics={changeMetrics} note={workout.exNotes?.[eid]} onUpdateNote={updateNote}
           onGripTouch={e=>{
             const touch=e.touches?e.touches[0]:e;if(!touch)return;
