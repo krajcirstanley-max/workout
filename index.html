@@ -2043,12 +2043,14 @@ function App(){
         },
         notes:'Sprint drills → LJ drills → Pop-ups (HJ mat, 4-6 krokov) → Rovinky 70% → Prevencia'
       }];
-      if(!r.find(x=>x.id==='pl-speed-1'))r=[...r,{id:'pl-speed-1',date:'2026-04-27',name:'Speed Session',color:'#ef4444',
-        exerciseIds:['overspeed','free-sprint','wickets'],
+      r=r.filter(x=>x.id!=='pl-speed-1');
+      if(!r.find(x=>x.id==='pl-speed-2'))r=[...r,{id:'pl-speed-2',date:'2026-04-27',name:'Speed Session',color:'#ef4444',
+        exerciseIds:['overspeed','free-sprint__1','free-sprint__2','wickets'],
         supersets:[],
         setConfigs:{
           'overspeed':[{distance:40},{distance:40},{distance:40},{distance:40}],
-          'free-sprint':[{distance:50},{distance:50},{distance:50},{distance:50},{distance:60},{distance:60},{distance:60}],
+          'free-sprint__1':[{distance:50},{distance:50},{distance:50},{distance:50}],
+          'free-sprint__2':[{distance:60},{distance:60},{distance:60}],
           'wickets':[{reps:10},{reps:10},{reps:10},{reps:10},{reps:10}]
         },
         notes:'Overspeed 4×40m. 50m — 4× max effort, Freelap, 4-5 min pauzy. 60m — 3× max effort, Freelap, 4-5 min pauzy. Wickety 5×10.'
