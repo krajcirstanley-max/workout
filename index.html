@@ -206,31 +206,49 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 .add-set-btn:active{background:var(--primary-dim)}
 
 /* Focus Mode */
-.focus-card{background:var(--surface);border-radius:18px;padding:20px;margin-bottom:14px;box-shadow:var(--shadow-md)}
-.focus-totals-row{display:flex;justify-content:center;gap:28px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border-light)}
-.focus-tot-val{font-size:24px;font-weight:900;color:var(--primary);letter-spacing:-.5px}
-.focus-tot-lbl{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-left:5px}
-.focus-name{font-size:24px;font-weight:900;color:var(--text1);text-align:center;margin-bottom:14px;letter-spacing:-.6px;line-height:1.15}
-.focus-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.focus-stat-box{background:var(--bg);border-radius:12px;padding:10px 12px}
-.focus-stat-lbl{font-size:9px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
-.focus-stat-val{font-size:14px;font-weight:800;color:var(--text1)}
-.focus-note{font-size:13px;color:var(--text2);font-style:italic;margin-bottom:14px;padding:10px 12px;background:var(--bg);border-radius:10px;line-height:1.4}
-.focus-th{display:grid;gap:8px;padding:0 6px 8px;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;text-align:center}
-.focus-tr{display:grid;gap:8px;align-items:center;padding:6px;border-radius:12px;margin-bottom:5px;transition:background .2s}
-.focus-tr.done{background:var(--primary-glow)}
-.focus-tr-num{font-size:14px;font-weight:800;color:var(--text3);text-align:center}
-.focus-input{background:var(--border-light);border:2px solid transparent;border-radius:10px;padding:14px 4px;font-size:18px;font-weight:800;text-align:center;width:100%;min-width:0;transition:all .2s;color:var(--text1)}
+.focus-screen{padding:0 14px 120px}
+.focus-dots{display:flex;justify-content:center;align-items:center;gap:8px;padding:14px 0 10px}
+.focus-dots .d{width:7px;height:7px;border-radius:50%;background:#d1d5db;transition:all .2s;cursor:pointer}
+.focus-dots .d.active{background:var(--primary);transform:scale(1.4)}
+.focus-totals{display:flex;justify-content:center;align-items:baseline;gap:24px;padding:6px 0 14px;border-bottom:2px solid var(--text1)}
+.focus-tot-val{font-size:18px;font-weight:900;color:var(--text1);letter-spacing:-.3px}
+.focus-tot-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-left:4px}
+.focus-name{font-size:30px;font-weight:900;color:var(--text1);text-align:left;margin:18px 0 14px;letter-spacing:-1px;line-height:1.05}
+.focus-pr-card{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:14px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.04);cursor:pointer}
+.focus-pr-block{display:flex;flex-direction:column;gap:4px}
+.focus-pr-lbl{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
+.focus-pr-val{font-size:18px;font-weight:900;color:var(--text1);display:flex;align-items:center;gap:8px}
+.focus-pr-pill{background:#10b981;color:#fff;font-size:10px;font-weight:900;padding:2px 8px;border-radius:6px;letter-spacing:.5px}
+.focus-stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.focus-stat-card{background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);min-height:64px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.focus-stat-card .lbl{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
+.focus-stat-card .val{font-size:15px;font-weight:800;color:var(--text1)}
+.focus-note{font-size:14px;color:var(--text2);margin:14px 4px;line-height:1.45}
+.focus-table{background:var(--surface);border-radius:16px;padding:14px;margin-top:8px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.focus-table-hdr{display:grid;gap:10px;padding:0 4px 10px;border-bottom:1px solid var(--border-light);font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;text-align:center}
+.focus-table-hdr .left{text-align:left}
+.focus-row{display:grid;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border-light)}
+.focus-row:last-child{border-bottom:none}
+.focus-row-num{font-size:16px;font-weight:800;color:var(--text2);text-align:center}
+.focus-input{background:var(--border-light);border:2px solid transparent;border-radius:10px;padding:14px 4px;font-size:20px;font-weight:800;text-align:center;width:100%;min-width:0;transition:all .15s;color:var(--text1)}
 .focus-input:focus{border-color:var(--primary);background:var(--surface);outline:none}
-.focus-input::placeholder{color:var(--text3);font-weight:500;font-size:13px}
-.focus-check{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--border-light);color:transparent;border:2px solid var(--border);transition:all .2s;cursor:pointer;flex-shrink:0}
-.focus-check.done{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(16,185,129,.4)}
+.focus-input::placeholder{color:#cbd5e1;font-weight:500;font-size:14px}
+.focus-check{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:transparent;border:2px solid #d1d5db;transition:all .15s;cursor:pointer;flex-shrink:0;justify-self:center}
+.focus-check.done{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(16,185,129,.35)}
 .focus-check:active{transform:scale(.88)}
-.focus-set-ctrl{display:flex;justify-content:center;align-items:center;gap:18px;margin:16px 0 4px}
-.focus-set-ctrl button{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:20px;font-weight:800;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.focus-set-ctrl{display:flex;justify-content:center;align-items:center;gap:18px;padding:14px 0 4px}
+.focus-set-ctrl button{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:22px;font-weight:300;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1}
 .focus-set-ctrl button:active{background:var(--border-light)}
-.focus-set-ctrl-lbl{font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
-.focus-ss-tag{display:inline-block;background:var(--primary);color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:10px;letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px}
+.focus-set-ctrl button:disabled{opacity:.35}
+.focus-set-ctrl-lbl{font-size:13px;font-weight:700;color:var(--text2)}
+.focus-ss-tag{display:inline-block;background:var(--primary);color:#fff;font-size:10px;font-weight:800;padding:4px 10px;border-radius:10px;letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px}
+.focus-trophy{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#fbbf24;color:#fff;border-radius:50%;font-size:10px;margin-left:4px;vertical-align:middle}
+.focus-bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border-light);padding:10px 8px calc(10px + var(--safe-b));z-index:30;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:8px}
+.focus-bn-btn{display:flex;align-items:center;justify-content:center;gap:5px;padding:10px;background:none;border:none;font-size:14px;font-weight:700;color:var(--text2);cursor:pointer;border-radius:10px;transition:all .15s}
+.focus-bn-btn:active{background:var(--border-light)}
+.focus-bn-btn:disabled{color:#cbd5e1;cursor:default}
+.focus-bn-btn.center{color:var(--primary);font-weight:800}
+.focus-bn-btn.next{color:var(--primary);font-weight:800}
 
 /* Rest Timer */
 .rest-bar{position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + var(--safe-b) + 8px);
@@ -830,53 +848,81 @@ function InlineMetricEditor({current,cm,onChange}){
           setNm('');setNu('');setShowNew(false)}}>Add</button></div>}
   </div>)}
 
-function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateSet,onToggleSet,onAddSet,onDeleteSet,onShowHistory,ssTag}){
+function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateSet,onToggleSet,onAddSet,onDeleteSet,onShowHistory,ssTag,allWorkouts,exId,activeAth}){
   if(!exercise)return null;
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
   const completed=sets.filter(s=>s.completed);
   const totals=[];
-  if(exercise.metrics.includes('reps')){const tr=completed.reduce((a,s)=>a+(Number(s.values.reps)||0),0);if(tr)totals.push({val:tr,lbl:'reps'})}
-  if(exercise.metrics.includes('weight')){const tv=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);if(tv)totals.push({val:Math.round(tv),lbl:'kg'})}
-  if(exercise.metrics.includes('distance')){const td=completed.reduce((a,s)=>a+(Number(s.values.distance)||0),0);if(td)totals.push({val:td,lbl:'m'})}
-  const lastSet=prevSets?.[prevSets.length-1];
-  const lastStr=lastSet?mds.map(md=>lastSet.values[md.id]?lastSet.values[md.id]+(md.unit?md.unit:''):null).filter(Boolean).join(' × '):null;
-  const prVal=prs?.maxWeight?`${prs.maxWeight} kg`:prs?.e1rm?`${prs.e1rm} kg`:prs?.['tf-time']?`${prs['tf-time']}s`:prs?.maxReps?`${prs.maxReps} reps`:null;
-  const prLbl=prs?.e1rm?'Est. 1RM':prs?.maxWeight?'Max Weight':prs?.['tf-time']?'Best Time':'Max Reps';
-  const gridCols=`28px ${mds.map(()=>'1fr').join(' ')} 44px`;
-  return(<div className="focus-card">
+  const hasW=exercise.metrics.includes('weight');const hasR=exercise.metrics.includes('reps');
+  const hasD=exercise.metrics.includes('distance');
+  if(hasR){const tr=completed.reduce((a,s)=>a+(Number(s.values.reps)||0),0);if(tr)totals.push({val:tr,lbl:'reps'})}
+  if(hasW){const tv=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);if(tv)totals.push({val:Math.round(tv),lbl:'kg'})}
+  if(hasD){const td=completed.reduce((a,s)=>a+(Number(s.values.distance)||0),0);if(td)totals.push({val:td,lbl:'m'})}
+  let lastSummary=null;
+  if(allWorkouts&&exId){const baseId=baseExId(exId);
+    for(let i=allWorkouts.length-1;i>=0;i--){const wk=allWorkouts[i];const ad=wk.athletes?.[activeAth];if(!ad)continue;
+      const matchKey=Object.keys(ad.sets||{}).find(k=>baseExId(k)===baseId);
+      if(matchKey){const ds=ad.sets[matchKey].filter(s=>s.completed);if(ds.length){
+        if(hasW&&hasR){const r=ds[0]?.values?.reps;const w=ds[0]?.values?.weight;
+          if(r&&w)lastSummary=`${ds.length} × ${r} @ ${w} kg`;else lastSummary=`${ds.length} sets`;
+        }else if(hasD){const d=ds[0]?.values?.distance;lastSummary=d?`${ds.length} × ${d}m`:`${ds.length} sets`;
+        }else lastSummary=`${ds.length} sets`;break}}}}
+  const prDisplay=prs?.e1rm?{lbl:'Est. 1RM',val:`${prs.e1rm} kg`}:prs?.maxWeight?{lbl:'Max',val:`${prs.maxWeight} kg`}:prs?.['tf-time']?{lbl:'Best',val:`${prs['tf-time']}s`}:prs?.maxReps?{lbl:'Max Reps',val:`${prs.maxReps}`}:null;
+  const prSetIdx=hasW&&prs?.maxWeight?sets.findIndex(s=>Number(s.values.weight)===prs.maxWeight&&s.completed):-1;
+  const numCols=mds.length;
+  const gridCols=`32px ${mds.map(()=>'1fr').join(' ')} 38px`;
+  return(<div>
     {ssTag&&<div className="focus-ss-tag">{ssTag}</div>}
-    {totals.length>0&&<div className="focus-totals-row">
+    {totals.length>0&&<div className="focus-totals">
       {totals.map((t,i)=><div key={i}><span className="focus-tot-val">{t.val.toLocaleString()}</span><span className="focus-tot-lbl">{t.lbl}</span></div>)}
     </div>}
     <div className="focus-name" onClick={onShowHistory} style={{cursor:onShowHistory?'pointer':'default'}}>{exercise.name}</div>
-    {(lastStr||prVal)&&<div className="focus-stat-grid">
-      {lastStr&&<div className="focus-stat-box"><div className="focus-stat-lbl">Last</div><div className="focus-stat-val">{lastStr}</div></div>}
-      {prVal&&<div className="focus-stat-box"><div className="focus-stat-lbl">{prLbl}</div><div className="focus-stat-val">{prVal}</div></div>}
+    {prDisplay&&<div className="focus-pr-card" onClick={onShowHistory}>
+      <div className="focus-pr-block">
+        <span className="focus-pr-lbl">{prDisplay.lbl}</span>
+        <span className="focus-pr-val">{prDisplay.val}{prs?.e1rm&&<span className="focus-pr-pill">PR</span>}</span>
+      </div>
+      <Icon name="chevRight" size={20}/>
+    </div>}
+    {(lastSummary||prDisplay)&&<div className="focus-stats-row">
+      <div className="focus-stat-card">
+        <span className="lbl">Last Session</span>
+        <span className="val">{lastSummary||'—'}</span>
+      </div>
+      <div className="focus-stat-card">
+        <span className="lbl">Working Max</span>
+        <span className="val">{prs?.maxWeight?`${prs.maxWeight} kg`:prs?.['tf-time']?`${prs['tf-time']}s`:'—'}</span>
+      </div>
     </div>}
     {note&&<div className="focus-note">{note}</div>}
-    <div className="focus-th" style={{gridTemplateColumns:gridCols}}>
-      <span>Set</span>
-      {mds.map(md=><span key={md.id}>{md.name}{md.unit?` (${md.unit})`:''}</span>)}
-      <span></span>
-    </div>
-    {sets.map((s,i)=>(
-      <div key={i} className={`focus-tr ${s.completed?'done':''}`} style={{gridTemplateColumns:gridCols}}>
-        <span className="focus-tr-num">{i+1}</span>
-        {mds.map(md=>(
-          <input key={md.id} type="number" inputMode="decimal" className="focus-input"
-            value={s.values[md.id]??''} step={md.step}
-            placeholder={prevSets?.[i]?.values?.[md.id]!=null&&prevSets?.[i]?.values?.[md.id]!==''?String(prevSets[i].values[md.id]):(md.unit||'')}
-            onChange={e=>onUpdateSet(i,md.id,e.target.value===''?'':Number(e.target.value))}/>
-        ))}
-        <button className={`focus-check ${s.completed?'done':''}`} onClick={()=>onToggleSet(i)} aria-label="Complete">
-          {s.completed&&<Icon name="check" size={20}/>}
-        </button>
+    <div className="focus-table">
+      <div className="focus-table-hdr" style={{gridTemplateColumns:gridCols}}>
+        <span className="left">Set</span>
+        {mds.map(md=><span key={md.id}>{md.unit||md.name}</span>)}
+        <span></span>
       </div>
-    ))}
-    <div className="focus-set-ctrl">
-      <button onClick={()=>sets.length>1&&onDeleteSet(sets.length-1)} disabled={sets.length<=1} style={{opacity:sets.length<=1?0.4:1}}>−</button>
-      <span className="focus-set-ctrl-lbl">Set</span>
-      <button onClick={onAddSet}>+</button>
+      {sets.map((s,i)=>(
+        <div key={i} className="focus-row" style={{gridTemplateColumns:gridCols}}>
+          <span className="focus-row-num">{i+1}</span>
+          {mds.map((md,mi)=>(
+            <div key={md.id} style={{position:'relative'}}>
+              <input type="number" inputMode="decimal" className="focus-input"
+                value={s.values[md.id]??''} step={md.step}
+                placeholder={prevSets?.[i]?.values?.[md.id]!=null&&prevSets?.[i]?.values?.[md.id]!==''?String(prevSets[i].values[md.id]):''}
+                onChange={e=>onUpdateSet(i,md.id,e.target.value===''?'':Number(e.target.value))}/>
+              {i===prSetIdx&&mi===0&&<span className="focus-trophy" title="PR">★</span>}
+            </div>
+          ))}
+          <button className={`focus-check ${s.completed?'done':''}`} onClick={()=>onToggleSet(i)} aria-label="Complete">
+            {s.completed&&<Icon name="check" size={18}/>}
+          </button>
+        </div>
+      ))}
+      <div className="focus-set-ctrl">
+        <button onClick={()=>sets.length>1&&onDeleteSet(sets.length-1)} disabled={sets.length<=1}>−</button>
+        <span className="focus-set-ctrl-lbl">Set</span>
+        <button onClick={onAddSet}>+</button>
+      </div>
     </div>
   </div>)}
 
@@ -1639,22 +1685,22 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           const ss=supersets.find(s=>s.includes(eid));
           let ssTag=null;
           if(ss){const ssOrder=ss.map(sid=>flatIds.indexOf(sid)).filter(i=>i>=0).sort((a,b)=>a-b);
-            const pos=ssOrder.indexOf(safeIdx);if(pos>=0)ssTag=`Superset · ${String.fromCharCode(65)}${pos+1} of ${ssOrder.length}`}
+            const pos=ssOrder.indexOf(safeIdx);if(pos>=0)ssTag=`Superset · ${String.fromCharCode(65+pos)} of ${ssOrder.length}`}
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
           return[
-            <div key="focus-pos" style={{display:'flex',justifyContent:'center',alignItems:'center',gap:6,margin:'4px 0 14px',flexWrap:'wrap'}}>
-              {flatIds.map((_,i)=><div key={i} onClick={()=>setFocusIdx(i)} style={{width:i===safeIdx?22:8,height:8,borderRadius:4,background:i===safeIdx?'var(--primary)':'var(--border)',cursor:'pointer',transition:'width .2s'}}/>)}
-              <span style={{marginLeft:8,fontSize:11,fontWeight:800,color:'var(--text3)',letterSpacing:'.5px'}}>{safeIdx+1} / {flatIds.length}</span>
+            <div key="focus-dots" className="focus-dots">
+              {flatIds.map((_,i)=><div key={i} className={'d'+(i===safeIdx?' active':'')} onClick={()=>setFocusIdx(i)}/>)}
             </div>,
-            <FocusExerciseCard key={'fc-'+eid} exercise={ex} sets={athSets[eid]||[]}
+            <FocusExerciseCard key={'fc-'+eid} exercise={ex} sets={athSets[eid]||[]} exId={eid} activeAth={activeAth} allWorkouts={workouts}
               prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
               note={workout.exNotes?.[eid]} ssTag={ssTag}
               onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
               onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
               onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}/>,
-            <div key="focus-nav" style={{display:'flex',gap:8,marginTop:14}}>
-              <button className="btn btn-secondary" style={{flex:1,opacity:safeIdx===0?0.4:1}} disabled={safeIdx===0} onClick={()=>setFocusIdx(Math.max(0,safeIdx-1))}>← Prev</button>
-              <button className="btn btn-primary" style={{flex:1,opacity:safeIdx>=flatIds.length-1?0.4:1}} disabled={safeIdx>=flatIds.length-1} onClick={()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1))}>Next →</button>
+            <div key="focus-bn" className="focus-bottom-nav">
+              <button className="focus-bn-btn" disabled={safeIdx===0} onClick={()=>setFocusIdx(Math.max(0,safeIdx-1))}>← Back</button>
+              <button className="focus-bn-btn center" onClick={startRest}><Icon name="clock" size={18}/> Timer</button>
+              <button className="focus-bn-btn next" disabled={safeIdx>=flatIds.length-1} onClick={()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1))}>Next →</button>
             </div>
           ];
         }
