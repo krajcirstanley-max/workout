@@ -1205,11 +1205,11 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
               if(ssGroup){ssGroup.forEach(id=>rendered.add(id));
                 return<div key={'ss-'+eid} style={{border:'1px solid var(--primary)',borderRadius:8,padding:'4px 8px',margin:'4px 0'}}>
                   <div style={{fontSize:10,fontWeight:800,color:'var(--primary)',marginBottom:2}}>SUPERSET</div>
-                  {ssGroup.map(sid=>{const sex=exercises.find(e=>e.id===sid);const cfg=plan.setConfigs?.[sid];const sets=cfg?cfg.length:3;
+                  {ssGroup.map(sid=>{const sex=exercises.find(e=>e.id===baseExId(sid));const cfg=plan.setConfigs?.[sid];const sets=cfg?cfg.length:3;
                     const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
                     const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
                     return<div key={sid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {sex?.name||'?'}</div>})}</div>}
-              const ex=exercises.find(e=>e.id===eid);const cfg=plan.setConfigs?.[eid];const sets=cfg?cfg.length:3;
+              const ex=exercises.find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?cfg.length:3;
               const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
               const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
               return<div key={eid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {ex?.name||'?'}</div>})})()}

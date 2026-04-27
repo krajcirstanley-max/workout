@@ -1,4 +1,4 @@
-const CACHE='workout-v13';
+const CACHE='workout-v14';
 
 const PRECACHE=[
   './',
