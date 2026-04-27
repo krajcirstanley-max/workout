@@ -432,8 +432,12 @@ const BUILTIN_METRICS=[{id:'weight',name:'Weight',unit:'kg',step:2.5},{id:'reps'
   {id:'time',name:'Time',unit:'s',step:1},{id:'distance',name:'Distance',unit:'m',step:10},{id:'rpe',name:'RPE',unit:'',step:0.5},
   {id:'tf-time',name:'Sprint Time',unit:'s',step:0.01},{id:'tf-dist',name:'T&F Distance',unit:'m',step:0.01},
   {id:'height',name:'Height',unit:'m',step:0.01},{id:'eg-setting',name:'EG #',unit:'',step:1},
-  {id:'split-10m',name:'10m Split',unit:'s',step:0.01},{id:'split-20m',name:'20m Split',unit:'s',step:0.01},
-  {id:'split-30m',name:'30m Split',unit:'s',step:0.01}];
+  {id:'split-10m',name:'0–10m Split',unit:'s',step:0.01},{id:'split-20m',name:'0–20m Split',unit:'s',step:0.01},
+  {id:'split-30m',name:'0–30m Split',unit:'s',step:0.01},
+  {id:'fly-10m-1',name:'10m Fly #1',unit:'s',step:0.01},{id:'fly-10m-2',name:'10m Fly #2',unit:'s',step:0.01},
+  {id:'fly-10m-3',name:'10m Fly #3',unit:'s',step:0.01},{id:'fly-10m-4',name:'10m Fly #4',unit:'s',step:0.01},
+  {id:'fly-20m-1',name:'20m Fly #1',unit:'s',step:0.01},{id:'fly-20m-2',name:'20m Fly #2',unit:'s',step:0.01},
+  {id:'fly-30m-1',name:'30m Fly',unit:'s',step:0.01}];
 const DEFAULT_EXERCISES=[
   {id:'bench-press',name:'Bench Press',category:'Chest',metrics:['weight','reps']},
   {id:'incline-bench',name:'Incline Bench',category:'Chest',metrics:['weight','reps']},
@@ -585,7 +589,11 @@ function getPrevSets(exId,athId,workouts){
     const k=Object.keys(a.sets||{}).find(k=>baseExId(k)===base&&a.sets[k]?.length>0);
     if(k)return a.sets[k]}return null}
 
-const TIME_METRICS=['tf-time','split-10m','split-20m','time'];
+const TIME_METRICS=['tf-time','split-10m','split-20m','split-30m','time',
+  'fly-10m-1','fly-10m-2','fly-10m-3','fly-10m-4','fly-20m-1','fly-20m-2','fly-30m-1'];
+const FLY_FAMILIES={'fly-10m':['fly-10m-1','fly-10m-2','fly-10m-3','fly-10m-4'],
+  'fly-20m':['fly-20m-1','fly-20m-2'],'fly-30m':['fly-30m-1']};
+const flyFamily=mid=>{for(const k of Object.keys(FLY_FAMILIES))if(FLY_FAMILIES[k].includes(mid))return k;return null};
 const DIST_METRICS=['tf-dist','distance','height'];
 function computePRs(exId,athId,workouts,exercise){
   const prs={};if(!exercise)return prs;const base=baseExId(exId);
@@ -596,7 +604,8 @@ function computePRs(exId,athId,workouts,exercise){
     if(hw&&hr){const e1=(s.values.weight||0)*(1+(s.values.reps||0)/30);if(e1>(prs.e1rm||0))prs.e1rm=Math.round(e1*10)/10;
       const vol=(s.values.weight||0)*(s.values.reps||0);if(vol>(prs.maxVol||0))prs.maxVol=vol}
     exercise.metrics.forEach(mid=>{const v=Number(s.values[mid]);if(!v)return;
-      if(TIME_METRICS.includes(mid)){if(!prs[mid]||v<prs[mid])prs[mid]=v}
+      if(TIME_METRICS.includes(mid)){if(!prs[mid]||v<prs[mid])prs[mid]=v;
+        const fam=flyFamily(mid);if(fam&&(!prs[fam]||v<prs[fam]))prs[fam]=v}
       else if(DIST_METRICS.includes(mid)){if(!prs[mid]||v>prs[mid])prs[mid]=v}});
   })})});return prs}
 
@@ -608,7 +617,7 @@ function computeSprintPRs(exId,athId,workouts){
     const eg=s.values['eg-setting'];
     const key=eg?`${dist}m @ EG#${eg}`:`${dist}m`;
     const entry={time,dist,eg:eg||null,splits:{},date:w.startTime,wkName:w.name||'Workout'};
-    Object.keys(s.values).forEach(k2=>{if(k2.startsWith('split-')&&s.values[k2]!==''&&s.values[k2]!=null)
+    Object.keys(s.values).forEach(k2=>{if((k2.startsWith('split-')||k2.startsWith('fly-'))&&s.values[k2]!==''&&s.values[k2]!=null)
       entry.splits[k2]=Number(s.values[k2])});
     if(!byKey[key]||time<byKey[key].time)byKey[key]=entry})})});
   return byKey}
