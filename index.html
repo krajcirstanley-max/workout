@@ -434,7 +434,8 @@ const BUILTIN_METRICS=[{id:'weight',name:'Weight',unit:'kg',step:2.5},{id:'reps'
   {id:'height',name:'Height',unit:'m',step:0.01},{id:'eg-setting',name:'EG #',unit:'',step:1},
   {id:'split-10m',name:'0–10m Split',unit:'s',step:0.01},{id:'split-20m',name:'0–20m Split',unit:'s',step:0.01},
   {id:'split-30m',name:'0–30m Split',unit:'s',step:0.01},{id:'split-40m',name:'0–40m Split',unit:'s',step:0.01},
-  {id:'split-50m',name:'0–50m Split',unit:'s',step:0.01},
+  {id:'split-50m',name:'0–50m Split',unit:'s',step:0.01},{id:'split-60m',name:'0–60m Split',unit:'s',step:0.01},
+  {id:'split-70m',name:'0–70m Split',unit:'s',step:0.01},{id:'split-80m',name:'0–80m Split',unit:'s',step:0.01},
   {id:'fly-10m-1',name:'10m Fly #1',unit:'s',step:0.01},{id:'fly-10m-2',name:'10m Fly #2',unit:'s',step:0.01},
   {id:'fly-10m-3',name:'10m Fly #3',unit:'s',step:0.01},{id:'fly-10m-4',name:'10m Fly #4',unit:'s',step:0.01},
   {id:'fly-20m-1',name:'20m Fly #1',unit:'s',step:0.01},{id:'fly-20m-2',name:'20m Fly #2',unit:'s',step:0.01},
@@ -590,8 +591,11 @@ function getPrevSets(exId,athId,workouts){
     const k=Object.keys(a.sets||{}).find(k=>baseExId(k)===base&&a.sets[k]?.length>0);
     if(k)return a.sets[k]}return null}
 
-const TIME_METRICS=['tf-time','split-10m','split-20m','split-30m','split-40m','split-50m','time',
+const TIME_METRICS=['tf-time','split-10m','split-20m','split-30m','split-40m','split-50m','split-60m','split-70m','split-80m','time',
   'fly-10m-1','fly-10m-2','fly-10m-3','fly-10m-4','fly-20m-1','fly-20m-2','fly-30m-1'];
+const SPRINT_AUTO_METRICS_EX=new Set(['free-sprint','overspeed','resisted-sprint','waterbag-sprint']);
+const standardSprintMetrics=dist=>{const d=Number(dist);if(!d||d<30||d>120||d%10!==0)return null;
+  return['distance','tf-time',`split-${d-20}m`,'fly-10m-1','fly-10m-2']};
 const FLY_FAMILIES={'fly-10m':['fly-10m-1','fly-10m-2','fly-10m-3','fly-10m-4'],
   'fly-20m':['fly-20m-1','fly-20m-2'],'fly-30m':['fly-30m-1']};
 const flyFamily=mid=>{for(const k of Object.keys(FLY_FAMILIES))if(FLY_FAMILIES[k].includes(mid))return k;return null};
@@ -1312,12 +1316,15 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     const w={id:uid(),name:initialPlan?.name||'',startTime:Date.now(),exerciseIds:[],athletes:a};
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
       if(initialPlan.exerciseAthletes)w.exerciseAthletes={...initialPlan.exerciseAthletes};
-      if(initialPlan.exerciseMetrics)w.exerciseMetrics={...initialPlan.exerciseMetrics};
+      w.exerciseMetrics={...(initialPlan.exerciseMetrics||{})};
       const cfgs=initialPlan.setConfigs||{};
+      initialPlan.exerciseIds.forEach(eid=>{const baseEx=initEx.find(e=>e.id===baseExId(eid));
+        if(baseEx&&!w.exerciseMetrics[eid]&&SPRINT_AUTO_METRICS_EX.has(baseEx.id)){
+          const std=standardSprintMetrics(cfgs[eid]?.[0]?.distance);if(std)w.exerciseMetrics[eid]=std}});
       Object.keys(a).forEach(aId=>{initialPlan.exerciseIds.forEach(eid=>{
         const ex=initEx.find(e=>e.id===baseExId(eid));if(ex){const prev=getPrevSets(eid,aId,workouts);
           const cfg=cfgs[eid];const numSets=cfg?cfg.length:3;
-          const mets=initialPlan.exerciseMetrics?.[eid]||ex.metrics;
+          const mets=w.exerciseMetrics[eid]||ex.metrics;
           a[aId].sets[eid]=Array.from({length:numSets},(_,i)=>{const s={values:{},completed:false};
             mets.forEach(mid=>{const prefill=cfg?.[i]?.[mid];
               s.values[mid]=prefill!=null?prefill:(prev?.[i]?.values[mid]??'')});return s})}})});
@@ -2085,8 +2092,8 @@ function App(){
         },
         notes:'Sprint drills → LJ drills → Pop-ups (HJ mat, 4-6 krokov) → Rovinky 70% → Prevencia'
       }];
-      r=r.filter(x=>x.id!=='pl-speed-1'&&x.id!=='pl-speed-2');
-      if(!r.find(x=>x.id==='pl-speed-3'))r=[...r,{id:'pl-speed-3',date:'2026-04-27',name:'Speed Session',color:'#ef4444',
+      r=r.filter(x=>x.id!=='pl-speed-1'&&x.id!=='pl-speed-2'&&x.id!=='pl-speed-3');
+      if(!r.find(x=>x.id==='pl-speed-4'))r=[...r,{id:'pl-speed-4',date:'2026-04-27',name:'Speed Session',color:'#ef4444',
         exerciseIds:['overspeed','free-sprint__1','free-sprint__2','wickets'],
         supersets:[],
         setConfigs:{
@@ -2094,10 +2101,6 @@ function App(){
           'free-sprint__1':[{distance:50},{distance:50},{distance:50},{distance:50}],
           'free-sprint__2':[{distance:60},{distance:60},{distance:60}],
           'wickets':[{reps:10},{reps:10},{reps:10},{reps:10},{reps:10}]
-        },
-        exerciseMetrics:{
-          'free-sprint__1':['distance','tf-time','split-30m','fly-10m-1','fly-10m-2'],
-          'free-sprint__2':['distance','tf-time','split-40m','fly-10m-1','fly-10m-2']
         },
         notes:'Overspeed 4×40m. 50m — 4× max effort, Freelap, 0-30m + 2×10m fly, 4-5 min pauzy. 60m — 3× max effort, Freelap, 0-40m + 2×10m fly, 4-5 min pauzy. Wickety 5×10.'
       }];
