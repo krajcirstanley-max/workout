@@ -980,30 +980,7 @@ function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onS
         <div className="form-group"><label className="form-label">Notes</label>
           <textarea className="input" placeholder="How did it go?" value={athData[a.id]?.notes||''}
             onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],notes:e.target.value}}))}/></div></div>))}
-      <div style={{display:'flex',gap:8}}>
-        <button className="btn btn-secondary" style={{flex:1}} onClick={()=>{
-          const dStr=new Date(workout.startTime).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-          const lines=[wkName||workout.name||'Workout',dStr,fmtDur(customElapsed)+(workout.tempC!=null?' · '+workout.tempC+'°C':'')+(weather?' · '+fmtWeather(weather):''),''];
-          athletes.filter(a=>workout.athletes[a.id]).forEach(a=>{
-            const ad=workout.athletes[a.id];if(athletes.length>1)lines.push(a.name);
-            workout.exerciseIds.forEach(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));
-              const sets=(ad.sets[eid]||[]).filter(s=>s.completed);if(!sets.length)return;
-              lines.push('  '+(ex?.name||'?'));
-              sets.forEach((s,j)=>{const parts=[];const v=s.values;
-                if(v.distance!=null&&v.distance!==''&&v['tf-time']!=null&&v['tf-time']!==''){
-                  let l=v.distance+'m → '+v['tf-time']+'s';
-                  const sp=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null).map(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');return lab+': '+v[k]});
-                  if(sp.length)l+=' ('+sp.join(' ')+')';parts.push(l);
-                }else{(workout.exerciseMetrics?.[eid]||ex?.metrics||[]).forEach(mid=>{const md=getMetric(mid,cm);const val=v[mid];
-                  if(val!=null&&val!=='')parts.push(val+(md.unit?' '+md.unit:''))});}
-                lines.push('    '+(j+1)+'. '+parts.join(' · '))});
-              if(workout.exNotes?.[eid])lines.push('    → '+workout.exNotes[eid])});
-            if(athData[a.id]?.rpe)lines.push('  RPE: '+athData[a.id].rpe+'/10');
-            if(athData[a.id]?.notes)lines.push('  '+athData[a.id].notes);lines.push('')});
-          navigator.clipboard?.writeText(lines.join('\n')).then(()=>alert('Copied!'));
-        }}>📋 Copy</button>
-        <button className="btn btn-primary" style={{flex:2}} onClick={()=>onSave({name:wkName,weather,tag,athData,customDuration:customElapsed})}>Save Workout</button>
-      </div></div></div>)}
+      <button className="btn btn-primary" onClick={()=>onSave({name:wkName,weather,tag,athData,customDuration:customElapsed})}>Save Workout</button></div></div>)}
 
 function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,onUpdate,onRepeat,allTags,onSaveTemplate}){
   const[wk,setWk]=useState(JSON.parse(JSON.stringify(initWk)));
@@ -1119,6 +1096,26 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
         onClick={()=>setShowAddEx(true)}><Icon name="plus" size={14}/> Add Exercise</button>}
 
       {dirty&&<button className="btn btn-primary" style={{marginTop:8}} onClick={()=>{onUpdate(wk);setEditing(false)}}>Save Changes</button>}
+      <button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>{
+        const dStr=new Date(wk.startTime).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+        const lines=[wk.name||'Workout',dStr,fmtDur(dur)+(wk.tempC!=null?' · '+wk.tempC+'°C':'')+(wk.weather?' · '+fmtWeather(wk.weather):''),''];
+        athletes.filter(a=>wk.athletes[a.id]).forEach(a=>{
+          const adX=wk.athletes[a.id];if(athletes.length>1)lines.push(a.name);
+          wk.exerciseIds.forEach(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));
+            const sets=(adX.sets[eid]||[]).filter(s=>s.completed);if(!sets.length)return;
+            lines.push('  '+(ex?.name||'?'));
+            sets.forEach((s,j)=>{const parts=[];const v=s.values;
+              if(v.distance!=null&&v.distance!==''&&v['tf-time']!=null&&v['tf-time']!==''){
+                let l=v.distance+'m → '+v['tf-time']+'s';
+                const sp=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null).map(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');return lab+': '+v[k]});
+                if(sp.length)l+=' ('+sp.join(' ')+')';parts.push(l);
+              }else{(wk.exerciseMetrics?.[eid]||ex?.metrics||[]).forEach(mid=>{const md=getMetric(mid,cm);const val=v[mid];
+                if(val!=null&&val!=='')parts.push(val+(md.unit?' '+md.unit:''))});}
+              lines.push('    '+(j+1)+'. '+parts.join(' · '))});
+            if(wk.exNotes?.[eid])lines.push('    → '+wk.exNotes[eid])});
+          if(adX.rpe)lines.push('  RPE: '+adX.rpe+'/10');if(adX.notes)lines.push('  '+adX.notes);lines.push('')});
+        navigator.clipboard?.writeText(lines.join('\n')).then(()=>alert('Copied!'));
+      }}>📋 Copy Workout</button>
       {onRepeat&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>onRepeat(wk)}>🔁 Repeat Workout</button>}
       {onSaveTemplate&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>{onSaveTemplate(wk);onClose()}}>Save as Template</button>}
       <button className="btn btn-danger" style={{marginTop:8}} onClick={()=>onDelete(wk.id)}>Delete Workout</button>
