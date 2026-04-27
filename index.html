@@ -1279,7 +1279,7 @@ function CalendarScreen({workouts,planned,exercises,competitions,onView}){
 function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,workouts,
   onFinish,onCancel,initialPlan,allTags,onAddCustomTag}){
   const[activeAth,setActiveAth]=useState(athletes[0]?.id);
-  const[workout,setWorkout]=useState(()=>{try{const sv=localStorage.getItem('wk2_activeWorkout');if(sv){const w=JSON.parse(sv);if(w&&w.id)return w}}catch{}
+  const[workout,setWorkout]=useState(()=>{
     const a={};athletes.forEach(at=>{a[at.id]={readiness:null,sets:{}}});
     const w={id:uid(),name:initialPlan?.name||'',startTime:Date.now(),exerciseIds:[],athletes:a};
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
@@ -1291,9 +1291,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
             ex.metrics.forEach(mid=>{const prefill=cfg?.[i]?.[mid];
               s.values[mid]=prefill!=null?prefill:(prev?.[i]?.values[mid]??'')});return s})}})});
     }return w});
-  useEffect(()=>{try{localStorage.setItem('wk2_activeWorkout',JSON.stringify(workout))}catch{}},[workout]);
-  const[showCheckin,setShowCheckin]=useState(true);const[checkedIn,setCheckedIn]=useState(()=>{try{const sv=localStorage.getItem('wk2_activeCheckedIn');if(sv)return new Set(JSON.parse(sv))}catch{};return new Set()});
-  useEffect(()=>{try{localStorage.setItem('wk2_activeCheckedIn',JSON.stringify([...checkedIn]))}catch{}},[checkedIn]);
+  const[showCheckin,setShowCheckin]=useState(true);const[checkedIn,setCheckedIn]=useState(()=>new Set());
   const[showPicker,setShowPicker]=useState(false);const[showEditor,setShowEditor]=useState(false);
   const[replacingIdx,setReplacingIdx]=useState(null);const[showFinish,setShowFinish]=useState(false);
   const[historyEx,setHistoryEx]=useState(null);
@@ -1307,8 +1305,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
       return{name:ath?.name||'?',notes:ad.notes}}).filter(Boolean)};
   const[localEx,setLocalEx]=useState(initEx);const[localCM,setLocalCM]=useState(initCM);
   const[vzMap,setVzMap]=useState({});
-  const[supersets,setSupersets]=useState(()=>{try{const sv=localStorage.getItem('wk2_activeSupersets');if(sv)return JSON.parse(sv)}catch{};return initialPlan?.supersets||[]});
-  useEffect(()=>{try{localStorage.setItem('wk2_activeSupersets',JSON.stringify(supersets))}catch{}},[supersets]);
+  const[supersets,setSupersets]=useState(initialPlan?.supersets||[]);
   const toggleSuperset=(eid1,eid2)=>setSupersets(prev=>{
     const existing=prev.findIndex(ss=>ss.includes(eid1)&&ss.includes(eid2));
     if(existing>=0)return prev.filter((_,i)=>i!==existing);
@@ -1959,7 +1956,7 @@ function WorkoutSummary({workout,athletes,exercises,cm,onClose}){
 
 // ── App ──
 function App(){
-  const[tab,setTab]=useState('today');const[inWorkout,setInWorkout]=useState(()=>{try{return localStorage.getItem('wk2_activeSession')==='1'}catch{return false}});const[activePlan,setActivePlan]=useState(()=>{try{const v=localStorage.getItem('wk2_activePlan');return v?JSON.parse(v):null}catch{return null}});
+  const[tab,setTab]=useState('today');const[inWorkout,setInWorkout]=useState(false);const[activePlan,setActivePlan]=useState(null);
   const[activeAth,setActiveAth]=useState('ath-1');
   const[athletes,setAthletes]=useStore('athletes',DEFAULT_ATHLETES);
   const[exercises,setExercises]=useStore('exercises',DEFAULT_EXERCISES);
@@ -2065,8 +2062,8 @@ function App(){
     setExercises(localEx);setCM(localCM);setInWorkout(false);setActivePlan(null);setTab('today')};
   const cancelWorkout=()=>{_clearActiveSession();setInWorkout(false);setActivePlan(null);setTab('today')};
   const deleteWorkout=id=>{setWorkouts(p=>p.filter(w=>w.id!==id));setViewing(null)};
-  const startPlan=plan=>{_clearActiveSession();try{localStorage.setItem('wk2_activePlan',JSON.stringify(plan));localStorage.setItem('wk2_activeSession','1')}catch{};setActivePlan(plan);setInWorkout(true)};
-  const startEmpty=()=>{_clearActiveSession();try{localStorage.setItem('wk2_activeSession','1')}catch{};setInWorkout(true)};
+  const startPlan=plan=>{_clearActiveSession();setActivePlan(plan);setInWorkout(true)};
+  const startEmpty=()=>{_clearActiveSession();setInWorkout(true)};
   const repeatWorkout=wk=>{const plan={id:'pl-'+uid(),name:wk.name||'Workout',exerciseIds:wk.exerciseIds.map(baseExId),
     supersets:[],setConfigs:{}};wk.exerciseIds.forEach(eid=>{const base=baseExId(eid);
     const sets=Object.values(wk.athletes).flatMap(a=>(a.sets[eid]||[]).filter(s=>s.completed));
