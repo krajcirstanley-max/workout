@@ -509,6 +509,14 @@ const DEFAULT_EXERCISES=[
   {id:'tibialis-raise',name:'Tibialis Raise',category:'T&F',metrics:['reps']},
   {id:'overspeed',name:'Overspeed',category:'T&F',metrics:['distance','tf-time']},
   {id:'wickets',name:'Wickets',category:'T&F',metrics:['reps']},
+  {id:'tb-jump',name:'TB Jump',category:'Legs',metrics:['weight','reps']},
+  {id:'pogos-bands',name:'Pogos w Bands',category:'Legs',metrics:['reps']},
+  {id:'tb-deadlift',name:'TB Deadlift',category:'Legs',metrics:['weight','reps']},
+  {id:'afsm',name:'AFSM',category:'Legs',metrics:['weight','reps']},
+  {id:'step-up',name:'Step Up',category:'Legs',metrics:['weight','reps']},
+  {id:'drop-jump-sl',name:'Drop Jump SL',category:'Legs',metrics:['reps']},
+  {id:'seated-calf-raise',name:'Seated Calf Raise',category:'Legs',metrics:['weight','reps']},
+  {id:'nordics',name:'Nordics',category:'Legs',metrics:['reps']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
 const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -2006,7 +2014,7 @@ function App(){
   useEffect(()=>{
     if(!plannedSynced) return;
     setPlanned(p=>{
-      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-'));
+      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-'));
       if(!r.find(x=>x.id==='pl-sprint-5'))r=[...r,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
           'mb-overhead-back','mb-chest-pass','mb-rotational'],
@@ -2058,6 +2066,25 @@ function App(){
           'wickets':[{reps:10},{reps:10},{reps:10},{reps:10},{reps:10}]
         },
         notes:'Overspeed 4×40m. 50m — 4× max effort, Freelap, 4-5 min pauzy. 60m — 3× max effort, Freelap, 4-5 min pauzy. Wickety 5×10.'
+      }];
+      if(!r.find(x=>x.id==='pl-gym-1'))r=[...r,{id:'pl-gym-1',date:'2026-04-27',name:'Gym',color:'#3b82f6',
+        exerciseIds:['tb-jump','pogos-bands','tb-deadlift','afsm','step-up','drop-jump-sl',
+          'hip-thrust','rdl','seated-calf-raise','nordics','pull-up'],
+        supersets:[['tb-jump','pogos-bands'],['tb-deadlift','afsm'],['step-up','drop-jump-sl'],['rdl','seated-calf-raise']],
+        setConfigs:{
+          'tb-jump':[{reps:4},{reps:4},{reps:4}],
+          'pogos-bands':[{reps:10},{reps:10},{reps:10}],
+          'tb-deadlift':[{reps:3},{reps:3}],
+          'afsm':[{reps:4},{reps:4}],
+          'step-up':[{reps:5},{reps:5}],
+          'drop-jump-sl':[{reps:4},{reps:4},{reps:4}],
+          'hip-thrust':[{reps:6},{reps:6},{reps:6}],
+          'rdl':[{reps:6},{reps:6}],
+          'seated-calf-raise':[{reps:10},{reps:10},{reps:10}],
+          'nordics':[{reps:5},{reps:5},{reps:5}],
+          'pull-up':[{reps:6},{reps:6}]
+        },
+        notes:'A1 TB Jump 3×4 + A2 Pogos w Bands 3×10. B1 TB Deadlift 2×3 + B2 AFSM 2×4. C1 Step Up 2×5/nohu + C2 Drop Jump SL 3×4/nohu. D Hip Thrust 3×6. E1 RDL 2×6 + E2 Seated Calf Raise 3×10. F Nordics 3×5. G Pull Ups 2×6-8.'
       }];
       return r});
     },[plannedSynced]);
