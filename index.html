@@ -1002,7 +1002,8 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
   const up=fn=>{const c=JSON.parse(JSON.stringify(wk));const n=fn(c);setWk(n)};
   const setVal=(eid,si,mid,val)=>up(w=>{w.athletes[selAth].sets[eid][si].values[mid]=val===''?val:Number(val);return w});
   const addSet=eid=>up(w=>{const ex=exercises.find(e=>e.id===baseExId(eid));const ns={values:{},completed:true};
-    (ex?.metrics||[]).forEach(mid=>{ns.values[mid]=''});w.athletes[selAth].sets[eid].push(ns);return w});
+    const mIds=w.exerciseMetrics?.[eid]||ex?.metrics||[];
+    mIds.forEach(mid=>{ns.values[mid]=''});w.athletes[selAth].sets[eid].push(ns);return w});
   const delSet=(eid,si)=>up(w=>{w.athletes[selAth].sets[eid].splice(si,1);
     if(!w.athletes[selAth].sets[eid].length){delete w.athletes[selAth].sets[eid];
       w.exerciseIds=w.exerciseIds.filter(id=>id!==eid)}return w});
@@ -1071,7 +1072,8 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
 
       {wk.exerciseIds.map((eid,i)=>{const ex=exercises.find(e=>e.id===baseExId(eid));
         const sets=ad?.sets?.[eid]||[];if(!sets.length&&!editing)return null;
-        const mds=(ex?.metrics||[]).map(id=>getMetric(id,cm));
+        const metIds=wk.exerciseMetrics?.[eid]||ex?.metrics||[];
+        const mds=metIds.map(id=>getMetric(id,cm));
         return(<div key={eid} className="detail-ex">
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <div className="detail-ex-name">{ex?.name||'?'}</div>
@@ -1149,10 +1151,10 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
                 const hasDist=v.distance!=null&&v.distance!=='';const hasTfT=v['tf-time']!=null&&v['tf-time']!=='';
                 const hasTfD=v['tf-dist']!=null&&v['tf-dist']!=='';const hasW=v.weight!=null&&v.weight!=='';
                 const hasR=v.reps!=null&&v.reps!=='';
-                const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
+                const splits=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null);
                 const egV=v['eg-setting'];const hasEg=egV!=null&&egV!=='';
                 let primary=null,extra=null;
-                if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
+                if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');extras.push(lab+': '+v[k])});
                   if(hasEg)extras.push('EG: '+egV);
                   primary=[<span key="d" style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>,
                     <span key="a" style={{color:'var(--text3)'}}>→</span>,
@@ -1599,10 +1601,10 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
               const hasDist=v.distance!=null&&v.distance!=='';const hasTfT=v['tf-time']!=null&&v['tf-time']!=='';
               const hasTfD=v['tf-dist']!=null&&v['tf-dist']!=='';const hasWt=v.weight!=null&&v.weight!=='';
               const hasRp=v.reps!=null&&v.reps!=='';
-              const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
+              const splits=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null);
               const egV=v['eg-setting'];const hasEg=egV!=null&&egV!=='';
               let primary=null,extra=null;
-              if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
+              if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');extras.push(lab+': '+v[k])});
                 if(hasEg)extras.push('EG: '+egV);
                 primary=[<span key="d" style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>,
                   <span key="a" style={{color:'var(--text3)'}}>→</span>,
@@ -1948,7 +1950,7 @@ function WorkoutSummary({workout,athletes,exercises,cm,onClose}){
         sets.forEach((s,j)=>{const parts=[];const v=s.values;
           if(v.distance!=null&&v.distance!==''&&v['tf-time']!=null&&v['tf-time']!==''){
             let l=v.distance+'m → '+v['tf-time']+'s';
-            const sp=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null).map(k=>k.replace('split-','')+': '+v[k]);
+            const sp=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null).map(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');return lab+': '+v[k]});
             if(sp.length)l+=' ('+sp.join(' ')+')';parts.push(l);
           }else{(ex?.metrics||[]).forEach(mid=>{const md=getMetric(mid,cm);const val=v[mid];
             if(val!=null&&val!=='')parts.push(val+(md.unit?' '+md.unit:''))});}
@@ -1979,9 +1981,9 @@ function WorkoutSummary({workout,athletes,exercises,cm,onClose}){
                 const hasDist=v.distance!=null&&v.distance!=='';const hasTfT=v['tf-time']!=null&&v['tf-time']!=='';
                 const hasTfD=v['tf-dist']!=null&&v['tf-dist']!=='';const hasW=v.weight!=null&&v.weight!=='';
                 const hasR=v.reps!=null&&v.reps!=='';
-                const splits=Object.keys(v).filter(k=>k.startsWith('split-')&&v[k]!==''&&v[k]!=null);
+                const splits=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null);
                 let primary=null,extra=null;
-                if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>extras.push(k.replace('split-','')+': '+v[k]));
+                if(hasDist&&hasTfT){const extras=[];splits.forEach(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');extras.push(lab+': '+v[k])});
                   primary=[<span key="d" style={{fontWeight:800,color:'var(--text1)'}}>{v.distance}m</span>,
                     <span key="a" style={{color:'var(--text3)'}}>→</span>,
                     <span key="t" style={{fontWeight:700,color:c}}>{v['tf-time']}s</span>];
