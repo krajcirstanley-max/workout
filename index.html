@@ -570,6 +570,13 @@ const DEFAULT_EXERCISES=[
   {id:'drop-jump-sl',name:'Drop Jump SL',category:'Legs',metrics:['reps']},
   {id:'seated-calf-raise',name:'Seated Calf Raise',category:'Legs',metrics:['weight','reps']},
   {id:'nordics',name:'Nordics',category:'Legs',metrics:['reps']},
+  {id:'hurdle-jumps',name:'Hurdle Jumps',category:'T&F',metrics:['reps']},
+  {id:'short-app-popup',name:'Short Approach Pop-up',category:'T&F',metrics:['reps']},
+  {id:'full-app-runthrough',name:'Full Approach Run-through',category:'T&F',metrics:['reps']},
+  {id:'full-app-popup',name:'Full Approach Pop-up',category:'T&F',metrics:['reps']},
+  {id:'approach-jump',name:'Approach Jump',category:'T&F',metrics:['tf-dist']},
+  {id:'sl-bounds-jump',name:'SL Bounds + Jump',category:'T&F',metrics:['reps']},
+  {id:'alt-bounds-jump',name:'Alternate Bounds + Jump',category:'T&F',metrics:['reps']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
 const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -615,10 +622,21 @@ const fmtDate=d=>{const dt=new Date(d);const now=new Date();if(dt.toDateString()
   const diff=Math.floor((now-dt)/864e5);if(diff<7)return`${diff}d ago`;
   return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})};
 const dateKey=d=>{const dt=new Date(d);return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`};
-const WEATHER_MAP={sunny:'☀️',windy:'💨',rainy:'🌧️'};
+const WEATHER_MAP={sunny:'☀️',windy:'💨',rainy:'🌧️',indoor:'🏢'};
+const noteFor=(exNotes,eid,aId)=>{const v=exNotes?.[eid];if(!v)return '';if(typeof v==='string')return v;return v[aId]||''};
 const fmtWeather=w=>{if(!w)return'';if(Array.isArray(w))return w.map(k=>WEATHER_MAP[k]||'').join('');return WEATHER_MAP[w]||''};
 const toggleWeather=(cur,k)=>{const arr=Array.isArray(cur)?[...cur]:cur?[cur]:[];return arr.includes(k)?arr.filter(x=>x!==k):[...arr,k]};
 const hasWeather=(cur,k)=>Array.isArray(cur)?cur.includes(k):cur===k;
+const _haversineM=(a,b)=>{const R=6371000;const t1=a.lat*Math.PI/180;const t2=b.lat*Math.PI/180;
+  const dt=(b.lat-a.lat)*Math.PI/180;const dl=(b.lng-a.lng)*Math.PI/180;
+  const x=Math.sin(dt/2)**2+Math.cos(t1)*Math.cos(t2)*Math.sin(dl/2)**2;return 2*R*Math.asin(Math.sqrt(x))};
+const detectIndoor=cb=>{if(!navigator.geolocation)return cb(null);
+  navigator.geolocation.getCurrentPosition(p=>{const cur={lat:p.coords.latitude,lng:p.coords.longitude};
+    let locs=[];try{locs=JSON.parse(localStorage.getItem('wk2_indoorLocs')||'[]')}catch{}
+    const match=locs.find(l=>_haversineM(cur,l)<150);cb(match?cur:null,cur)},
+  ()=>cb(null),{timeout:5000,maximumAge:60000})};
+const saveIndoorLoc=loc=>{if(!loc)return;let locs=[];try{locs=JSON.parse(localStorage.getItem('wk2_indoorLocs')||'[]')}catch{}
+  const exists=locs.some(l=>_haversineM(loc,l)<80);if(!exists){locs.push(loc);try{localStorage.setItem('wk2_indoorLocs',JSON.stringify(locs))}catch{}}};
 const getMetric=(id,cm)=>BUILTIN_METRICS.find(m=>m.id===id)||(cm||[]).find(m=>m.id===id)||{id,name:id,unit:'',step:1};
 async function fetchTemp(){try{const pos=await new Promise((ok,fail)=>navigator.geolocation.getCurrentPosition(ok,fail,{timeout:5000}));
   const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current=temperature_2m`);
@@ -848,7 +866,7 @@ function InlineMetricEditor({current,cm,onChange}){
           setNm('');setNu('');setShowNew(false)}}>Add</button></div>}
   </div>)}
 
-function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateSet,onToggleSet,onAddSet,onDeleteSet,onShowHistory,ssTag,allWorkouts,exId,activeAth}){
+function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUpdateSet,onToggleSet,onAddSet,onDeleteSet,onShowHistory,ssTag,allWorkouts,exId,activeAth,onChangeMetrics}){
   if(!exercise)return null;
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
   const completed=sets.filter(s=>s.completed);
@@ -858,12 +876,15 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateSet,onTog
   if(hasR){const tr=completed.reduce((a,s)=>a+(Number(s.values.reps)||0),0);if(tr)totals.push({val:tr,lbl:'reps'})}
   if(hasW){const tv=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);if(tv)totals.push({val:Math.round(tv),lbl:'kg'})}
   if(hasD){const td=completed.reduce((a,s)=>a+(Number(s.values.distance)||0),0);if(td)totals.push({val:td,lbl:'m'})}
-  let lastSummary=null;
+  let lastSummary=null;let lastSprintLines=null;let lastDate=null;
+  const isSprint=exercise.metrics.includes('tf-time')&&hasD;
   if(allWorkouts&&exId){const baseId=baseExId(exId);
     for(let i=allWorkouts.length-1;i>=0;i--){const wk=allWorkouts[i];const ad=wk.athletes?.[activeAth];if(!ad)continue;
       const matchKey=Object.keys(ad.sets||{}).find(k=>baseExId(k)===baseId);
       if(matchKey){const ds=ad.sets[matchKey].filter(s=>s.completed);if(ds.length){
-        if(hasW&&hasR){const r=ds[0]?.values?.reps;const w=ds[0]?.values?.weight;
+        lastDate=new Date(wk.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        if(isSprint){lastSprintLines=ds.map(s=>{const d=s.values.distance;const t=s.values['tf-time'];return d&&t?`${d}m: ${t}s`:null}).filter(Boolean);
+        }else if(hasW&&hasR){const r=ds[0]?.values?.reps;const w=ds[0]?.values?.weight;
           if(r&&w)lastSummary=`${ds.length} × ${r} @ ${w} kg`;else lastSummary=`${ds.length} sets`;
         }else if(hasD){const d=ds[0]?.values?.distance;lastSummary=d?`${ds.length} × ${d}m`:`${ds.length} sets`;
         }else lastSummary=`${ds.length} sets`;break}}}}
@@ -884,17 +905,18 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateSet,onTog
       </div>
       <Icon name="chevRight" size={20}/>
     </div>}
-    {(lastSummary||prDisplay)&&<div className="focus-stats-row">
-      <div className="focus-stat-card">
-        <span className="lbl">Last Session</span>
-        <span className="val">{lastSummary||'—'}</span>
+    {isSprint&&lastSprintLines&&lastSprintLines.length>0?
+      <div className="focus-stat-card" style={{marginBottom:14}}>
+        <span className="lbl">Last Session{lastDate?` · ${lastDate}`:''}</span>
+        <div style={{display:'flex',flexWrap:'wrap',gap:'4px 12px',marginTop:4}}>
+          {lastSprintLines.map((l,i)=><span key={i} className="val" style={{fontSize:14}}>{l}</span>)}
+        </div>
       </div>
-      <div className="focus-stat-card">
-        <span className="lbl">Working Max</span>
-        <span className="val">{prs?.maxWeight?`${prs.maxWeight} kg`:prs?.['tf-time']?`${prs['tf-time']}s`:'—'}</span>
-      </div>
-    </div>}
-    {note&&<div className="focus-note">{note}</div>}
+    :(lastSummary)&&<div className="focus-stat-card" style={{marginBottom:14}}>
+        <span className="lbl">Last Session{lastDate?` · ${lastDate}`:''}</span>
+        <span className="val">{lastSummary}</span>
+      </div>}
+    {note!=null&&note!==''&&<div className="focus-note">{note}</div>}
     <div className="focus-table">
       <div className="focus-table-hdr" style={{gridTemplateColumns:gridCols}}>
         <span className="left">Set</span>
@@ -924,6 +946,30 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateSet,onTog
         <button onClick={onAddSet}>+</button>
       </div>
     </div>
+    {onUpdateNote&&<FocusNoteBox eid={exId} note={note||''} onUpdate={onUpdateNote}/>}
+    {onChangeMetrics&&<FocusMetricsToggle exId={exId} current={exercise.metrics} cm={cm} onChange={onChangeMetrics}/>}
+  </div>)}
+
+function FocusNoteBox({eid,note,onUpdate}){
+  const[text,setText]=useState(note);
+  useEffect(()=>{setText(note)},[note,eid]);
+  return(<div style={{marginTop:14}}>
+    <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.6px',marginBottom:6,paddingLeft:4}}>Notes</div>
+    <textarea className="input" value={text} placeholder="Add notes for this exercise…"
+      onChange={e=>setText(e.target.value)}
+      onBlur={()=>{if(text!==note)onUpdate(eid,text)}}
+      style={{minHeight:60,fontSize:14,padding:12,resize:'vertical'}}/>
+  </div>)}
+
+function FocusMetricsToggle({exId,current,cm,onChange}){
+  const[open,setOpen]=useState(false);
+  return(<div style={{marginTop:10}}>
+    <button onClick={()=>setOpen(!open)} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 12px',background:'var(--surface)',border:'1.5px solid var(--border)',borderRadius:10,fontSize:13,fontWeight:700,color:'var(--text2)',cursor:'pointer',width:'100%',justifyContent:'center'}}>
+      📏 {open?'Hide Metrics':'Edit Metrics'}
+    </button>
+    {open&&<div style={{marginTop:8,padding:12,background:'var(--surface)',borderRadius:12,boxShadow:'0 1px 3px rgba(0,0,0,.04)'}}>
+      <InlineMetricEditor current={current} cm={cm} onChange={(newM,newC)=>onChange(exId,newM,newC)}/>
+    </div>}
   </div>)}
 
 function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics,note,onUpdateNote,athletes,assignedAthletes,onToggleAthlete}){
@@ -1035,6 +1081,8 @@ function ConfirmDialog({title,message,onConfirm,onCancel,confirmText='OK',danger
 
 function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onSave,onCancel,allTags,onAddCustomTag}){
   const[weather,setWeather]=useState(null);const[tag,setTag]=useState(initialTag||null);
+  const[geoLoc,setGeoLoc]=useState(null);
+  useEffect(()=>{detectIndoor((match,cur)=>{setGeoLoc(cur);if(match)setWeather(['indoor'])})},[]);
   const[showCustomTag,setShowCustomTag]=useState(false);const[ctName,setCtName]=useState('');const[ctColor,setCtColor]=useState('#8b5cf6');
   const[wkName,setWkName]=useState(workout.name||'');
   const elSec=Math.floor(elapsed/1000);
@@ -1064,10 +1112,11 @@ function WorkoutFinishForm({workout,athletes,exercises,cm,elapsed,initialTag,onS
       </div>
       <div className="form-group"><label className="form-label">Workout Name</label>
         <input className="input" placeholder="e.g. Push Day" value={wkName} onChange={e=>setWkName(e.target.value)}/></div>
-      <div className="form-group"><label className="form-label">Weather</label>
-        <div className="weather-picker">{[{k:'sunny',e:'☀️',l:'Sunny'},{k:'windy',e:'💨',l:'Windy'},{k:'rainy',e:'🌧️',l:'Rainy'}].map(w=>(
+      <div className="form-group"><label className="form-label">{hasWeather(weather,'indoor')?'Location':'Weather'}</label>
+        <div className="weather-picker">{[{k:'indoor',e:'🏢',l:'Indoor'},{k:'sunny',e:'☀️',l:'Sunny'},{k:'windy',e:'💨',l:'Windy'},{k:'rainy',e:'🌧️',l:'Rainy'}].filter(w=>!hasWeather(weather,'indoor')||w.k==='indoor').map(w=>(
           <button key={w.k} className={`weather-btn ${hasWeather(weather,w.k)?'active':''}`}
-            onClick={()=>{const nw=toggleWeather(weather,w.k);setWeather(nw.length?nw:null)}}>
+            onClick={()=>{if(w.k==='indoor'){const isOn=hasWeather(weather,'indoor');if(isOn)setWeather(null);else{setWeather(['indoor']);if(geoLoc)saveIndoorLoc(geoLoc)}return}
+              const nw=toggleWeather(weather,w.k);setWeather(nw.length?nw:null)}}>
             <span className="emoji">{w.e}</span><span>{w.l}</span></button>))}</div></div>
       <div className="form-group"><label className="form-label">Tag</label>
         <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
@@ -1204,7 +1253,7 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
             <div className="detail-ex-name">{ex?.name||'?'}</div>
             {editing&&<button style={{color:'var(--danger)',padding:4}} onClick={()=>delEx(eid)}><Icon name="trash" size={14}/></button>}
           </div>
-          {wk.exNotes?.[eid]&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',marginBottom:4}}>{wk.exNotes[eid]}</div>}
+          {noteFor(wk.exNotes,eid,selAth)&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',marginBottom:4}}>{noteFor(wk.exNotes,eid,selAth)}</div>}
           {!editing?sets.map((s,j)=>(<div key={j} className="detail-set"><span className="detail-set-num">{j+1}</span>
             {mds.map(md=><span key={md.id}>{s.values[md.id]??'-'}{md.unit?` ${md.unit}`:''}</span>)}</div>))
           :<>{sets.map((s,j)=>(<div key={j} className="detail-set" style={{gap:6}}>
@@ -1237,7 +1286,7 @@ function WorkoutDetail({workout:initWk,athletes,exercises,cm,onClose,onDelete,on
               }else{(wk.exerciseMetrics?.[eid]||ex?.metrics||[]).forEach(mid=>{const md=getMetric(mid,cm);const val=v[mid];
                 if(val!=null&&val!=='')parts.push(val+(md.unit?' '+md.unit:''))});}
               lines.push('    '+(j+1)+'. '+parts.join(' · '))});
-            if(wk.exNotes?.[eid])lines.push('    → '+wk.exNotes[eid])});
+            const _ne=noteFor(wk.exNotes,eid,a.id);if(_ne)lines.push('    → '+_ne)});
           if(adX.rpe)lines.push('  RPE: '+adX.rpe+'/10');if(adX.notes)lines.push('  '+adX.notes);lines.push('')});
         navigator.clipboard?.writeText(lines.join('\n')).then(()=>alert('Copied!'));
       }}>📋 Copy Workout</button>
@@ -1560,7 +1609,11 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
       na[aId]={...na[aId],sets:{...na[aId].sets,[exId]:na[aId].sets[exId].map(s=>{
         const nv={};newMetrics.forEach(mid=>{nv[mid]=s.values[mid]??''});return{...s,values:nv}})}}}});
       return{...w,athletes:na,exerciseMetrics:{...(w.exerciseMetrics||{}),[exId]:newMetrics}}})};
-  const updateNote=(exId,text)=>{setWorkout(w=>({...w,exNotes:{...w.exNotes,[exId]:text}}))};
+  const getNote=(eid,aId)=>{const v=workout.exNotes?.[eid];if(!v)return '';if(typeof v==='string')return v;return v[aId]||''};
+  const updateNote=(exId,text)=>{setWorkout(w=>{const cur=w.exNotes?.[exId];
+    let next;if(typeof cur==='string'){next={};athletes.forEach(a=>{if(cur)next[a.id]=cur});next[activeAth]=text}
+    else next={...(cur||{}),[activeAth]:text};
+    return{...w,exNotes:{...(w.exNotes||{}),[exId]:next}}})};
   const handleFinishSave=({name,weather,tag,athData,customDuration})=>{
     const endTime=customDuration!=null?workout.startTime+customDuration:Date.now();
     const fin={...workout,name:name||workout.name,endTime,weather,tag,color:tag?.color||'var(--primary)'};
@@ -1582,7 +1635,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     <span className="hdr-time">{fmtTime(Math.floor(elapsed/1000))}</span></div>
     <AthleteBar athletes={athletes} active={activeAth} onSelect={setActiveAth}/>
     <div className="screen pad" ref={listRef} style={{paddingBottom:curRestStart?'calc(var(--nav-h) + 80px)':undefined}}>
-      {(()=>{const renderedSet=new Set();const ids=workout.exerciseIds;const items=[];
+      {(()=>{const renderedSet=new Set();const ids=workout.exerciseIds;const items=[];const itemMeta=[];
         ids.forEach((eid,idx)=>{
           if(renderedSet.has(idx))return;
           if(!exForAth(eid))return;
@@ -1590,6 +1643,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           if(ss){const ssIdxs=ss.map(sid=>ids.indexOf(sid)).filter(i=>i>=0&&exForAth(ids[i])).sort((a,b)=>a-b);
             if(ssIdxs[0]===idx&&ssIdxs.length>0){ssIdxs.forEach(i=>renderedSet.add(i));
               const ssEids=ssIdxs.map(i=>ids[i]);
+              itemMeta.push({first:ssEids[0],last:ssEids[ssEids.length-1],isSS:true});
               const onSSGrip=e=>{const touch=e.touches?e.touches[0]:e;if(!touch)return;
                 const groupEl=e.target.closest('.superset-group');if(!groupEl)return;
                 const rect=groupEl.getBoundingClientRect();
@@ -1631,9 +1685,10 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                     onReplace={()=>{setReplacingIdx(si);setShowPicker(true)}} onDelete={()=>delEx(si)}
                     onShowHistory={()=>setHistoryEx(sex)}
                     athletes={athletes} assignedAthletes={workout.exerciseAthletes?.[seid]} onToggleAthlete={aId=>toggleExAthlete(seid,aId)}
-                    onChangeMetrics={changeMetrics} note={workout.exNotes?.[seid]} onUpdateNote={updateNote} onGripTouch={()=>{}}/>})}</div>);return}}
+                    onChangeMetrics={changeMetrics} note={getNote(seid,activeAth)} onUpdateNote={updateNote} onGripTouch={()=>{}}/>})}</div>);return}}
           const ex=effEx(eid);
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
+          itemMeta.push({first:eid,last:eid,isSS:false});
           items.push(<ExerciseAccordion key={eid} exId={eid} exercise={ex} sets={athSets[eid]||[]}
           prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
           velocityZone={vzMap[eid]||null} onSetVZ={vz=>setVzMap(p=>({...p,[eid]:vz}))}
@@ -1642,7 +1697,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           onReplace={()=>{setReplacingIdx(idx);setShowPicker(true)}} onDelete={()=>delEx(idx)}
           onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}
           athletes={athletes} assignedAthletes={workout.exerciseAthletes?.[eid]} onToggleAthlete={aId=>toggleExAthlete(eid,aId)}
-          onChangeMetrics={changeMetrics} note={workout.exNotes?.[eid]} onUpdateNote={updateNote}
+          onChangeMetrics={changeMetrics} note={getNote(eid,activeAth)} onUpdateNote={updateNote}
           onGripTouch={e=>{
             const touch=e.touches?e.touches[0]:e;if(!touch)return;
             const accEl=e.target.closest('.acc');if(!accEl)return;
@@ -1693,7 +1748,8 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
             </div>,
             <FocusExerciseCard key={'fc-'+eid} exercise={ex} sets={athSets[eid]||[]} exId={eid} activeAth={activeAth} allWorkouts={workouts}
               prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
-              note={workout.exNotes?.[eid]} ssTag={ssTag}
+              note={getNote(eid,activeAth)} onUpdateNote={updateNote} ssTag={ssTag}
+              onChangeMetrics={changeMetrics}
               onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
               onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
               onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}/>,
@@ -1705,13 +1761,11 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           ];
         }
         const result=[];
-        const freeIds=ids.filter(eid=>!supersets.some(ss=>ss.includes(eid)));
         items.forEach((item,i)=>{result.push(item);
-          if(i<items.length-1){const k1=item.key;const k2=items[i+1].key;
-            const e1=typeof k1==='string'&&!k1.startsWith('ss-')?k1:null;
-            const e2=typeof k2==='string'&&!k2.startsWith('ss-')?k2:null;
-            if(e1&&e2)result.push(<button key={'link-'+i} className="link-btn"
-              onClick={()=>toggleSuperset(e1,e2)}><Icon name="link" size={12}/></button>)}});
+          if(i<items.length-1){const m1=itemMeta[i];const m2=itemMeta[i+1];
+            if(!(m1.isSS&&m2.isSS)){const e1=m1.last;const e2=m2.first;
+              if(e1&&e2)result.push(<button key={'link-'+i} className="link-btn"
+                onClick={()=>toggleSuperset(e1,e2)}><Icon name="link" size={12}/></button>)}}});
         return result})()}
       {viewMode!=='focus'&&<button className="btn btn-secondary" style={{marginBottom:12}} onClick={()=>{setReplacingIdx(null);setShowPicker(true)}}>
         <Icon name="plus" size={16}/> Add Exercise</button>}
@@ -2133,7 +2187,7 @@ function WorkoutSummary({workout,athletes,exercises,cm,onClose}){
           }else{(workout.exerciseMetrics?.[eid]||ex?.metrics||[]).forEach(mid=>{const md=getMetric(mid,cm);const val=v[mid];
             if(val!=null&&val!=='')parts.push(val+(md.unit?' '+md.unit:''))});}
           lines.push('    '+(j+1)+'. '+parts.join(' · '))});
-        if(workout.exNotes?.[eid])lines.push('    → '+workout.exNotes[eid])});
+        const _ne=noteFor(workout.exNotes,eid,a.id);if(_ne)lines.push('    → '+_ne)});
       if(ad.rpe)lines.push('  RPE: '+ad.rpe+'/10');if(ad.notes)lines.push('  '+ad.notes);lines.push('')});
     navigator.clipboard?.writeText(lines.join('\n')).then(()=>alert('Copied!'))};
   const c=workout.tag?.color||workout.color||'var(--primary)';
@@ -2175,7 +2229,7 @@ function WorkoutSummary({workout,athletes,exercises,cm,onClose}){
                 return(<div key={j} style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text2)',padding:'1px 0'}}>
                   <span style={{width:16,fontSize:11,fontWeight:700,color:'var(--text3)'}}>{j+1}</span>
                   {primary}{extra}</div>)})}
-              {workout.exNotes?.[eid]&&<div style={{fontSize:11,color:'var(--text3)',fontStyle:'italic',marginTop:2}}>{workout.exNotes[eid]}</div>}
+              {noteFor(workout.exNotes,eid,a.id)&&<div style={{fontSize:11,color:'var(--text3)',fontStyle:'italic',marginTop:2}}>{noteFor(workout.exNotes,eid,a.id)}</div>}
             </div>)})}
           {ad.rpe&&<div style={{fontSize:12,fontWeight:700,color:'var(--text3)',marginTop:4}}>RPE: {ad.rpe}/10</div>}
           {ad.notes&&<div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{ad.notes}</div>}
@@ -2234,7 +2288,7 @@ function App(){
   useEffect(()=>{
     if(!plannedSynced) return;
     setPlanned(p=>{
-      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-'));
+      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-'));
       if(!r.find(x=>x.id==='pl-sprint-5'))r=[...r,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
           'mb-overhead-back','mb-chest-pass','mb-rotational'],
@@ -2286,6 +2340,21 @@ function App(){
           'wickets':[{reps:10},{reps:10},{reps:10},{reps:10},{reps:10}]
         },
         notes:'Overspeed 4×40m. 50m — 4× max effort, Freelap, 0-30m + 2×10m fly, 4-5 min pauzy. 60m — 3× max effort, Freelap, 0-40m + 2×10m fly, 4-5 min pauzy. Wickety 5×10.'
+      }];
+      if(!r.find(x=>x.id==='pl-lj-session-1'))r=[...r,{id:'pl-lj-session-1',date:'2026-04-28',name:'Long Jump Session',color:'#8b5cf6',
+        exerciseIds:['hurdle-jumps','short-app-popup','full-app-runthrough','full-app-popup','approach-jump__1','approach-jump__2','sl-bounds-jump','alt-bounds-jump'],
+        supersets:[],
+        setConfigs:{
+          'hurdle-jumps':[{reps:5},{reps:5},{reps:5}],
+          'short-app-popup':[{reps:3},{reps:3},{reps:3}],
+          'full-app-runthrough':[{reps:1},{reps:1}],
+          'full-app-popup':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
+          'approach-jump__1':[{},{}],
+          'approach-jump__2':[{},{},{},{},{},{}],
+          'sl-bounds-jump':[{reps:1},{reps:1},{reps:1}],
+          'alt-bounds-jump':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}]
+        },
+        notes:'Hurdle Jumps 3×5. Short approach pop-upy 5 krokov 3×3. Full approach run-throughs 2×. Full approach pop-upy 5×. 10-step approach skok 2×. 14-step approach skoky 6×. SL bounds + jump 3×/nohu. Alternate bounds + jump 5×.'
       }];
       if(!r.find(x=>x.id==='pl-gym-1'))r=[...r,{id:'pl-gym-1',date:'2026-04-27',name:'Gym',color:'#3b82f6',
         exerciseIds:['tb-jump','pogos-bands','tb-deadlift','afsm','step-up','drop-jump-sl',
