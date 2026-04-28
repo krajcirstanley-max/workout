@@ -249,8 +249,6 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 .focus-bn-btn:disabled{color:#cbd5e1;cursor:default}
 .focus-bn-btn.center{color:var(--primary);font-weight:800}
 .focus-bn-btn.next{color:var(--primary);font-weight:800}
-@keyframes focusPageIn{from{opacity:0}to{opacity:1}}
-.focus-page-enter{animation:focusPageIn .18s ease-out}
 
 /* Rest Timer */
 .rest-bar{position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + var(--safe-b) + 8px);
@@ -1555,8 +1553,6 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const[supersets,setSupersets]=useState(_sv?.supersets||initialPlan?.supersets||[]);
   const[viewMode,setViewMode]=useState(_sv?.viewMode||'list');
   const[focusIdx,setFocusIdx]=useState(_sv?.focusIdx||0);
-  const[dragX,setDragX]=useState(0);const[anim,setAnim]=useState(false);
-  const swipeRef=useRef({startX:0,startY:0,active:false,didMove:false});const dragRef=useRef(0);
   useEffect(()=>{try{localStorage.setItem('wk2_activeSnapshot',JSON.stringify({
     workout,localEx,localCM,supersets,checkedIn:[...checkedIn],wkTag,vzMap,viewMode,focusIdx}))}catch{}
   },[workout,localEx,localCM,supersets,checkedIn,wkTag,vzMap,viewMode,focusIdx]);
@@ -1756,33 +1752,16 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
           const goPrev=()=>setFocusIdx(Math.max(0,safeIdx-1));
           const goNext=()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1));
-          const W=typeof window!=='undefined'?window.innerWidth:400;
-          const commit=dir=>{setAnim(true);
-            const off=dir==='next'?-W:W;setDragX(off);dragRef.current=off;
-            setTimeout(()=>{if(dir==='next')setFocusIdx(Math.min(flatIds.length-1,safeIdx+1));
-              else setFocusIdx(Math.max(0,safeIdx-1));
-              setDragX(0);dragRef.current=0;setAnim(false)},200)};
-          const onTouchStart=e=>{const tag=(e.target.tagName||'').toLowerCase();
-            if(tag==='input'||tag==='textarea'||tag==='button')return;
-            const t=e.touches[0];swipeRef.current={startX:t.clientX,startY:t.clientY,active:true,didMove:false};setAnim(false)};
-          const onTouchMove=e=>{const r=swipeRef.current;if(!r.active)return;const t=e.touches[0];
-            const dx=t.clientX-r.startX;const dy=Math.abs(t.clientY-r.startY);
-            if(!r.didMove&&dy>10&&Math.abs(dx)<dy){r.active=false;setDragX(0);dragRef.current=0;return}
-            if(Math.abs(dx)>6)r.didMove=true;if(!r.didMove)return;
-            let b=dx;if(safeIdx===0&&dx>0)b=dx*0.3;if(safeIdx>=flatIds.length-1&&dx<0)b=dx*0.3;
-            dragRef.current=b;setDragX(b)};
-          const onTouchEnd=()=>{const r=swipeRef.current;if(!r.active||!r.didMove){setDragX(0);dragRef.current=0;r.active=false;return}
-            r.active=false;const dx=dragRef.current;const th=70;
-            if(dx<-th&&safeIdx<flatIds.length-1)commit('next');
-            else if(dx>th&&safeIdx>0)commit('prev');
-            else{setAnim(true);setDragX(0);dragRef.current=0;setTimeout(()=>setAnim(false),200)}};
+          const swipeRef={x:null,y:null};
+          const onTouchStart=e=>{const t=e.touches[0];swipeRef.x=t.clientX;swipeRef.y=t.clientY};
+          const onTouchEnd=e=>{if(swipeRef.x==null)return;const t=e.changedTouches[0];const dx=t.clientX-swipeRef.x;const dy=Math.abs(t.clientY-swipeRef.y);
+            if(Math.abs(dx)>60&&dy<80){const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'||tag==='textarea')return;
+              if(dx<0)goNext();else goPrev()}swipeRef.x=null};
           return[
             <div key="focus-dots" className="focus-dots">
               {flatIds.map((_,i)=><div key={i} className={'d'+(i===safeIdx?' active':'')} onClick={()=>setFocusIdx(i)}/>)}
             </div>,
-            <div key={'fc-wrap-'+eid} className="focus-page-enter"
-              onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
-              style={{transform:`translateX(${dragX}px)`,transition:anim?'transform .2s cubic-bezier(.2,.8,.3,1)':'none',touchAction:'pan-y',willChange:'transform'}}>
+            <div key={'fc-wrap-'+eid} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
               <FocusExerciseCard exercise={ex} sets={athSets[eid]||[]} exId={eid} activeAth={activeAth} allWorkouts={workouts}
                 prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
                 note={getNote(eid,activeAth)} onUpdateNote={updateNote} ssTag={ssTag}
