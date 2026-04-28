@@ -883,7 +883,7 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUp
       const matchKey=Object.keys(ad.sets||{}).find(k=>baseExId(k)===baseId);
       if(matchKey){const ds=ad.sets[matchKey].filter(s=>s.completed);if(ds.length){
         lastDate=new Date(wk.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-        if(isSprint){lastSprintLines=ds.map(s=>{const d=s.values.distance;const t=s.values['tf-time'];return d&&t?`${d}m: ${t}s`:null}).filter(Boolean);
+        if(isSprint){lastSprintLines=ds.map(s=>{const d=s.values.distance;const t=s.values['tf-time'];return d&&t?{d,t}:null}).filter(Boolean);
         }else if(hasW&&hasR){const r=ds[0]?.values?.reps;const w=ds[0]?.values?.weight;
           if(r&&w)lastSummary=`${ds.length} × ${r} @ ${w} kg`;else lastSummary=`${ds.length} sets`;
         }else if(hasD){const d=ds[0]?.values?.distance;lastSummary=d?`${ds.length} × ${d}m`:`${ds.length} sets`;
@@ -891,7 +891,9 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUp
   const prDisplay=prs?.e1rm?{lbl:'Est. 1RM',val:`${prs.e1rm} kg`}:prs?.maxWeight?{lbl:'Max',val:`${prs.maxWeight} kg`}:prs?.['tf-time']?{lbl:'Best',val:`${prs['tf-time']}s`}:prs?.maxReps?{lbl:'Max Reps',val:`${prs.maxReps}`}:null;
   const prSetIdx=hasW&&prs?.maxWeight?sets.findIndex(s=>Number(s.values.weight)===prs.maxWeight&&s.completed):-1;
   const numCols=mds.length;
-  const gridCols=`32px ${mds.map(()=>'1fr').join(' ')} 38px`;
+  const wide=numCols>=4;
+  const gridCols=wide?`32px ${mds.map(()=>'minmax(72px,1fr)').join(' ')} 38px`:`32px ${mds.map(()=>'1fr').join(' ')} 38px`;
+  const tableMinWidth=wide?(32+38+numCols*78+(numCols+1)*10):'auto';
   return(<div>
     {ssTag&&<div className="focus-ss-tag">{ssTag}</div>}
     {totals.length>0&&<div className="focus-totals">
@@ -908,8 +910,10 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUp
     {isSprint&&lastSprintLines&&lastSprintLines.length>0?
       <div className="focus-stat-card" style={{marginBottom:14}}>
         <span className="lbl">Last Session{lastDate?` · ${lastDate}`:''}</span>
-        <div style={{display:'flex',flexWrap:'wrap',gap:'4px 12px',marginTop:4}}>
-          {lastSprintLines.map((l,i)=><span key={i} className="val" style={{fontSize:14}}>{l}</span>)}
+        <div style={{display:'flex',flexWrap:'wrap',gap:'4px 14px',marginTop:4}}>
+          {lastSprintLines.map((l,i)=><span key={i} style={{fontSize:14,color:'var(--text2)'}}>
+            <span style={{fontWeight:500}}>{l.d}m: </span><span style={{fontWeight:800,color:'var(--text1)'}}>{l.t}s</span>
+          </span>)}
         </div>
       </div>
     :(lastSummary)&&<div className="focus-stat-card" style={{marginBottom:14}}>
@@ -918,6 +922,8 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUp
       </div>}
     {note!=null&&note!==''&&<div className="focus-note">{note}</div>}
     <div className="focus-table">
+      <div style={{overflowX:wide?'auto':'visible',WebkitOverflowScrolling:'touch'}}>
+      <div style={{minWidth:tableMinWidth}}>
       <div className="focus-table-hdr" style={{gridTemplateColumns:gridCols}}>
         <span className="left">Set</span>
         {mds.map(md=><span key={md.id}>{md.unit||md.name}</span>)}
@@ -940,6 +946,8 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUp
           </button>
         </div>
       ))}
+      </div>
+      </div>
       <div className="focus-set-ctrl">
         <button onClick={()=>sets.length>1&&onDeleteSet(sets.length-1)} disabled={sets.length<=1}>−</button>
         <span className="focus-set-ctrl-lbl">Set</span>
@@ -1742,17 +1750,26 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           if(ss){const ssOrder=ss.map(sid=>flatIds.indexOf(sid)).filter(i=>i>=0).sort((a,b)=>a-b);
             const pos=ssOrder.indexOf(safeIdx);if(pos>=0)ssTag=`Superset · ${String.fromCharCode(65+pos)} of ${ssOrder.length}`}
           const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
+          const goPrev=()=>setFocusIdx(Math.max(0,safeIdx-1));
+          const goNext=()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1));
+          const swipeRef={x:null,y:null};
+          const onTouchStart=e=>{const t=e.touches[0];swipeRef.x=t.clientX;swipeRef.y=t.clientY};
+          const onTouchEnd=e=>{if(swipeRef.x==null)return;const t=e.changedTouches[0];const dx=t.clientX-swipeRef.x;const dy=Math.abs(t.clientY-swipeRef.y);
+            if(Math.abs(dx)>60&&dy<80){const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'||tag==='textarea')return;
+              if(dx<0)goNext();else goPrev()}swipeRef.x=null};
           return[
             <div key="focus-dots" className="focus-dots">
               {flatIds.map((_,i)=><div key={i} className={'d'+(i===safeIdx?' active':'')} onClick={()=>setFocusIdx(i)}/>)}
             </div>,
-            <FocusExerciseCard key={'fc-'+eid} exercise={ex} sets={athSets[eid]||[]} exId={eid} activeAth={activeAth} allWorkouts={workouts}
-              prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
-              note={getNote(eid,activeAth)} onUpdateNote={updateNote} ssTag={ssTag}
-              onChangeMetrics={changeMetrics}
-              onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
-              onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
-              onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}/>,
+            <div key={'fc-wrap-'+eid} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+              <FocusExerciseCard exercise={ex} sets={athSets[eid]||[]} exId={eid} activeAth={activeAth} allWorkouts={workouts}
+                prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
+                note={getNote(eid,activeAth)} onUpdateNote={updateNote} ssTag={ssTag}
+                onChangeMetrics={changeMetrics}
+                onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
+                onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
+                onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}/>
+            </div>,
             <div key="focus-bn" className="focus-bottom-nav">
               <button className="focus-bn-btn" disabled={safeIdx===0} onClick={()=>setFocusIdx(Math.max(0,safeIdx-1))}>← Back</button>
               <button className="focus-bn-btn center" onClick={startRest}><Icon name="clock" size={18}/> Timer</button>
