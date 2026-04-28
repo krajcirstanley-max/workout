@@ -1556,7 +1556,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   const[viewMode,setViewMode]=useState(_sv?.viewMode||'list');
   const[focusIdx,setFocusIdx]=useState(_sv?.focusIdx||0);
   const[dragX,setDragX]=useState(0);const[anim,setAnim]=useState(false);
-  const swipeRef=useRef({startX:0,startY:0,active:false,didMove:false});const dragRef=useRef(0);
+  const swipeRef=useRef({startX:0,startY:0,active:false,didMove:false});const swipeDragRef=useRef(0);
   useEffect(()=>{try{localStorage.setItem('wk2_activeSnapshot',JSON.stringify({
     workout,localEx,localCM,supersets,checkedIn:[...checkedIn],wkTag,vzMap,viewMode,focusIdx}))}catch{}
   },[workout,localEx,localCM,supersets,checkedIn,wkTag,vzMap,viewMode,focusIdx]);
@@ -1758,24 +1758,24 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           const goNext=()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1));
           const W=typeof window!=='undefined'?window.innerWidth:400;
           const commit=dir=>{setAnim(true);
-            const off=dir==='next'?-W:W;setDragX(off);dragRef.current=off;
+            const off=dir==='next'?-W:W;setDragX(off);swipeDragRef.current=off;
             setTimeout(()=>{if(dir==='next')setFocusIdx(Math.min(flatIds.length-1,safeIdx+1));
               else setFocusIdx(Math.max(0,safeIdx-1));
-              setDragX(0);dragRef.current=0;setAnim(false)},200)};
+              setDragX(0);swipeDragRef.current=0;setAnim(false)},200)};
           const onTouchStart=e=>{const tag=(e.target.tagName||'').toLowerCase();
             if(tag==='input'||tag==='textarea'||tag==='button')return;
             const t=e.touches[0];swipeRef.current={startX:t.clientX,startY:t.clientY,active:true,didMove:false};setAnim(false)};
           const onTouchMove=e=>{const r=swipeRef.current;if(!r.active)return;const t=e.touches[0];
             const dx=t.clientX-r.startX;const dy=Math.abs(t.clientY-r.startY);
-            if(!r.didMove&&dy>10&&Math.abs(dx)<dy){r.active=false;setDragX(0);dragRef.current=0;return}
+            if(!r.didMove&&dy>10&&Math.abs(dx)<dy){r.active=false;setDragX(0);swipeDragRef.current=0;return}
             if(Math.abs(dx)>6)r.didMove=true;if(!r.didMove)return;
             let b=dx;if(safeIdx===0&&dx>0)b=dx*0.3;if(safeIdx>=flatIds.length-1&&dx<0)b=dx*0.3;
-            dragRef.current=b;setDragX(b)};
-          const onTouchEnd=()=>{const r=swipeRef.current;if(!r.active||!r.didMove){setDragX(0);dragRef.current=0;r.active=false;return}
-            r.active=false;const dx=dragRef.current;const th=70;
+            swipeDragRef.current=b;setDragX(b)};
+          const onTouchEnd=()=>{const r=swipeRef.current;if(!r.active||!r.didMove){setDragX(0);swipeDragRef.current=0;r.active=false;return}
+            r.active=false;const dx=swipeDragRef.current;const th=70;
             if(dx<-th&&safeIdx<flatIds.length-1)commit('next');
             else if(dx>th&&safeIdx>0)commit('prev');
-            else{setAnim(true);setDragX(0);dragRef.current=0;setTimeout(()=>setAnim(false),200)}};
+            else{setAnim(true);setDragX(0);swipeDragRef.current=0;setTimeout(()=>setAnim(false),200)}};
           return[
             <div key="focus-dots" className="focus-dots">
               {flatIds.map((_,i)=><div key={i} className={'d'+(i===safeIdx?' active':'')} onClick={()=>setFocusIdx(i)}/>)}
