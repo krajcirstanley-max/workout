@@ -579,6 +579,13 @@ const DEFAULT_EXERCISES=[
   {id:'approach-jump',name:'Approach Jump',category:'T&F',metrics:['tf-dist']},
   {id:'sl-bounds-jump',name:'SL Bounds + Jump',category:'T&F',metrics:['reps']},
   {id:'alt-bounds-jump',name:'Alternate Bounds + Jump',category:'T&F',metrics:['reps']},
+  {id:'high-pull',name:'High Pull',category:'Legs',metrics:['weight','reps']},
+  {id:'quarter-squat',name:'Quarter Squat',category:'Legs',metrics:['weight','reps']},
+  {id:'drop-jump-rsi',name:'Drop Jump RSI',category:'Legs',metrics:['reps']},
+  {id:'lower-back-ext',name:'Lower Back Extension',category:'Back',metrics:['reps']},
+  {id:'ab-wheel-rollout',name:'Ab Wheel Rollout',category:'Core',metrics:['reps']},
+  {id:'leg-raises',name:'Leg Raises',category:'Core',metrics:['reps']},
+  {id:'sprint-arms',name:'Sprint Arms',category:'Core',metrics:['time']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
 const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -2327,6 +2334,24 @@ function App(){
     if(!plannedSynced) return;
     setPlanned(p=>{
       let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-'));
+      if(!r.find(x=>x.id==='pl-gym-2'))r=[...r,{id:'pl-gym-2',date:'2026-04-28',name:'Gym',color:'#3b82f6',
+        exerciseIds:['high-pull','afsm','quarter-squat','drop-jump-rsi','hip-thrust','nordics','calf-raise','lower-back-ext','ab-wheel-rollout','leg-raises','sprint-arms'],
+        supersets:[['high-pull','afsm'],['quarter-squat','drop-jump-rsi'],['ab-wheel-rollout','leg-raises','sprint-arms']],
+        setConfigs:{
+          'high-pull':[{reps:3},{reps:3},{reps:3}],
+          'afsm':[{reps:4},{reps:4},{reps:4}],
+          'quarter-squat':[{reps:3},{reps:3},{reps:3}],
+          'drop-jump-rsi':[{reps:5},{reps:5},{reps:5}],
+          'hip-thrust':[{reps:6},{reps:6},{reps:6}],
+          'nordics':[{reps:5},{reps:5},{reps:5}],
+          'calf-raise':[{reps:10},{reps:10},{reps:10}],
+          'lower-back-ext':[{reps:10},{reps:10}],
+          'ab-wheel-rollout':[{reps:6},{reps:6}],
+          'leg-raises':[{reps:6},{reps:6}],
+          'sprint-arms':[{time:7},{time:7}]
+        },
+        notes:'A1 High Pull 3×3 (mean 0.85-1.10 m/s, peak 1.70+) + A2 AFSM 3×4. B1 Quarter Squat 3×3 (mean 0.30-0.50 m/s, 3s eccentric) + B2 Drop Jump RSI 3×5 (GCT pod 200ms). C Hip Thrust 3×6 (mean 0.60-0.80 m/s). D Nordics 3×5 (Stanley +15kg / Miška band→BW). E Calf Raise 3×10 (3s eccentric). F Lower Back Ext 2×10. G Core Circuit 2 kolá: Ab Wheel Rollout 6× + Leg Raises 6× + Šprintérske ruky 7s.'
+      }];
       if(!r.find(x=>x.id==='pl-sprint-5'))r=[...r,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
           'mb-overhead-back','mb-chest-pass','mb-rotational'],
