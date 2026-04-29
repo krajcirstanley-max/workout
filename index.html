@@ -26,7 +26,10 @@
   --radius:16px;--radius-sm:12px;
   --safe-b:env(safe-area-inset-bottom,0px);--nav-h:64px;
 }
-html,body{height:100%;overflow:hidden}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.pull-refresh{position:fixed;top:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:center;z-index:200;pointer-events:none}
+.pull-refresh-spinner{width:30px;height:30px;border-radius:50%;border:3px solid rgba(0,0,0,.08);border-top-color:var(--primary);box-shadow:0 2px 10px rgba(0,0,0,.08);background:#fff}
 body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 #root{height:100%;display:flex;flex-direction:column}
@@ -2287,6 +2290,40 @@ function WorkoutSummary({workout,athletes,exercises,cm,onClose}){
   </div></div>)}
 
 // ── App ──
+function PullRefresh(){
+  const[pullY,setPullY]=useState(0);const[refreshing,setRefreshing]=useState(false);
+  const ref=useRef({y0:0,active:false,didMove:false});const pullRef=useRef(0);
+  useEffect(()=>{
+    const inActive=()=>{try{return localStorage.getItem('wk2_activeSession')==='1'}catch{return false}};
+    const onStart=e=>{if(refreshing||inActive())return;
+      const sc=document.querySelector('.screen');if(sc&&sc.scrollTop>5)return;
+      if(window.scrollY>5)return;
+      const t=e.touches[0];ref.current={y0:t.clientY,active:true,didMove:false};pullRef.current=0};
+    const onMove=e=>{const r=ref.current;if(!r.active)return;
+      const t=e.touches[0];const dy=t.clientY-r.y0;
+      if(dy<=0){if(r.didMove){r.active=false;setPullY(0);pullRef.current=0}return}
+      r.didMove=true;
+      const damped=Math.min(dy*0.5,160);pullRef.current=damped;setPullY(damped)};
+    const onEnd=async()=>{const r=ref.current;if(!r.active||!r.didMove){setPullY(0);pullRef.current=0;r.active=false;return}
+      r.active=false;const dx=pullRef.current;
+      if(dx>60){setRefreshing(true);setPullY(50);
+        try{if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();
+          if(reg)await reg.update();await new Promise(r=>setTimeout(r,300))}}catch{}
+        window.location.reload()}
+      else{setPullY(0);pullRef.current=0}};
+    document.addEventListener('touchstart',onStart,{passive:true});
+    document.addEventListener('touchmove',onMove,{passive:true});
+    document.addEventListener('touchend',onEnd,{passive:true});
+    return()=>{document.removeEventListener('touchstart',onStart);
+      document.removeEventListener('touchmove',onMove);
+      document.removeEventListener('touchend',onEnd)};
+  },[refreshing]);
+  if(pullY<3&&!refreshing)return null;
+  const progress=Math.min(pullY/60,1);const rot=pullY*4;
+  return(<div className="pull-refresh" style={{transform:`translateY(${pullY-60}px)`,transition:refreshing?'transform .25s ease':'none'}}>
+    <div className="pull-refresh-spinner" style={{transform:`rotate(${rot}deg)`,animation:refreshing?'spin .8s linear infinite':'none',opacity:Math.max(0.4,progress)}}/>
+  </div>)}
+
 function App(){
   const[tab,setTab]=useState('today');
   const[inWorkout,setInWorkout]=useState(()=>{try{return localStorage.getItem('wk2_activeSession')==='1'}catch{return false}});
@@ -2476,6 +2513,7 @@ function App(){
       allTags={allTags} onAddCustomTag={addCustomTag}/></div>);
 
   return(<>
+    <PullRefresh/>
     {offline&&<div style={{background:'#f59e0b',color:'#fff',textAlign:'center',padding:'6px 16px',
       fontSize:13,fontWeight:600,letterSpacing:'.3px'}}>OFFLINE</div>}
     {tab==='today'&&<TodayScreen athletes={athletes} activeAth={activeAth} onSelectAth={setActiveAth}
