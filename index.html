@@ -2377,30 +2377,26 @@ function App(){
         exerciseIds:['wall-drills','eg-marches',
           'resisted-sprint__1','free-sprint__1',
           'resisted-sprint__2','free-sprint__2',
-          'resisted-sprint__3','free-sprint__3',
-          'resisted-sprint__4','free-sprint__4',
-          'free-sprint__5','hurdle-hops',
+          'free-sprint__3','hurdle-hops',
           'mb-overhead-back','mb-chest-pass','mb-forward-underhand'],
         supersets:[
           ['resisted-sprint__1','free-sprint__1'],
-          ['resisted-sprint__2','free-sprint__2'],
-          ['resisted-sprint__3','free-sprint__3'],
-          ['resisted-sprint__4','free-sprint__4']
+          ['resisted-sprint__2','free-sprint__2']
         ],
         setConfigs:{
           'wall-drills':[{reps:8},{reps:8},{reps:8}],
           'eg-marches':[{distance:20},{distance:20},{distance:20}],
-          'resisted-sprint__1':[{distance:20}],'free-sprint__1':[{distance:20}],
-          'resisted-sprint__2':[{distance:20}],'free-sprint__2':[{distance:25}],
-          'resisted-sprint__3':[{distance:20}],'free-sprint__3':[{distance:30}],
-          'resisted-sprint__4':[{distance:20}],'free-sprint__4':[{distance:30}],
-          'free-sprint__5':[{distance:30},{distance:30},{distance:30},{distance:30}],
+          'resisted-sprint__1':[{distance:20},{distance:20}],
+          'free-sprint__1':[{distance:20},{distance:20}],
+          'resisted-sprint__2':[{distance:30},{distance:30}],
+          'free-sprint__2':[{distance:30},{distance:30}],
+          'free-sprint__3':[{distance:30},{distance:30},{distance:30},{distance:30}],
           'hurdle-hops':[{reps:8},{reps:8},{reps:8}],
           'mb-overhead-back':[{reps:5}],
           'mb-chest-pass':[{reps:5}],
           'mb-forward-underhand':[{reps:5}]
         },
-        notes:'Wall drills 3×8/nohu. Exer Genie marches 3×20m. Contrast: Resisted 20m + Free 20m/25m/30m/30m (4 párov). Free sprint 4×30m. Hurdle Hops 3×8. Med ball: Overhead back throw 1×5, Chest pass 1×5, Forward underhand 1×5/strana.'
+        notes:'Wall drills 3×8/nohu. Exer Genie marches 3×20m. Contrast: 2× (Resisted 20m + Free 20m), 2× (Resisted 30m + Free 30m). Free sprint 4×30m. Hurdle Hops 3×8. Med ball: Overhead back throw 1×5, Chest pass 1×5, Forward underhand 1×5/strana.'
       }];
       if(!r.find(x=>x.id==='pl-gym-2'))r=[...r,{id:'pl-gym-2',date:'2026-04-29',name:'Gym',color:'#3b82f6',
         exerciseIds:['high-pull','afsm','quarter-squat','drop-jump-rsi','hip-thrust','nordics','calf-raise','lower-back-ext','ab-wheel-rollout','leg-raises','sprint-arms'],
