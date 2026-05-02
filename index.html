@@ -589,6 +589,8 @@ const DEFAULT_EXERCISES=[
   {id:'ab-wheel-rollout',name:'Ab Wheel Rollout',category:'Core',metrics:['reps']},
   {id:'leg-raises',name:'Leg Raises',category:'Core',metrics:['reps']},
   {id:'sprint-arms',name:'Sprint Arms',category:'Core',metrics:['time']},
+  {id:'hurdle-hops',name:'Hurdle Hops',category:'T&F',metrics:['reps']},
+  {id:'mb-forward-underhand',name:'MB Forward Underhand Throw',category:'T&F',metrics:['weight','reps']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
 const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -2371,6 +2373,35 @@ function App(){
     if(!plannedSynced) return;
     setPlanned(p=>{
       let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-'));
+      if(!r.find(x=>x.id==='pl-sprint-6'))r=[...r,{id:'pl-sprint-6',date:'2026-04-29',name:'Sprint Training',color:'#06b6d4',
+        exerciseIds:['wall-drills','eg-marches',
+          'resisted-sprint__1','free-sprint__1',
+          'resisted-sprint__2','free-sprint__2',
+          'resisted-sprint__3','free-sprint__3',
+          'resisted-sprint__4','free-sprint__4',
+          'free-sprint__5','hurdle-hops',
+          'mb-overhead-back','mb-chest-pass','mb-forward-underhand'],
+        supersets:[
+          ['resisted-sprint__1','free-sprint__1'],
+          ['resisted-sprint__2','free-sprint__2'],
+          ['resisted-sprint__3','free-sprint__3'],
+          ['resisted-sprint__4','free-sprint__4']
+        ],
+        setConfigs:{
+          'wall-drills':[{reps:8},{reps:8},{reps:8}],
+          'eg-marches':[{distance:20},{distance:20},{distance:20}],
+          'resisted-sprint__1':[{distance:20}],'free-sprint__1':[{distance:20}],
+          'resisted-sprint__2':[{distance:20}],'free-sprint__2':[{distance:25}],
+          'resisted-sprint__3':[{distance:20}],'free-sprint__3':[{distance:30}],
+          'resisted-sprint__4':[{distance:20}],'free-sprint__4':[{distance:30}],
+          'free-sprint__5':[{distance:30},{distance:30},{distance:30},{distance:30}],
+          'hurdle-hops':[{reps:8},{reps:8},{reps:8}],
+          'mb-overhead-back':[{reps:5}],
+          'mb-chest-pass':[{reps:5}],
+          'mb-forward-underhand':[{reps:5}]
+        },
+        notes:'Wall drills 3×8/nohu. Exer Genie marches 3×20m. Contrast: Resisted 20m + Free 20m/25m/30m/30m (4 párov). Free sprint 4×30m. Hurdle Hops 3×8. Med ball: Overhead back throw 1×5, Chest pass 1×5, Forward underhand 1×5/strana.'
+      }];
       if(!r.find(x=>x.id==='pl-gym-2'))r=[...r,{id:'pl-gym-2',date:'2026-04-29',name:'Gym',color:'#3b82f6',
         exerciseIds:['high-pull','afsm','quarter-squat','drop-jump-rsi','hip-thrust','nordics','calf-raise','lower-back-ext','ab-wheel-rollout','leg-raises','sprint-arms'],
         supersets:[['high-pull','afsm'],['quarter-squat','drop-jump-rsi'],['ab-wheel-rollout','leg-raises','sprint-arms']],
