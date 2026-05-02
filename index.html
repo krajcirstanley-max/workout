@@ -1426,7 +1426,7 @@ function DateStrip({workouts,planned,competitions,selectedDate,onSelectDate}){
       onSelectDay={d=>{onSelectDate(new Date(d));setCalOpen(false)}}/></div>}
   </div>)}
 
-function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView,templates}){
+function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,competitions,onStartEmpty,onStartPlan,onView,templates,remoteSession,onResume}){
   const athlete=athletes.find(a=>a.id===activeAth);
   const today=dateKey(Date.now());
   const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
@@ -1443,10 +1443,21 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
         <p>{fullDate()}</p>
       </div>
 
-      {todayPlans.map(plan=>(<div key={plan.id} className="plan-hero" style={{'--c':plan.color}}>
-        <div style={{position:'absolute',top:0,left:0,bottom:0,width:5,background:plan.color}}/>
-        <div className="plan-hero-label">Today's Workout</div>
+      {remoteSession&&!remoteSession.planId&&<div className="plan-hero" style={{'--c':'#10b981',marginBottom:12}}>
+        <div style={{position:'absolute',top:0,left:0,bottom:0,width:5,background:'#10b981'}}/>
+        <div className="plan-hero-label" style={{color:'#10b981'}}>● Workout In Progress</div>
+        <div className="plan-hero-name">Empty Workout</div>
+        <div style={{fontSize:12,color:'var(--text3)',marginTop:6,marginBottom:12}}>
+          Started {new Date(remoteSession.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
+        </div>
+        <button className="btn btn-primary" style={{background:'#10b981',borderColor:'#10b981'}} onClick={onResume}>↩ Resume Workout</button>
+      </div>}
+      {todayPlans.map(plan=>{const isLive=remoteSession?.planId===plan.id;return(
+        <div key={plan.id} className="plan-hero" style={{'--c':isLive?'#10b981':plan.color}}>
+        <div style={{position:'absolute',top:0,left:0,bottom:0,width:5,background:isLive?'#10b981':plan.color}}/>
+        <div className="plan-hero-label" style={isLive?{color:'#10b981'}:{}}>{isLive?'● Workout In Progress':"Today's Workout"}</div>
         <div className="plan-hero-name">{plan.name}</div>
+        {isLive&&<div style={{fontSize:12,color:'var(--text3)',marginTop:4}}>Started {new Date(remoteSession.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>}
         <div className="plan-hero-count">{plan.exerciseIds.length} exercises</div>
         <div className="plan-hero-exercises">
           {(()=>{const ss=(plan.supersets||[]).flat();const rendered=new Set();
@@ -1466,8 +1477,10 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
               return<div key={eid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {ex?.name||'?'}</div>})})()}
         </div>
         {plan.notes&&<div style={{fontSize:11,color:'var(--text3)',marginTop:8,marginBottom:12,lineHeight:1.4,padding:'8px 10px',background:'var(--primary-dim)',borderRadius:8}}>{plan.notes}</div>}
-        <button className="btn btn-primary" onClick={()=>onStartPlan(plan)}>Start Workout</button>
-      </div>))}
+        {isLive
+          ?<button className="btn btn-primary" style={{background:'#10b981',borderColor:'#10b981'}} onClick={onResume}>↩ Resume Workout</button>
+          :<button className="btn btn-primary" onClick={()=>onStartPlan(plan)}>Start Workout</button>}
+      </div>)})}
 
       {todayPlans.length===0&&<button className="btn btn-primary" style={{marginBottom:16,fontSize:16,padding:'18px 24px'}} onClick={onStartEmpty}>
         <Icon name="play" size={18}/> Start Workout</button>}
@@ -1572,6 +1585,14 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
   useEffect(()=>{try{localStorage.setItem('wk2_activeSnapshot',JSON.stringify({
     workout,localEx,localCM,supersets,checkedIn:[...checkedIn],wkTag,vzMap,viewMode,focusIdx}))}catch{}
   },[workout,localEx,localCM,supersets,checkedIn,wkTag,vzMap,viewMode,focusIdx]);
+  const snapRef=useRef();
+  snapRef.current={workout,localEx,localCM,supersets,checkedIn:[...checkedIn],wkTag,vzMap,viewMode,focusIdx};
+  useEffect(()=>{if(!sb)return;
+    const planId=initialPlan?.id||null;
+    const push=()=>{const s=snapRef.current;
+      sb.from('wk_store').upsert({key:'sharedActiveSession',value:{planId,plan:initialPlan||null,snapshot:s,updatedAt:Date.now()},updated_at:new Date().toISOString()}).then(()=>{})};
+    push();const iv=setInterval(push,15000);return()=>clearInterval(iv);
+  },[]);
   const toggleSuperset=(eid1,eid2)=>setSupersets(prev=>{
     const existing=prev.findIndex(ss=>ss.includes(eid1)&&ss.includes(eid2));
     if(existing>=0)return prev.filter((_,i)=>i!==existing);
@@ -2513,14 +2534,31 @@ function App(){
   const _clearActiveSession=()=>{['activeSession','activePlan','activeSnapshot'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}})};
   const _markActive=plan=>{try{localStorage.setItem('wk2_activeSession','1');
     if(plan)localStorage.setItem('wk2_activePlan',JSON.stringify(plan));else localStorage.removeItem('wk2_activePlan')}catch{}};
-  const finishWorkout=(wk,localEx,localCM)=>{_clearActiveSession();
+  const[remoteSession,setRemoteSession]=useState(null);
+  const _pullRemoteSession=useCallback(()=>{if(!sb)return;
+    sb.from('wk_store').select('value').eq('key','sharedActiveSession').maybeSingle().then(({data})=>{
+      const v=data?.value||null;
+      if(v&&Date.now()-(v.updatedAt||0)>4*3600*1000){setRemoteSession(null);return}
+      setRemoteSession(v)
+    }).catch(()=>{})},[]);
+  useEffect(()=>{_pullRemoteSession();const iv=setInterval(_pullRemoteSession,20000);return()=>clearInterval(iv)},[_pullRemoteSession]);
+  const _pushRemoteSession=(planId,plan,snapshot)=>{if(!sb)return;
+    const payload={planId,plan:plan||null,snapshot:snapshot||null,updatedAt:Date.now()};
+    sb.from('wk_store').upsert({key:'sharedActiveSession',value:payload,updated_at:new Date().toISOString()}).then(()=>{setRemoteSession(payload)})};
+  const _clearRemoteSession=()=>{if(!sb)return;
+    sb.from('wk_store').delete().eq('key','sharedActiveSession').then(()=>{});setRemoteSession(null)};
+  const finishWorkout=(wk,localEx,localCM)=>{_clearActiveSession();_clearRemoteSession();
     if(wk.exerciseIds.length>0){setWorkouts(p=>[...p,wk]);setSummaryWk(wk)}
     if(activePlan&&!activePlan.id?.startsWith('tpl-'))setPlanned(p=>p.filter(pl=>pl.id!==activePlan.id));
     setExercises(localEx);setCM(localCM);setInWorkout(false);setActivePlan(null);setTab('today')};
-  const cancelWorkout=()=>{_clearActiveSession();setInWorkout(false);setActivePlan(null);setTab('today')};
+  const cancelWorkout=()=>{_clearActiveSession();_clearRemoteSession();setInWorkout(false);setActivePlan(null);setTab('today')};
   const deleteWorkout=id=>{setWorkouts(p=>p.filter(w=>w.id!==id));setViewing(null)};
-  const startPlan=plan=>{_clearActiveSession();_markActive(plan);setActivePlan(plan);setInWorkout(true)};
-  const startEmpty=()=>{_clearActiveSession();_markActive(null);setInWorkout(true)};
+  const startPlan=plan=>{_clearActiveSession();_markActive(plan);_pushRemoteSession(plan?.id||null,plan,null);setActivePlan(plan);setInWorkout(true)};
+  const startEmpty=()=>{_clearActiveSession();_markActive(null);_pushRemoteSession(null,null,null);setInWorkout(true)};
+  const resumeRemote=()=>{if(!remoteSession)return;
+    if(remoteSession.snapshot){try{localStorage.setItem('wk2_activeSnapshot',JSON.stringify(remoteSession.snapshot))}catch{}}
+    const plan=remoteSession.planId?(planned.find(p=>p.id===remoteSession.planId)||remoteSession.plan):remoteSession.plan;
+    _markActive(plan);setActivePlan(plan||null);setInWorkout(true)};
   const repeatWorkout=wk=>{const plan={id:'pl-'+uid(),name:wk.name||'Workout',exerciseIds:wk.exerciseIds.map(baseExId),
     supersets:[],setConfigs:{}};wk.exerciseIds.forEach(eid=>{const base=baseExId(eid);
     const sets=Object.values(wk.athletes).flatMap(a=>(a.sets[eid]||[]).filter(s=>s.completed));
@@ -2545,7 +2583,8 @@ function App(){
       fontSize:13,fontWeight:600,letterSpacing:'.3px'}}>OFFLINE</div>}
     {tab==='today'&&<TodayScreen athletes={athletes} activeAth={activeAth} onSelectAth={setActiveAth}
       workouts={workouts} planned={planned} exercises={exercises} competitions={competitions}
-      onStartEmpty={startEmpty} onStartPlan={startPlan} onView={setViewing} templates={templates}/>}
+      onStartEmpty={startEmpty} onStartPlan={startPlan} onView={setViewing} templates={templates}
+      remoteSession={remoteSession} onResume={resumeRemote}/>}
     {tab==='calendar'&&<CalendarScreen workouts={workouts} planned={planned} exercises={exercises}
       competitions={competitions} onView={setViewing}/>}
     {tab==='progress'&&<ProgressScreen workouts={workouts} athletes={athletes} activeAth={activeAth}
