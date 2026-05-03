@@ -2443,11 +2443,11 @@ function App(){
     setPlanned(p=>{
       let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-'));
       if(!r.find(x=>x.id==='pl-lj-session-2'))r=[...r,{id:'pl-lj-session-2',date:'2026-05-03',name:'Long Jump Session',color:'#8b5cf6',
-        exerciseIds:['hurdle-jumps','fly-sprint','short-app-popup','wickets','full-app-runthrough','full-app-popup','approach-jump__1','approach-jump__2','sl-bounds-jump','alt-bounds-jump'],
+        exerciseIds:['hurdle-jumps','start-50m','short-app-popup','wickets','full-app-runthrough','full-app-popup','approach-jump__1','approach-jump__2','sl-bounds-jump','alt-bounds-jump'],
         supersets:[],
         setConfigs:{
           'hurdle-jumps':[{reps:5},{reps:5},{reps:5}],
-          'fly-sprint':[{distance:50},{distance:50}],
+          'start-50m':[{},{}],
           'short-app-popup':[{reps:3},{reps:3},{reps:3}],
           'wickets':[{},{},{},{}],
           'full-app-runthrough':[{reps:1},{reps:1}],
@@ -2457,7 +2457,7 @@ function App(){
           'sl-bounds-jump':[{reps:1},{reps:1},{reps:1}],
           'alt-bounds-jump':[{reps:1},{reps:1},{reps:1},{reps:1}]
         },
-        notes:'Hurdle Jumps 3×5. Fly 50m 2× (Freelap, max velocity check + CNS primer). Short approach pop-upy 5 krokov 3×3. Wickety v cruise zóne 3-4×. Full approach run-throughs 18 krokov 2×. Full approach pop-upy 18 krokov 4×. 14-step approach skoky 4×. 18-step approach skoky 3×. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×.'
+        notes:'Hurdle Jumps 3×5. 50m start 2× (Freelap, max velocity check + CNS primer). Short approach pop-upy 5 krokov 3×3. Wickety v cruise zóne 3-4×. Full approach run-throughs 18 krokov 2×. Full approach pop-upy 18 krokov 4×. 14-step approach skoky 4×. 18-step approach skoky 3×. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×.'
       }];
       if(!r.find(x=>x.id==='pl-sprint-6'))r=[...r,{id:'pl-sprint-6',date:'2026-05-02',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','eg-marches',
