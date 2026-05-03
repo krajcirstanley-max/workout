@@ -546,8 +546,6 @@ const DEFAULT_EXERCISES=[
   {id:'falling-starts',name:'Falling Starts',category:'T&F',metrics:['reps']},
   {id:'build-ups',name:'Build-ups',category:'T&F',metrics:['distance','tf-time']},
   {id:'eg-marches',name:'EG Marches',category:'T&F',metrics:['distance','eg-setting']},
-  {id:'resisted-sprint',name:'Resisted Sprint',category:'T&F',metrics:['distance','tf-time','eg-setting']},
-  {id:'free-sprint',name:'Free Sprint',category:'T&F',metrics:['distance','tf-time','split-10m','split-20m','split-30m']},
   {id:'mb-overhead-back',name:'MB Overhead Back Throw',category:'T&F',metrics:['weight','reps']},
   {id:'mb-chest-pass',name:'MB Chest Pass',category:'T&F',metrics:['weight','reps']},
   {id:'mb-rotational',name:'MB Rotational Throw',category:'T&F',metrics:['weight','reps']},
@@ -592,6 +590,20 @@ const DEFAULT_EXERCISES=[
   {id:'hurdle-hops',name:'Hurdle Hops',category:'T&F',metrics:['reps']},
   {id:'mb-forward-underhand',name:'MB Forward Underhand Throw',category:'T&F',metrics:['weight','reps']},
   {id:'fly-sprint',name:'Fly Sprint',category:'T&F',metrics:['distance','tf-time']},
+  {id:'start-10m',name:'10m Start',category:'T&F',metrics:['tf-time']},
+  {id:'start-20m',name:'20m Start',category:'T&F',metrics:['split-10m','split-20m']},
+  {id:'start-25m',name:'25m Start',category:'T&F',metrics:['split-10m','split-20m','tf-time']},
+  {id:'start-30m',name:'30m Start',category:'T&F',metrics:['split-10m','split-20m','split-30m']},
+  {id:'start-40m',name:'40m Start',category:'T&F',metrics:['split-10m','split-20m','split-30m','split-40m']},
+  {id:'start-50m',name:'50m Start',category:'T&F',metrics:['split-30m','fly-10m-1','fly-10m-2']},
+  {id:'start-60m',name:'60m Start',category:'T&F',metrics:['split-40m','fly-10m-1','fly-10m-2']},
+  {id:'fly-10m',name:'10m Fly',category:'T&F',metrics:['fly-10m-1']},
+  {id:'fly-20m',name:'20m Fly',category:'T&F',metrics:['fly-20m-1']},
+  {id:'fly-30m',name:'30m Fly',category:'T&F',metrics:['fly-30m-1']},
+  {id:'resisted-10m',name:'10m Resisted',category:'T&F',metrics:['tf-time']},
+  {id:'resisted-20m',name:'20m Resisted',category:'T&F',metrics:['tf-time']},
+  {id:'resisted-25m',name:'25m Resisted',category:'T&F',metrics:['tf-time']},
+  {id:'resisted-30m',name:'30m Resisted',category:'T&F',metrics:['tf-time']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
 const WORKOUT_COLORS=['#10b981','#3b82f6','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -1780,55 +1792,65 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
         if(viewMode==='focus'){
           const flatIds=ids.filter(eid=>exForAth(eid));
           if(!flatIds.length)return null;
-          const safeIdx=Math.min(focusIdx,flatIds.length-1);
-          const eid=flatIds[safeIdx];
-          const ex=effEx(eid);
-          const ss=supersets.find(s=>s.includes(eid));
-          let ssTag=null;
-          if(ss){const ssOrder=ss.map(sid=>flatIds.indexOf(sid)).filter(i=>i>=0).sort((a,b)=>a-b);
-            const pos=ssOrder.indexOf(safeIdx);if(pos>=0)ssTag=`Superset · ${String.fromCharCode(65+pos)} of ${ssOrder.length}`}
-          const exPrs=ex?computePRs(eid,activeAth,workouts,ex):{};
-          const goPrev=()=>setFocusIdx(Math.max(0,safeIdx-1));
-          const goNext=()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1));
+          // Build pages: single exercise or whole superset group
+          const pages=[];const seen=new Set();
+          flatIds.forEach(eid=>{if(seen.has(eid))return;
+            const ss=supersets.find(s=>s.includes(eid));
+            if(ss){const grp=ss.filter(id=>flatIds.includes(id));
+              if(grp.length){grp.forEach(id=>seen.add(id));pages.push({type:'ss',eids:grp})}
+            }else{seen.add(eid);pages.push({type:'single',eid})}});
+          if(!pages.length)return null;
+          const safeIdx=Math.min(focusIdx,pages.length-1);
+          const page=pages[safeIdx];
           const W=typeof window!=='undefined'?window.innerWidth:400;
           const commit=dir=>{setAnim(true);
             const off=dir==='next'?-W:W;setDragX(off);swipeDragRef.current=off;
-            setTimeout(()=>{if(dir==='next')setFocusIdx(Math.min(flatIds.length-1,safeIdx+1));
+            setTimeout(()=>{if(dir==='next')setFocusIdx(Math.min(pages.length-1,safeIdx+1));
               else setFocusIdx(Math.max(0,safeIdx-1));
               setDragX(0);swipeDragRef.current=0;setAnim(false)},200)};
+          const insideHScroll=el=>{while(el&&el!==document.body){const cs=getComputedStyle(el);
+            if((cs.overflowX==='auto'||cs.overflowX==='scroll')&&el.scrollWidth>el.clientWidth+1)return true;
+            el=el.parentElement}return false};
           const onTouchStart=e=>{const tag=(e.target.tagName||'').toLowerCase();
-            if(tag==='input'||tag==='textarea'||tag==='button')return;
+            if(tag==='input'||tag==='textarea'||tag==='button'||tag==='select')return;
+            if(insideHScroll(e.target))return;
             const t=e.touches[0];swipeRef.current={startX:t.clientX,startY:t.clientY,active:true,didMove:false};setAnim(false)};
           const onTouchMove=e=>{const r=swipeRef.current;if(!r.active)return;const t=e.touches[0];
             const dx=t.clientX-r.startX;const dy=Math.abs(t.clientY-r.startY);
             if(!r.didMove&&dy>10&&Math.abs(dx)<dy){r.active=false;setDragX(0);swipeDragRef.current=0;return}
             if(Math.abs(dx)>6)r.didMove=true;if(!r.didMove)return;
-            let b=dx;if(safeIdx===0&&dx>0)b=dx*0.3;if(safeIdx>=flatIds.length-1&&dx<0)b=dx*0.3;
+            let b=dx;if(safeIdx===0&&dx>0)b=dx*0.3;if(safeIdx>=pages.length-1&&dx<0)b=dx*0.3;
             swipeDragRef.current=b;setDragX(b)};
           const onTouchEnd=()=>{const r=swipeRef.current;if(!r.active||!r.didMove){setDragX(0);swipeDragRef.current=0;r.active=false;return}
             r.active=false;const dx=swipeDragRef.current;const th=70;
-            if(dx<-th&&safeIdx<flatIds.length-1)commit('next');
+            if(dx<-th&&safeIdx<pages.length-1)commit('next');
             else if(dx>th&&safeIdx>0)commit('prev');
             else{setAnim(true);setDragX(0);swipeDragRef.current=0;setTimeout(()=>setAnim(false),200)}};
+          const renderCard=(eid,ssTag)=>{const ex=effEx(eid);if(!ex)return null;
+            const exPrs=computePRs(eid,activeAth,workouts,ex);
+            return<FocusExerciseCard key={eid} exercise={ex} sets={athSets[eid]||[]} exId={eid} activeAth={activeAth} allWorkouts={workouts}
+              prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
+              note={getNote(eid,activeAth)} onUpdateNote={updateNote} ssTag={ssTag}
+              onChangeMetrics={changeMetrics}
+              onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
+              onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
+              onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}/>};
+          const pageKey=page.type==='ss'?'ss-'+page.eids.join(',') : 'sg-'+page.eid;
           return[
             <div key="focus-dots" className="focus-dots">
-              {flatIds.map((_,i)=><div key={i} className={'d'+(i===safeIdx?' active':'')} onClick={()=>setFocusIdx(i)}/>)}
+              {pages.map((_,i)=><div key={i} className={'d'+(i===safeIdx?' active':'')} onClick={()=>setFocusIdx(i)}/>)}
             </div>,
-            <div key={'fc-wrap-'+eid} className="focus-page-enter"
+            <div key={'fc-wrap-'+pageKey} className="focus-page-enter"
               onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
               style={{transform:`translateX(${dragX}px)`,transition:anim?'transform .2s cubic-bezier(.2,.8,.3,1)':'none',touchAction:'pan-y',willChange:'transform'}}>
-              <FocusExerciseCard exercise={ex} sets={athSets[eid]||[]} exId={eid} activeAth={activeAth} allWorkouts={workouts}
-                prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
-                note={getNote(eid,activeAth)} onUpdateNote={updateNote} ssTag={ssTag}
-                onChangeMetrics={changeMetrics}
-                onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
-                onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
-                onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}/>
+              {page.type==='single'
+                ? renderCard(page.eid,null)
+                : page.eids.map((eid,i)=>renderCard(eid,`Superset · ${String.fromCharCode(65+i)} of ${page.eids.length}`))}
             </div>,
             <div key="focus-bn" className="focus-bottom-nav">
               <button className="focus-bn-btn" disabled={safeIdx===0} onClick={()=>setFocusIdx(Math.max(0,safeIdx-1))}>← Back</button>
               <button className="focus-bn-btn center" onClick={startRest}><Icon name="clock" size={18}/> Timer</button>
-              <button className="focus-bn-btn next" disabled={safeIdx>=flatIds.length-1} onClick={()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1))}>Next →</button>
+              <button className="focus-bn-btn next" disabled={safeIdx>=pages.length-1} onClick={()=>setFocusIdx(Math.min(pages.length-1,safeIdx+1))}>Next →</button>
             </div>
           ];
         }
@@ -2391,6 +2413,31 @@ function App(){
       return nw}))},[]);
   useEffect(()=>{const photoMap={};DEFAULT_ATHLETES.forEach(da=>{if(da.photo)photoMap[da.id]=da.photo});
     if(athletes.some(a=>photoMap[a.id]&&!a.photo))setAthletes(prev=>prev.map(a=>photoMap[a.id]&&!a.photo?{...a,photo:photoMap[a.id]}:a))},[]);
+  useEffect(()=>{const MIGRATION_KEY='wk2_migrated_distance_sprints_v1';
+    if(localStorage.getItem(MIGRATION_KEY))return;
+    const needsWork=workouts.some(w=>w.exerciseIds?.some(eid=>{const b=baseExId(eid);return b==='free-sprint'||b==='resisted-sprint'}));
+    if(!needsWork){localStorage.setItem(MIGRATION_KEY,'1');return}
+    try{localStorage.setItem('wk2_backup_workouts_pre_distance_v1',JSON.stringify(workouts));
+      localStorage.setItem('wk2_backup_planned_pre_distance_v1',JSON.stringify(planned));
+      localStorage.setItem('wk2_backup_templates_pre_distance_v1',JSON.stringify(templates))}catch{}
+    const remap=(eid,distHint)=>{const b=baseExId(eid);if(b!=='free-sprint'&&b!=='resisted-sprint')return null;
+      const d=Math.round(Number(distHint)||0);if(![10,20,25,30,40,50,60].includes(d))return null;
+      const newBase=b==='free-sprint'?`start-${d}m`:`resisted-${d}m`;
+      const suf=eid.includes('__')?'__'+eid.split('__')[1]:'';
+      return newBase+suf};
+    const migrateWk=wk=>{const nw=JSON.parse(JSON.stringify(wk));const map={};
+      nw.exerciseIds.forEach(eid=>{const b=baseExId(eid);if(b!=='free-sprint'&&b!=='resisted-sprint')return;
+        let dist=null;Object.keys(nw.athletes||{}).forEach(aId=>{const sets=nw.athletes[aId]?.sets?.[eid]||[];
+          for(const s of sets){const d=Number(s.values?.distance);if(d){dist=d;break}}
+          if(!dist){const sets2=nw.athletes[aId]?.sets?.[eid]||[];for(const s of sets2){const d=Number(s.values?.distance);if(d){dist=d;break}}}});
+        const ne=remap(eid,dist);if(ne)map[eid]=ne});
+      if(Object.keys(map).length===0)return nw;
+      nw.exerciseIds=nw.exerciseIds.map(e=>map[e]||e);
+      Object.keys(nw.athletes||{}).forEach(aId=>{const ns={};Object.keys(nw.athletes[aId].sets||{}).forEach(e=>{ns[map[e]||e]=nw.athletes[aId].sets[e]});nw.athletes[aId].sets=ns});
+      ['exerciseAthletes','exerciseMetrics','exNotes'].forEach(f=>{if(!nw[f])return;const u={};Object.keys(nw[f]).forEach(e=>{u[map[e]||e]=nw[f][e]});nw[f]=u});
+      return nw};
+    setWorkouts(prev=>prev.map(migrateWk));
+    localStorage.setItem(MIGRATION_KEY,'1')},[workouts.length]);
   useEffect(()=>{
     if(!plannedSynced) return;
     setPlanned(p=>{
@@ -2414,28 +2461,28 @@ function App(){
       }];
       if(!r.find(x=>x.id==='pl-sprint-6'))r=[...r,{id:'pl-sprint-6',date:'2026-05-02',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','eg-marches',
-          'resisted-sprint__1','free-sprint__1',
-          'resisted-sprint__2','free-sprint__2',
-          'free-sprint__3','hurdle-hops',
+          'resisted-20m','start-20m',
+          'resisted-30m','start-30m__2',
+          'start-30m__3','hurdle-hops',
           'mb-overhead-back','mb-chest-pass','mb-forward-underhand'],
         supersets:[
-          ['resisted-sprint__1','free-sprint__1'],
-          ['resisted-sprint__2','free-sprint__2']
+          ['resisted-20m','start-20m'],
+          ['resisted-30m','start-30m__2']
         ],
         setConfigs:{
           'wall-drills':[{reps:8},{reps:8},{reps:8}],
           'eg-marches':[{distance:20},{distance:20},{distance:20}],
-          'resisted-sprint__1':[{distance:20},{distance:20}],
-          'free-sprint__1':[{distance:20},{distance:20}],
-          'resisted-sprint__2':[{distance:30},{distance:30}],
-          'free-sprint__2':[{distance:30},{distance:30}],
-          'free-sprint__3':[{distance:30},{distance:30},{distance:30},{distance:30}],
+          'resisted-20m':[{},{}],
+          'start-20m':[{},{}],
+          'resisted-30m':[{},{}],
+          'start-30m__2':[{},{}],
+          'start-30m__3':[{},{},{},{}],
           'hurdle-hops':[{reps:8},{reps:8},{reps:8}],
           'mb-overhead-back':[{reps:5}],
           'mb-chest-pass':[{reps:5}],
           'mb-forward-underhand':[{reps:5}]
         },
-        notes:'Wall drills 3×8/nohu. Exer Genie marches 3×20m. Contrast: 2× (Resisted 20m + Free 20m), 2× (Resisted 30m + Free 30m). Free sprint 4×30m. Hurdle Hops 3×8. Med ball: Overhead back throw 1×5, Chest pass 1×5, Forward underhand 1×5/strana.'
+        notes:'Wall drills 3×8/nohu. Exer Genie marches 3×20m. Contrast: 2× (Resisted 20m + 20m Start), 2× (Resisted 30m + 30m Start). 30m Start 4×. Hurdle Hops 3×8. Med ball: Overhead back throw 1×5, Chest pass 1×5, Forward underhand 1×5/strana.'
       }];
       if(!r.find(x=>x.id==='pl-gym-2'))r=[...r,{id:'pl-gym-2',date:'2026-04-29',name:'Gym',color:'#3b82f6',
         exerciseIds:['high-pull','afsm','quarter-squat','drop-jump-rsi','hip-thrust','nordics','calf-raise','lower-back-ext','ab-wheel-rollout','leg-raises','sprint-arms'],
@@ -2461,21 +2508,26 @@ function App(){
         notes:'A1 High Pull 3×3 + A2 AFSM 3×4. B1 Quarter Squat 3×3 + B2 Drop Jump RSI 3×5 (GCT pod 200ms). C Hip Thrust 3×6. D Nordics 3×5 (Stanley +15kg / Miška band→BW). E Calf Raise 3×10 (3s eccentric). F Lower Back Ext 2×10. G Core Circuit 2 kolá: Ab Wheel Rollout 6× + Leg Raises 6× + Šprintérske ruky 7s.'
       }];
       if(!r.find(x=>x.id==='pl-sprint-5'))r=[...r,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
-        exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint','resisted-sprint','free-sprint',
+        exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint',
+          'resisted-20m','start-20m','start-25m','start-30m','start-30m__2','start-30m__3',
           'mb-overhead-back','mb-chest-pass','mb-rotational'],
-        supersets:[['resisted-sprint','free-sprint']],
+        supersets:[['resisted-20m','start-20m']],
         setConfigs:{
           'wall-drills':[{reps:8},{reps:8},{reps:8}],
           'falling-starts':[{reps:5},{reps:5},{reps:5},{reps:5},{reps:5}],
           'eg-marches':[{distance:20},{distance:20},{distance:20}],
           'waterbag-sprint':[{distance:10},{distance:10},{distance:10}],
-          'resisted-sprint':[{distance:20},{distance:20},{distance:20}],
-          'free-sprint':[{distance:20},{distance:25},{distance:30},{distance:30},{distance:30},{distance:30}],
+          'resisted-20m':[{},{},{}],
+          'start-20m':[{}],
+          'start-25m':[{}],
+          'start-30m':[{}],
+          'start-30m__2':[{},{}],
+          'start-30m__3':[{}],
           'mb-overhead-back':[{reps:5}],
           'mb-chest-pass':[{reps:5}],
           'mb-rotational':[{reps:5}]
         },
-        notes:'Contrast: Resisted 20m → Free 20m/25m/30m (4 min rest). Free sprints 3×30m (5 min rest). Freelap on free sprints.'
+        notes:'Contrast: Resisted 20m → 20m/25m/30m start (4 min rest). 30m start 3× (5 min rest). Freelap.'
       }];
       if(!r.find(x=>x.id==='pl-lj-drills-2'))r=[...r,{id:'pl-lj-drills-2',date:'2026-04-26',name:'LJ Drills',color:'#8b5cf6',
         exerciseIds:['ankle-dribble','calf-dribble','knee-dribble','free-leg-b-skip',
@@ -2502,15 +2554,15 @@ function App(){
       }];
       r=r.filter(x=>x.id!=='pl-speed-1'&&x.id!=='pl-speed-2'&&x.id!=='pl-speed-3');
       if(!r.find(x=>x.id==='pl-speed-4'))r=[...r,{id:'pl-speed-4',date:'2026-04-27',name:'Speed Session',color:'#ef4444',
-        exerciseIds:['overspeed','free-sprint__1','free-sprint__2','wickets'],
+        exerciseIds:['overspeed','start-50m','start-60m','wickets'],
         supersets:[],
         setConfigs:{
           'overspeed':[{distance:40},{distance:40},{distance:40},{distance:40}],
-          'free-sprint__1':[{distance:50},{distance:50},{distance:50},{distance:50}],
-          'free-sprint__2':[{distance:60},{distance:60},{distance:60}],
+          'start-50m':[{},{},{},{}],
+          'start-60m':[{},{},{}],
           'wickets':[{reps:10},{reps:10},{reps:10},{reps:10},{reps:10}]
         },
-        notes:'Overspeed 4×40m. 50m — 4× max effort, Freelap, 0-30m + 2×10m fly, 4-5 min pauzy. 60m — 3× max effort, Freelap, 0-40m + 2×10m fly, 4-5 min pauzy. Wickety 5×10.'
+        notes:'Overspeed 4×40m. 50m start 4× (Freelap). 60m start 3× (Freelap). Wickety 5×10.'
       }];
       if(!r.find(x=>x.id==='pl-lj-session-1'))r=[...r,{id:'pl-lj-session-1',date:'2026-04-28',name:'Long Jump Session',color:'#8b5cf6',
         exerciseIds:['hurdle-jumps','short-app-popup','full-app-runthrough','full-app-popup','approach-jump__1','approach-jump__2','sl-bounds-jump','alt-bounds-jump'],
