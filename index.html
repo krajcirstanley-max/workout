@@ -590,13 +590,13 @@ const DEFAULT_EXERCISES=[
   {id:'hurdle-hops',name:'Hurdle Hops',category:'T&F',metrics:['reps']},
   {id:'mb-forward-underhand',name:'MB Forward Underhand Throw',category:'T&F',metrics:['weight','reps']},
   {id:'fly-sprint',name:'Fly Sprint',category:'T&F',metrics:['distance','tf-time']},
-  {id:'start-10m',name:'10m Start',category:'T&F',metrics:['tf-time']},
-  {id:'start-20m',name:'20m Start',category:'T&F',metrics:['split-10m','split-20m']},
-  {id:'start-25m',name:'25m Start',category:'T&F',metrics:['split-10m','split-20m','tf-time']},
-  {id:'start-30m',name:'30m Start',category:'T&F',metrics:['split-10m','split-20m','split-30m']},
-  {id:'start-40m',name:'40m Start',category:'T&F',metrics:['split-10m','split-20m','split-30m','split-40m']},
-  {id:'start-50m',name:'50m Start',category:'T&F',metrics:['split-30m','fly-10m-1','fly-10m-2']},
-  {id:'start-60m',name:'60m Start',category:'T&F',metrics:['split-40m','fly-10m-1','fly-10m-2']},
+  {id:'start-10m',name:'10m Sprint',category:'T&F',metrics:['tf-time']},
+  {id:'start-20m',name:'20m Sprint',category:'T&F',metrics:['split-10m','split-20m']},
+  {id:'start-25m',name:'25m Sprint',category:'T&F',metrics:['split-10m','split-20m','tf-time']},
+  {id:'start-30m',name:'30m Sprint',category:'T&F',metrics:['split-10m','split-20m','split-30m']},
+  {id:'start-40m',name:'40m Sprint',category:'T&F',metrics:['split-10m','split-20m','split-30m','split-40m']},
+  {id:'start-50m',name:'50m Sprint',category:'T&F',metrics:['split-30m','fly-10m-1','fly-10m-2']},
+  {id:'start-60m',name:'60m Sprint',category:'T&F',metrics:['split-40m','fly-10m-1','fly-10m-2']},
   {id:'fly-10m',name:'10m Fly',category:'T&F',metrics:['fly-10m-1']},
   {id:'fly-20m',name:'20m Fly',category:'T&F',metrics:['fly-20m-1']},
   {id:'fly-30m',name:'30m Fly',category:'T&F',metrics:['fly-30m-1']},
@@ -2457,7 +2457,7 @@ function App(){
           'sl-bounds-jump':[{reps:1},{reps:1},{reps:1}],
           'alt-bounds-jump':[{reps:1},{reps:1},{reps:1},{reps:1}]
         },
-        notes:'Hurdle Jumps 3×5. 50m start 2× (Freelap, max velocity check + CNS primer). Short approach pop-upy 5 krokov 3×3. Wickety v cruise zóne 3-4×. Full approach run-throughs 18 krokov 2×. Full approach pop-upy 18 krokov 4×. 14-step approach skoky 4×. 18-step approach skoky 3×. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×.'
+        notes:'Hurdle Jumps 3×5. 50m sprint 2× (Freelap, max velocity check + CNS primer). Short approach pop-upy 5 krokov 3×3. Wickety v cruise zóne 3-4×. Full approach run-throughs 18 krokov 2×. Full approach pop-upy 18 krokov 4×. 14-step approach skoky 4×. 18-step approach skoky 3×. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×.'
       }];
       if(!r.find(x=>x.id==='pl-sprint-6'))r=[...r,{id:'pl-sprint-6',date:'2026-05-02',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','eg-marches',
@@ -2482,7 +2482,7 @@ function App(){
           'mb-chest-pass':[{reps:5}],
           'mb-forward-underhand':[{reps:5}]
         },
-        notes:'Wall drills 3×8/nohu. Exer Genie marches 3×20m. Contrast: 2× (Resisted 20m + 20m Start), 2× (Resisted 30m + 30m Start). 30m Start 4×. Hurdle Hops 3×8. Med ball: Overhead back throw 1×5, Chest pass 1×5, Forward underhand 1×5/strana.'
+        notes:'Wall drills 3×8/nohu. Exer Genie marches 3×20m. Contrast: 2× (Resisted 20m + 20m Sprint), 2× (Resisted 30m + 30m Sprint). 30m Sprint 4×. Hurdle Hops 3×8. Med ball: Overhead back throw 1×5, Chest pass 1×5, Forward underhand 1×5/strana.'
       }];
       if(!r.find(x=>x.id==='pl-gym-2'))r=[...r,{id:'pl-gym-2',date:'2026-04-29',name:'Gym',color:'#3b82f6',
         exerciseIds:['high-pull','afsm','quarter-squat','drop-jump-rsi','hip-thrust','nordics','calf-raise','lower-back-ext','ab-wheel-rollout','leg-raises','sprint-arms'],
@@ -2527,7 +2527,7 @@ function App(){
           'mb-chest-pass':[{reps:5}],
           'mb-rotational':[{reps:5}]
         },
-        notes:'Contrast: Resisted 20m → 20m/25m/30m start (4 min rest). 30m start 3× (5 min rest). Freelap.'
+        notes:'Contrast: Resisted 20m → 20m/25m/30m sprint (4 min rest). 30m sprint 3× (5 min rest). Freelap.'
       }];
       if(!r.find(x=>x.id==='pl-lj-drills-2'))r=[...r,{id:'pl-lj-drills-2',date:'2026-04-26',name:'LJ Drills',color:'#8b5cf6',
         exerciseIds:['ankle-dribble','calf-dribble','knee-dribble','free-leg-b-skip',
@@ -2562,7 +2562,7 @@ function App(){
           'start-60m':[{},{},{}],
           'wickets':[{reps:10},{reps:10},{reps:10},{reps:10},{reps:10}]
         },
-        notes:'Overspeed 4×40m. 50m start 4× (Freelap). 60m start 3× (Freelap). Wickety 5×10.'
+        notes:'Overspeed 4×40m. 50m sprint 4× (Freelap). 60m sprint 3× (Freelap). Wickety 5×10.'
       }];
       if(!r.find(x=>x.id==='pl-lj-session-1'))r=[...r,{id:'pl-lj-session-1',date:'2026-04-28',name:'Long Jump Session',color:'#8b5cf6',
         exerciseIds:['hurdle-jumps','short-app-popup','full-app-runthrough','full-app-popup','approach-jump__1','approach-jump__2','sl-bounds-jump','alt-bounds-jump'],
