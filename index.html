@@ -233,6 +233,8 @@ textarea.input{resize:vertical;min-height:70px;font-size:14px}
 .focus-row{display:grid;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border-light)}
 .focus-row:last-child{border-bottom:none}
 .focus-row-num{font-size:16px;font-weight:800;color:var(--text2);text-align:center}
+.focus-row.warmup .focus-input{background:#fef3c7}
+.set-row.warmup .set-input{background:#fef3c7}
 .focus-input{background:var(--border-light);border:2px solid transparent;border-radius:10px;padding:14px 4px;font-size:20px;font-weight:800;text-align:center;width:100%;min-width:0;transition:all .15s;color:var(--text1)}
 .focus-input:focus{border-color:var(--primary);background:var(--surface);outline:none}
 .focus-input::placeholder{color:#cbd5e1;font-weight:500;font-size:14px}
@@ -693,9 +695,10 @@ const FLY_FAMILIES={'fly-10m':['fly-10m-1','fly-10m-2','fly-10m-3','fly-10m-4'],
   'fly-20m':['fly-20m-1','fly-20m-2'],'fly-30m':['fly-30m-1']};
 const flyFamily=mid=>{for(const k of Object.keys(FLY_FAMILIES))if(FLY_FAMILIES[k].includes(mid))return k;return null};
 const DIST_METRICS=['tf-dist','distance','height'];
+const isCountable=s=>s.completed&&!s.warmup;
 function computePRs(exId,athId,workouts,exercise){
   const prs={};if(!exercise)return prs;const base=baseExId(exId);
-  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
+  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(isCountable).forEach(s=>{
     const hw=exercise.metrics.includes('weight'),hr=exercise.metrics.includes('reps');
     if(hw&&(s.values.weight||0)>(prs.maxWeight||0))prs.maxWeight=s.values.weight;
     if(hr&&(s.values.reps||0)>(prs.maxReps||0))prs.maxReps=s.values.reps;
@@ -709,7 +712,7 @@ function computePRs(exId,athId,workouts,exercise){
 
 function computeSprintPRs(exId,athId,workouts){
   const byKey={};const base=baseExId(exId);
-  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(s=>s.completed).forEach(s=>{
+  workouts.forEach(w=>{const ad=w.athletes?.[athId];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{(ad.sets[k]||[]).filter(isCountable).forEach(s=>{
     const dist=Number(s.values.distance)||0;if(!dist)return;
     const time=Number(s.values['tf-time']);if(!time)return;
     const eg=s.values['eg-setting'];
@@ -723,7 +726,7 @@ function computeSprintPRs(exId,athId,workouts){
 function getProgressData(exId,athId,workouts,metric){
   const base=baseExId(exId);
   return workouts.filter(w=>{const ad=w.athletes?.[athId];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===base&&ad.sets[k]?.some(s=>s.completed))})
-    .map(w=>{const ad=w.athletes[athId];const allSets=Object.keys(ad.sets).filter(k=>baseExId(k)===base).flatMap(k=>ad.sets[k]).filter(s=>s.completed);
+    .map(w=>{const ad=w.athletes[athId];const allSets=Object.keys(ad.sets).filter(k=>baseExId(k)===base).flatMap(k=>ad.sets[k]).filter(isCountable);
       return{x:new Date(w.startTime),y:Math.max(...allSets.map(s=>s.values[metric]||0))}}).filter(d=>d.y>0)}
 
 // ── Hooks ──
@@ -815,11 +818,11 @@ function MonthCalendar({workouts,planned,competitions,onSelectDay}){
         <span>{d}</span>{dots.length>0&&<div className="cal-dots">{dots.slice(0,3).map((c,j)=><div key={j} className="cal-dot" style={{background:c}}/>)}</div>}
       </button>)})}</div></div>)}
 
-function SetRow({set,idx,metrics,cm,onUpdate,onToggle,onDelete}){
+function SetRow({set,idx,metrics,cm,onUpdate,onToggle,onDelete,onToggleWarmup}){
   const mds=metrics.map(id=>getMetric(id,cm));
   const gc=metrics.length>=4?`24px ${metrics.map(()=>'68px').join(' ')} 36px 28px`:`24px ${'1fr '.repeat(metrics.length)}36px 28px`;
-  return(<div className={`set-row ${set.completed?'completed':''}`} style={{gridTemplateColumns:gc,...(metrics.length>=4?{minWidth:'max-content'}:{})}}>
-    <div className="set-num">{idx+1}</div>
+  return(<div className={`set-row ${set.completed?'completed':''} ${set.warmup?'warmup':''}`} style={{gridTemplateColumns:gc,...(metrics.length>=4?{minWidth:'max-content'}:{})}}>
+    <button className="set-num" onClick={onToggleWarmup} title="Tap to toggle warmup" style={{background:'none',border:'none',padding:0,cursor:'pointer',color:set.warmup?'#f59e0b':'var(--text3)'}}>{set.warmup?'W':idx+1}</button>
     {mds.map(md=>(<input key={md.id} type="number" className="set-input" placeholder={md.unit||md.name}
       value={set.values[md.id]??''} step={md.step} onChange={e=>onUpdate(md.id,e.target.value===''?'':Number(e.target.value))}/>))}
     <button className={`set-check ${set.completed?'done':''}`} onClick={onToggle}><Icon name="check" size={14}/></button>
@@ -891,10 +894,10 @@ function InlineMetricEditor({current,cm,onChange}){
           setNm('');setNu('');setShowNew(false)}}>Add</button></div>}
   </div>)}
 
-function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUpdateSet,onToggleSet,onAddSet,onDeleteSet,onShowHistory,ssTag,allWorkouts,exId,activeAth,onChangeMetrics}){
+function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUpdateSet,onToggleSet,onAddSet,onDeleteSet,onShowHistory,ssTag,allWorkouts,exId,activeAth,onChangeMetrics,onToggleWarmup}){
   if(!exercise)return null;
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
-  const completed=sets.filter(s=>s.completed);
+  const completed=sets.filter(isCountable);
   const totals=[];
   const hasW=exercise.metrics.includes('weight');const hasR=exercise.metrics.includes('reps');
   const hasD=exercise.metrics.includes('distance');
@@ -906,7 +909,7 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUp
   if(allWorkouts&&exId){const baseId=baseExId(exId);
     for(let i=allWorkouts.length-1;i>=0;i--){const wk=allWorkouts[i];const ad=wk.athletes?.[activeAth];if(!ad)continue;
       const matchKey=Object.keys(ad.sets||{}).find(k=>baseExId(k)===baseId);
-      if(matchKey){const ds=ad.sets[matchKey].filter(s=>s.completed);if(ds.length){
+      if(matchKey){const ds=ad.sets[matchKey].filter(isCountable);if(ds.length){
         lastDate=new Date(wk.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'});
         if(isSprint){lastSprintLines=ds.map(s=>{const d=s.values.distance;const t=s.values['tf-time'];return d&&t?{d,t}:null}).filter(Boolean);
         }else if(hasW&&hasR){const r=ds[0]?.values?.reps;const w=ds[0]?.values?.weight;
@@ -955,15 +958,15 @@ function FocusExerciseCard({exercise,sets,prevSets,cm,prs,note,onUpdateNote,onUp
         <span></span>
       </div>
       {sets.map((s,i)=>(
-        <div key={i} className="focus-row" style={{gridTemplateColumns:gridCols}}>
-          <span className="focus-row-num">{i+1}</span>
+        <div key={i} className={'focus-row'+(s.warmup?' warmup':'')} style={{gridTemplateColumns:gridCols}}>
+          <button className="focus-row-num" onClick={()=>onToggleWarmup&&onToggleWarmup(i)} title="Tap to toggle warmup" style={{background:'none',border:'none',padding:0,cursor:'pointer',color:s.warmup?'#f59e0b':'var(--text2)'}}>{s.warmup?'W':i+1}</button>
           {mds.map((md,mi)=>(
             <div key={md.id} style={{position:'relative'}}>
               <input type="number" inputMode="decimal" className="focus-input"
                 value={s.values[md.id]??''} step={md.step}
                 placeholder={prevSets?.[i]?.values?.[md.id]!=null&&prevSets?.[i]?.values?.[md.id]!==''?String(prevSets[i].values[md.id]):''}
                 onChange={e=>onUpdateSet(i,md.id,e.target.value===''?'':Number(e.target.value))}/>
-              {i===prSetIdx&&mi===0&&<span className="focus-trophy" title="PR">★</span>}
+              {i===prSetIdx&&mi===0&&!s.warmup&&<span className="focus-trophy" title="PR">★</span>}
             </div>
           ))}
           <button className={`focus-check ${s.completed?'done':''}`} onClick={()=>onToggleSet(i)} aria-label="Complete">
@@ -1005,13 +1008,13 @@ function FocusMetricsToggle({exId,current,cm,onChange}){
     </div>}
   </div>)}
 
-function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics,note,onUpdateNote,athletes,assignedAthletes,onToggleAthlete}){
+function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSetVZ,onUpdateSet,onToggleSet,onDeleteSet,onAddSet,onReplace,onDelete,onGripTouch,onShowHistory,onChangeMetrics,note,onUpdateNote,athletes,assignedAthletes,onToggleAthlete,onToggleWarmup}){
   const[open,setOpen]=useState(false);const[showVZ,setShowVZ]=useState(false);const[showMetrics,setShowMetrics]=useState(false);const[showNote,setShowNote]=useState(!!note);if(!exercise)return null;
   const showAthChips=athletes&&athletes.length>1&&onToggleAthlete;
   const isAssigned=athId=>!assignedAthletes||assignedAthletes.length===0||assignedAthletes.length===athletes?.length||assignedAthletes.includes(athId);
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
   const gc=exercise.metrics.length>=4?`24px ${exercise.metrics.map(()=>'68px').join(' ')} 36px 28px`:`24px ${'1fr '.repeat(exercise.metrics.length)}36px 28px`;
-  const done=sets.filter(s=>s.completed).length;const gym=isGymEx(exercise);
+  const done=sets.filter(isCountable).length;const gym=isGymEx(exercise);
   const lastStr=fmtLast(prevSets,exercise);const unit=exercise.metrics.includes('weight')?'kg':exercise.metrics.includes('tf-dist')?'m':'';
   const prVal=prs?.maxWeight?`${prs.maxWeight}`:prs?.maxReps?`${prs.maxReps}`:
     prs?.['tf-time']?`${prs['tf-time']}s`:prs?.['tf-dist']?`${prs['tf-dist']}m`:null;
@@ -1058,7 +1061,8 @@ function ExerciseAccordion({exId,exercise,sets,prevSets,cm,prs,velocityZone,onSe
           {mds.map(m=>{const showUnit=m.unit&&!m.name.toLowerCase().includes(m.unit.toLowerCase());
             return<div key={m.id} style={{textAlign:'center'}}>{m.name}{showUnit?<><br/><span style={{fontSize:8,opacity:.7}}>({m.unit})</span></>:null}</div>})}<div/><div/></div>
         {sets.map((s,i)=>(<SetRow key={i} set={s} idx={i} metrics={exercise.metrics} cm={cm}
-          onUpdate={(mid,v)=>onUpdateSet(i,mid,v)} onToggle={()=>onToggleSet(i)} onDelete={()=>onDeleteSet(i)}/>))}</div>
+          onUpdate={(mid,v)=>onUpdateSet(i,mid,v)} onToggle={()=>onToggleSet(i)} onDelete={()=>onDeleteSet(i)}
+          onToggleWarmup={()=>onToggleWarmup&&onToggleWarmup(i)}/>))}</div>
       <button className="add-set-btn" onClick={onAddSet}><Icon name="plus" size={12}/> Add Set</button></div>}</div>)}
 
 // ── Modal Components ──
@@ -1655,6 +1659,8 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
       sets:{...w.athletes[activeAth].sets,[exId]:w.athletes[activeAth].sets[exId].map((s,i)=>i===si?{...s,completed:!s.completed}:s)}}}}})};
   const deleteSet=(exId,si)=>{setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[exId]:w.athletes[activeAth].sets[exId].filter((_,i)=>i!==si)}}}}))};
+  const toggleWarmup=(exId,si)=>{setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
+    sets:{...w.athletes[activeAth].sets,[exId]:w.athletes[activeAth].sets[exId].map((s,i)=>i===si?{...s,warmup:!s.warmup}:s)}}}}))};
   const addSet=exId=>{setWorkout(w=>{const sets=w.athletes[activeAth].sets[exId];const last=sets[sets.length-1];
     const ex=effEx(exId);const ns={values:{},completed:false};
     ex.metrics.forEach(mid=>{ns.values[mid]=last?.values[mid]??''});
@@ -1737,7 +1743,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
                     prevSets={getPrevSets(seid,activeAth,workouts)} cm={localCM} prs={sPrs}
                     velocityZone={vzMap[seid]||null} onSetVZ={vz=>setVzMap(p=>({...p,[seid]:vz}))}
                     onUpdateSet={(si2,mid,v)=>updateSet(seid,si2,mid,v)} onToggleSet={si2=>toggleSet(seid,si2)}
-                    onDeleteSet={si2=>deleteSet(seid,si2)} onAddSet={()=>addSet(seid)}
+                    onDeleteSet={si2=>deleteSet(seid,si2)} onAddSet={()=>addSet(seid)} onToggleWarmup={si2=>toggleWarmup(seid,si2)}
                     onReplace={()=>{setReplacingIdx(si);setShowPicker(true)}} onDelete={()=>delEx(si)}
                     onShowHistory={()=>setHistoryEx(sex)}
                     athletes={athletes} assignedAthletes={workout.exerciseAthletes?.[seid]} onToggleAthlete={aId=>toggleExAthlete(seid,aId)}
@@ -1749,7 +1755,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           prevSets={getPrevSets(eid,activeAth,workouts)} cm={localCM} prs={exPrs}
           velocityZone={vzMap[eid]||null} onSetVZ={vz=>setVzMap(p=>({...p,[eid]:vz}))}
           onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
-          onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
+          onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)} onToggleWarmup={si=>toggleWarmup(eid,si)}
           onReplace={()=>{setReplacingIdx(idx);setShowPicker(true)}} onDelete={()=>delEx(idx)}
           onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}
           athletes={athletes} assignedAthletes={workout.exerciseAthletes?.[eid]} onToggleAthlete={aId=>toggleExAthlete(eid,aId)}
@@ -1832,6 +1838,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
               onChangeMetrics={changeMetrics}
               onUpdateSet={(si,mid,v)=>updateSet(eid,si,mid,v)} onToggleSet={si=>toggleSet(eid,si)}
               onDeleteSet={si=>deleteSet(eid,si)} onAddSet={()=>addSet(eid)}
+              onToggleWarmup={si=>toggleWarmup(eid,si)}
               onShowHistory={()=>setHistoryEx(localEx.find(e=>e.id===baseExId(eid)))}/>};
           const pageKey=page.type==='ss'?'ss-'+page.eids.join(',') : 'sg-'+page.eid;
           return[
@@ -1900,7 +1907,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
     {historyEx&&(()=>{const hw=historyEx.metrics.includes('weight'),ht=historyEx.metrics.includes('time')||historyEx.metrics.includes('tf-time'),
       hd=historyEx.metrics.includes('tf-dist')||historyEx.metrics.includes('distance'),hh=historyEx.metrics.includes('height');
       let bestVal=null,bestDate=null,bestLabel='',bestUnit='';
-      workouts.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===historyEx.id).flatMap(k=>ad.sets[k]).filter(s=>s.completed).forEach(s=>{
+      workouts.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;Object.keys(ad.sets||{}).filter(k=>baseExId(k)===historyEx.id).flatMap(k=>ad.sets[k]).filter(isCountable).forEach(s=>{
         if(hw){const v=s.values.weight||0;if(v>=(bestVal||0)){bestVal=v;bestDate=w.startTime;bestLabel='Best Weight';bestUnit='kg'}}
         else if(ht){const mid=historyEx.metrics.includes('tf-time')?'tf-time':'time';const v=s.values[mid]||0;
           if(v>0&&(!bestVal||v<bestVal)){bestVal=v;bestDate=w.startTime;bestLabel='Best Time';bestUnit='s'}}
