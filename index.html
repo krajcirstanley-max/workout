@@ -591,18 +591,16 @@ const DEFAULT_EXERCISES=[
   {id:'mb-forward-underhand',name:'MB Forward Underhand Throw',category:'T&F',metrics:['weight','reps']},
   {id:'fly-sprint',name:'Fly Sprint',category:'T&F',metrics:['distance','tf-time']},
   {id:'start-10m',name:'10m Sprint',category:'T&F',metrics:['tf-time']},
-  {id:'start-20m',name:'20m Sprint',category:'T&F',metrics:['split-10m','split-20m']},
-  {id:'start-25m',name:'25m Sprint',category:'T&F',metrics:['split-10m','split-20m','tf-time']},
-  {id:'start-30m',name:'30m Sprint',category:'T&F',metrics:['split-10m','split-20m','split-30m']},
-  {id:'start-40m',name:'40m Sprint',category:'T&F',metrics:['split-10m','split-20m','split-30m','split-40m']},
-  {id:'start-50m',name:'50m Sprint',category:'T&F',metrics:['split-30m','fly-10m-1','fly-10m-2']},
-  {id:'start-60m',name:'60m Sprint',category:'T&F',metrics:['split-40m','fly-10m-1','fly-10m-2']},
-  {id:'fly-10m',name:'10m Fly',category:'T&F',metrics:['fly-10m-1']},
-  {id:'fly-20m',name:'20m Fly',category:'T&F',metrics:['fly-20m-1']},
-  {id:'fly-30m',name:'30m Fly',category:'T&F',metrics:['fly-30m-1']},
+  {id:'start-20m',name:'20m Sprint',category:'T&F',metrics:['tf-time','split-10m']},
+  {id:'start-30m',name:'30m Sprint',category:'T&F',metrics:['tf-time','split-10m','split-20m']},
+  {id:'start-40m',name:'40m Sprint',category:'T&F',metrics:['tf-time','split-10m','split-20m','split-30m']},
+  {id:'start-50m',name:'50m Sprint',category:'T&F',metrics:['tf-time','split-30m','fly-10m-1','fly-10m-2']},
+  {id:'start-60m',name:'60m Sprint',category:'T&F',metrics:['tf-time','split-40m','fly-10m-1','fly-10m-2']},
+  {id:'fly-10m',name:'10m Fly',category:'T&F',metrics:['tf-time']},
+  {id:'fly-20m',name:'20m Fly',category:'T&F',metrics:['tf-time','fly-10m-1','fly-10m-2']},
+  {id:'fly-30m',name:'30m Fly',category:'T&F',metrics:['tf-time','fly-10m-1','fly-10m-2','fly-10m-3']},
   {id:'resisted-10m',name:'10m Resisted',category:'T&F',metrics:['tf-time']},
   {id:'resisted-20m',name:'20m Resisted',category:'T&F',metrics:['tf-time']},
-  {id:'resisted-25m',name:'25m Resisted',category:'T&F',metrics:['tf-time']},
   {id:'resisted-30m',name:'30m Resisted',category:'T&F',metrics:['tf-time']},
 ];
 const ATHLETE_COLORS=['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#f97316'];
@@ -2421,7 +2419,7 @@ function App(){
       localStorage.setItem('wk2_backup_planned_pre_distance_v1',JSON.stringify(planned));
       localStorage.setItem('wk2_backup_templates_pre_distance_v1',JSON.stringify(templates))}catch{}
     const remap=(eid,distHint)=>{const b=baseExId(eid);if(b!=='free-sprint'&&b!=='resisted-sprint')return null;
-      const d=Math.round(Number(distHint)||0);if(![10,20,25,30,40,50,60].includes(d))return null;
+      const d=Math.round(Number(distHint)||0);if(![10,20,30,40,50,60].includes(d))return null;
       const newBase=b==='free-sprint'?`start-${d}m`:`resisted-${d}m`;
       const suf=eid.includes('__')?'__'+eid.split('__')[1]:'';
       return newBase+suf};
@@ -2509,7 +2507,7 @@ function App(){
       }];
       if(!r.find(x=>x.id==='pl-sprint-5'))r=[...r,{id:'pl-sprint-5',date:'2026-04-25',name:'Sprint Training',color:'#06b6d4',
         exerciseIds:['wall-drills','falling-starts','eg-marches','waterbag-sprint',
-          'resisted-20m','start-20m','start-25m','start-30m','start-30m__2','start-30m__3',
+          'resisted-20m','start-20m','start-30m','start-30m__2','start-30m__3',
           'mb-overhead-back','mb-chest-pass','mb-rotational'],
         supersets:[['resisted-20m','start-20m']],
         setConfigs:{
@@ -2519,7 +2517,6 @@ function App(){
           'waterbag-sprint':[{distance:10},{distance:10},{distance:10}],
           'resisted-20m':[{},{},{}],
           'start-20m':[{}],
-          'start-25m':[{}],
           'start-30m':[{}],
           'start-30m__2':[{},{}],
           'start-30m__3':[{}],
@@ -2527,7 +2524,7 @@ function App(){
           'mb-chest-pass':[{reps:5}],
           'mb-rotational':[{reps:5}]
         },
-        notes:'Contrast: Resisted 20m → 20m/25m/30m sprint (4 min rest). 30m sprint 3× (5 min rest). Freelap.'
+        notes:'Contrast: Resisted 20m → 20m/30m sprint (4 min rest). 30m sprint 3× (5 min rest). Freelap.'
       }];
       if(!r.find(x=>x.id==='pl-lj-drills-2'))r=[...r,{id:'pl-lj-drills-2',date:'2026-04-26',name:'LJ Drills',color:'#8b5cf6',
         exerciseIds:['ankle-dribble','calf-dribble','knee-dribble','free-leg-b-skip',
