@@ -1341,7 +1341,7 @@ function ExerciseStats({exercise,athletes,workouts,cm,onClose}){
   const chartData=getProgressData(exercise.id,selAth,workouts,chartMetric);
   const allMds=[...BUILTIN_METRICS,...cm];
   const mds=exercise.metrics.map(id=>getMetric(id,cm));
-  const history=[...workouts].reverse().filter(w=>{const ad=w.athletes?.[selAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===exercise.id&&ad.sets[k]?.some(s=>s.completed))}).slice(0,15);
+  const history=[...workouts].reverse().filter(w=>{const ad=w.athletes?.[selAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===exercise.id&&ad.sets[k]?.some(s=>s.completed))});
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
     <div className="modal-hdr"><span className="modal-title">{exercise.name}</span>
       <button className="hdr-btn" onClick={onClose}><Icon name="x" size={20}/></button></div>
@@ -1916,7 +1916,7 @@ function ActiveWorkoutScreen({athletes,exercises:initEx,customMetrics:initCM,wor
           <div><div style={{fontSize:12,fontWeight:800,color:'var(--primary)',textTransform:'uppercase',letterSpacing:'.5px'}}>{bestLabel}</div>
             <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>{new Date(bestDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div></div></div>}
         <div className="section-title">Sessions</div>
-        {workouts.filter(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))}).reverse().slice(0,10).map(w=>{
+        {workouts.filter(w=>{const ad=w.athletes?.[activeAth];return ad&&Object.keys(ad.sets||{}).some(k=>baseExId(k)===historyEx.id&&ad.sets[k]?.some(s=>s.completed))}).reverse().map(w=>{
           const sets=Object.keys(w.athletes[activeAth].sets).filter(k=>baseExId(k)===historyEx.id).flatMap(k=>w.athletes[activeAth].sets[k]).filter(s=>s.completed);
           return<div key={w.id} style={{marginBottom:16}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>{w.name||'Workout'} <span style={{color:'var(--text3)',fontWeight:500}}>
