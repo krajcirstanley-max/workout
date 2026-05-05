@@ -2447,6 +2447,17 @@ function App(){
     if(!plannedSynced) return;
     setPlanned(p=>{
       let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-'));
+      if(!r.find(x=>x.id==='pl-sprint-7'))r=[...r,{id:'pl-sprint-7',date:'2026-05-05',name:'Speed Session',color:'#ef4444',
+        exerciseIds:['overspeed','start-50m','start-60m','wickets'],
+        supersets:[],
+        setConfigs:{
+          'overspeed':[{distance:40},{distance:40}],
+          'start-50m':[{},{}],
+          'start-60m':[{}],
+          'wickets':[{reps:10},{reps:10},{reps:10}]
+        },
+        notes:'Overspeed 2×40m. 50m fly 2× (Freelap). 60m fly 1× (Freelap). Wickety 3×10.'
+      }];
       if(!r.find(x=>x.id==='pl-lj-session-2'))r=[...r,{id:'pl-lj-session-2',date:'2026-05-03',name:'Long Jump Session',color:'#8b5cf6',
         exerciseIds:['hurdle-jumps','start-50m','short-app-popup','wickets','full-app-runthrough','full-app-popup','approach-jump__1','approach-jump__2','sl-bounds-jump','alt-bounds-jump'],
         supersets:[],
