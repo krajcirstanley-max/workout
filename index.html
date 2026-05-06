@@ -493,7 +493,10 @@ const BUILTIN_METRICS=[{id:'weight',name:'Weight',unit:'kg',step:2.5},{id:'reps'
   {id:'fly-10m-1',name:'10m Fly #1',unit:'s',step:0.01},{id:'fly-10m-2',name:'10m Fly #2',unit:'s',step:0.01},
   {id:'fly-10m-3',name:'10m Fly #3',unit:'s',step:0.01},{id:'fly-10m-4',name:'10m Fly #4',unit:'s',step:0.01},
   {id:'fly-20m-1',name:'20m Fly #1',unit:'s',step:0.01},{id:'fly-20m-2',name:'20m Fly #2',unit:'s',step:0.01},
-  {id:'fly-30m-1',name:'30m Fly',unit:'s',step:0.01}];
+  {id:'fly-30m-1',name:'30m Fly',unit:'s',step:0.01},
+  {id:'steps',name:'Steps',unit:'',step:1},
+  {id:'time-10-1m',name:'10m–1m Time',unit:'s',step:0.01},
+  {id:'time-20-11m',name:'20m–11m Time',unit:'s',step:0.01}];
 const DEFAULT_EXERCISES=[
   {id:'bench-press',name:'Bench Press',category:'Chest',metrics:['weight','reps']},
   {id:'incline-bench',name:'Incline Bench',category:'Chest',metrics:['weight','reps']},
@@ -580,8 +583,13 @@ const DEFAULT_EXERCISES=[
   {id:'full-app-runthrough',name:'Full Approach Run-through',category:'T&F',metrics:['reps']},
   {id:'full-app-popup',name:'Full Approach Pop-up',category:'T&F',metrics:['reps']},
   {id:'approach-jump',name:'Approach Jump',category:'T&F',metrics:['tf-dist']},
-  {id:'sl-bounds-jump',name:'SL Bounds + Jump',category:'T&F',metrics:['reps']},
-  {id:'alt-bounds-jump',name:'Alternate Bounds + Jump',category:'T&F',metrics:['reps']},
+  {id:'approach-jump-12',name:'12-step Approach Jump',category:'T&F',metrics:['tf-dist','time-10-1m']},
+  {id:'approach-jump-14',name:'14-step Approach Jump',category:'T&F',metrics:['tf-dist','time-10-1m']},
+  {id:'approach-jump-16',name:'16-step Approach Jump',category:'T&F',metrics:['tf-dist','time-10-1m','time-20-11m']},
+  {id:'approach-jump-18',name:'18-step Approach Jump',category:'T&F',metrics:['tf-dist','time-10-1m','time-20-11m']},
+  {id:'sl-bounds-pr-l',name:'SL Bounds + Jump with Pre-Run · L',category:'T&F',metrics:['reps','steps','tf-dist']},
+  {id:'sl-bounds-pr-r',name:'SL Bounds + Jump with Pre-Run · R',category:'T&F',metrics:['reps','steps','tf-dist']},
+  {id:'alt-bounds-jump',name:'Alt Bounds + Jump with Pre-Run',category:'T&F',metrics:['reps','steps','tf-dist']},
   {id:'high-pull',name:'High Pull',category:'Legs',metrics:['weight','reps']},
   {id:'quarter-squat',name:'Quarter Squat',category:'Legs',metrics:['weight','reps']},
   {id:'drop-jump-rsi',name:'Drop Jump RSI',category:'Legs',metrics:['reps']},
@@ -2446,7 +2454,23 @@ function App(){
   useEffect(()=>{
     if(!plannedSynced) return;
     setPlanned(p=>{
-      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-'));
+      let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-')&&!x.id.startsWith('pl-lj-progressive-'));
+      if(!r.find(x=>x.id==='pl-lj-progressive-1'))r=[...r,{id:'pl-lj-progressive-1',date:'2026-05-06',name:'LJ Progressive',color:'#8b5cf6',
+        exerciseIds:['hurdle-jumps','short-app-popup','approach-jump-12','approach-jump-14','approach-jump-16','approach-jump-18','sl-bounds-pr-l','sl-bounds-pr-r','alt-bounds-jump'],
+        supersets:[],
+        setConfigs:{
+          'hurdle-jumps':[{reps:5},{reps:5},{reps:5}],
+          'short-app-popup':[{reps:3},{reps:3},{reps:3}],
+          'approach-jump-12':[{},{}],
+          'approach-jump-14':[{},{}],
+          'approach-jump-16':[{},{}],
+          'approach-jump-18':[{},{}],
+          'sl-bounds-pr-l':[{},{}],
+          'sl-bounds-pr-r':[{},{}],
+          'alt-bounds-jump':[{},{},{}]
+        },
+        notes:'Hurdle Jumps 3×5. Short approach pop-upy 5 krokov 3×3. 12/14/16/18-step approach skoky 2× každý. SL Bounds + Jump with Pre-Run 2×/leg (deload, normálne 3×). Alt Bounds + Jump with Pre-Run 3× (deload, normálne 4-5×).'
+      }];
       if(!r.find(x=>x.id==='pl-sprint-7'))r=[...r,{id:'pl-sprint-7',date:'2026-05-05',name:'Speed Session',color:'#ef4444',
         exerciseIds:['overspeed','start-50m','start-60m','wickets'],
         supersets:[],
