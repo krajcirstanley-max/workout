@@ -118,16 +118,43 @@ textarea.input{resize:vertical;min-height:80px;font-size:14px;font-weight:500}
 .greeting h1{font-size:34px;font-weight:900;letter-spacing:-1.2px;margin-bottom:4px;line-height:1.05;color:var(--text)}
 .greeting p{font-size:14px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.8px}
 
-/* Pro Hero */
-.pro-hero{padding:8px 0 24px;border-bottom:1px solid var(--border-light);margin-bottom:20px}
-.pro-hero-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px}
-.pro-hero-week{padding:3px 8px;background:var(--surface2);border-radius:4px;color:var(--primary)}
-.pro-hero-name{font-size:48px;font-weight:900;letter-spacing:-2.5px;line-height:.95;color:var(--text);margin-bottom:24px}
-.pro-stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--surface);border:1px solid var(--border-light);border-radius:14px;padding:14px 0;overflow:hidden}
-.pro-stat{display:flex;flex-direction:column;align-items:center;gap:4px;border-right:1px solid var(--border-light);padding:0 8px}
-.pro-stat:last-child{border-right:none}
-.pro-stat-num{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:var(--text);letter-spacing:-1px;line-height:1}
-.pro-stat-lbl{font-size:9px;font-weight:800;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase}
+/* Pro Hero — TrainHeroic + WHOOP + Vitruve */
+.pro-hero{padding:14px 0 22px;margin-bottom:18px}
+.pro-hero-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.2px}
+.pro-hero-week{padding:4px 10px;background:var(--primary-dim);border-radius:6px;color:var(--primary);font-weight:800}
+.pro-hero-name{font-size:56px;font-weight:900;letter-spacing:-3px;line-height:.92;color:var(--text);margin-bottom:6px}
+.pro-hero-sub{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.4px;font-family:'JetBrains Mono',monospace;margin-bottom:24px}
+
+/* Load chart — weekly bars (WHOOP-style) */
+.load-block{background:var(--surface);border-radius:18px;padding:18px 20px;margin-bottom:16px;border:1px solid var(--border-light)}
+.load-hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.load-hdr-l{font-size:10px;font-weight:800;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.load-hdr-r{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:900;color:var(--text);letter-spacing:-1.2px;line-height:1}
+.load-hdr-r small{font-size:11px;color:var(--text3);font-weight:700;margin-left:4px}
+.load-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:flex-end;height:60px;margin-bottom:6px}
+.load-bar{background:var(--surface3);border-radius:4px;width:100%;min-height:4px;transition:all .3s;position:relative}
+.load-bar.has{background:var(--primary)}
+.load-bar.today{background:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.load-axis{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--text3);text-align:center;letter-spacing:.5px;text-transform:uppercase}
+
+/* TrainHeroic-style block */
+.block-card{background:var(--surface);border-radius:20px;padding:24px;margin-bottom:14px;border:1px solid var(--border-light);position:relative;overflow:hidden}
+.block-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--c,var(--primary))}
+.block-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:var(--c,var(--primary));color:#0a0a0b;font-size:10px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;border-radius:6px;margin-bottom:14px;font-family:'JetBrains Mono',monospace}
+.block-name{font-size:38px;font-weight:900;letter-spacing:-1.6px;line-height:.98;margin-bottom:8px;color:var(--text)}
+.block-meta{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:18px;display:flex;gap:12px;align-items:center}
+.block-meta span{display:inline-flex;align-items:center;gap:5px}
+.block-section{margin-bottom:14px;padding:14px;background:var(--surface2);border-radius:12px}
+.block-section-tag{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--c,var(--primary));margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.block-section-tag::before{content:'';width:14px;height:14px;border-radius:4px;background:var(--c,var(--primary));color:#0a0a0b;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;line-height:14px;text-align:center}
+.block-ex{font-size:14px;font-weight:600;color:var(--text);padding:7px 0;display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:center;border-bottom:1px solid var(--border-light)}
+.block-ex:last-child{border-bottom:none}
+.block-ex-detail{font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--text2);font-size:13px;letter-spacing:-.3px}
+.block-ex-name{font-weight:700;color:var(--text);letter-spacing:-.2px}
+.block-cta{margin-top:16px;background:var(--primary);color:#0a0a0b;font-weight:900;letter-spacing:.4px;text-transform:uppercase;font-size:13px;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border:none}
+.block-cta:active{background:var(--primary-dark);transform:scale(.98)}
+.block-cta.live{background:#10b981}
+.block-cta.live:active{background:#059669}
 
 .plan-hero{background:linear-gradient(155deg,var(--c,var(--primary)) 0%,color-mix(in srgb,var(--c,var(--primary)) 75%,#000 25%) 100%);border-radius:24px;padding:28px 24px 24px;margin-bottom:16px;position:relative;overflow:hidden;transition:transform .15s;color:#0a0a0b;min-height:280px;display:flex;flex-direction:column;justify-content:space-between}
 .plan-hero:active{transform:scale(.99)}
@@ -1496,20 +1523,35 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
   const totalWk=workouts.filter(w=>w.athletes?.[activeAth]).length;
   const lastWk=recent[0];const daysSince=lastWk?Math.floor((Date.now()-lastWk.startTime)/864e5):null;
 
+  // Weekly load bars (Mon-Sun) — count workouts per day past 7
+  const todayD=new Date();const dow=(todayD.getDay()+6)%7;
+  const weekStart=new Date(todayD);weekStart.setDate(weekStart.getDate()-dow);weekStart.setHours(0,0,0,0);
+  const weekBars=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);
+    const k=dateKey(d.getTime());const cnt=workouts.filter(w=>w.athletes?.[activeAth]&&dateKey(w.startTime)===k).length;
+    return{day:['M','T','W','T','F','S','S'][i],count:cnt,isToday:k===today}});
+  const maxCount=Math.max(1,...weekBars.map(b=>b.count));
   return(<div className="screen" style={{padding:'0'}}>
-    <div style={{padding:'0 20px'}}>
+    <div style={{padding:'0 18px'}}>
     <AthleteBar athletes={athletes} active={activeAth} onSelect={onSelectAth}/>
     <div className="pro-hero">
       <div className="pro-hero-meta">
         <span className="pro-hero-date">{new Date().toLocaleDateString('en-US',{weekday:'short',day:'2-digit',month:'short'}).toUpperCase()}</span>
         <span className="pro-hero-week">W{Math.ceil((((Date.now()-new Date(new Date().getFullYear(),0,1).getTime())/864e5)+new Date(new Date().getFullYear(),0,1).getDay())/7)}</span>
       </div>
-      <div className="pro-hero-name">{(athlete?.name||'').toUpperCase()}</div>
-      <div className="pro-stat-strip">
-        <div className="pro-stat"><span className="pro-stat-num">{weekCount}</span><span className="pro-stat-lbl">7D</span></div>
-        <div className="pro-stat"><span className="pro-stat-num">{monthCount}</span><span className="pro-stat-lbl">30D</span></div>
-        <div className="pro-stat"><span className="pro-stat-num">{totalWk}</span><span className="pro-stat-lbl">TOTAL</span></div>
-        <div className="pro-stat"><span className="pro-stat-num">{daysSince==null?'—':daysSince}</span><span className="pro-stat-lbl">D AGO</span></div>
+      <div className="pro-hero-name">{(athlete?.name?.split(' ')[0]||'').toUpperCase()}</div>
+      <div className="pro-hero-sub">{daysSince==null?'No sessions logged':daysSince===0?'Trained today':daysSince===1?'1 day since last session':`${daysSince} days since last session`}</div>
+    </div>
+
+    <div className="load-block">
+      <div className="load-hdr">
+        <div className="load-hdr-l">Training Load · This Week</div>
+        <div className="load-hdr-r">{weekCount}<small>/7</small></div>
+      </div>
+      <div className="load-bars">
+        {weekBars.map((b,i)=><div key={i} className={'load-bar'+(b.count>0?' has':'')+(b.isToday?' today':'')} style={{height:Math.max(8,(b.count/maxCount)*60)+'px'}}/>)}
+      </div>
+      <div className="load-axis">
+        {weekBars.map((b,i)=><div key={i}>{b.day}</div>)}
       </div>
     </div>
 
@@ -1525,24 +1567,39 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
       {todayPlans.map(plan=>{const isLive=remoteSession?.planId===plan.id;
         const exCount=plan.exerciseIds.length;
         const totalSets=Object.values(plan.setConfigs||{}).reduce((a,s)=>a+(s?.length||0),0);
-        return(<div key={plan.id} className="plan-hero" style={{'--c':isLive?'#10b981':(plan.color||'#a3e635')}}>
-          <div className="plan-hero-label">{isLive?'In Progress':"Today's Mission"}</div>
-          <div>
-            <div className="plan-hero-name">{plan.name.toUpperCase()}</div>
-            <div className="plan-hero-count">{exCount} ex · {totalSets} sets{isLive?' · Started '+new Date(remoteSession.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div>
-            <div className="plan-hero-exercises">
-              {(()=>{const rendered=new Set();const chips=[];
-                plan.exerciseIds.forEach(eid=>{if(rendered.has(eid))return;rendered.add(eid);
-                  const ex=exercises.find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?.length||3;
-                  const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
-                  const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
-                  chips.push(<span key={eid} className="plan-hero-ex">{detail} {ex?.name||'?'}</span>)});
-                return chips})()}
-            </div>
+        // Group exercises into Block A/B/... by superset membership; non-superset exercises are individual blocks
+        const blocks=[];const seen=new Set();let blockIdx=0;
+        plan.exerciseIds.forEach(eid=>{if(seen.has(eid))return;
+          const ss=(plan.supersets||[]).find(g=>g.includes(eid));
+          if(ss){const grp=ss.filter(id=>plan.exerciseIds.includes(id));grp.forEach(id=>seen.add(id));
+            blocks.push({label:String.fromCharCode(65+blockIdx++),type:'ss',eids:grp})}
+          else{seen.add(eid);blocks.push({label:String.fromCharCode(65+blockIdx++),type:'single',eids:[eid]})}});
+        return(<div key={plan.id} className="block-card" style={{'--c':isLive?'#10b981':(plan.color||'#a3e635')}}>
+          <span className="block-tag">{isLive?'● Live':"Today's Block"}</span>
+          <div className="block-name">{plan.name}</div>
+          <div className="block-meta">
+            <span>{exCount} EX</span>
+            <span>·</span>
+            <span>{totalSets} SETS</span>
+            {isLive&&<><span>·</span><span style={{color:'#10b981'}}>{new Date(remoteSession.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></>}
           </div>
+          {blocks.slice(0,5).map((b,bi)=>(
+            <div key={bi} className="block-section">
+              <div className="block-section-tag">{b.type==='ss'?'Block '+b.label+' · Superset':'Block '+b.label}</div>
+              {b.eids.map(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?.length||3;
+                const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
+                const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
+                return(<div key={eid} className="block-ex">
+                  <div className="block-ex-detail">{detail}</div>
+                  <div className="block-ex-name">{ex?.name||'?'}</div>
+                </div>)})}
+            </div>
+          ))}
+          {blocks.length>5&&<div style={{fontSize:11,color:'var(--text3)',fontWeight:700,letterSpacing:'.5px',marginBottom:8}}>+ {blocks.length-5} more block{blocks.length-5===1?'':'s'}</div>}
+          {plan.notes&&<div style={{fontSize:12,color:'var(--text3)',lineHeight:1.5,padding:'10px 12px',background:'var(--surface2)',borderRadius:10,marginBottom:8,fontStyle:'italic'}}>{plan.notes}</div>}
           {isLive
-            ?<button className="btn" onClick={onResume}>Resume Workout →</button>
-            :<button className="btn" onClick={()=>onStartPlan(plan)}>Start Workout →</button>}
+            ?<button className={'block-cta live'} onClick={onResume}>Resume Workout</button>
+            :<button className={'block-cta'} onClick={()=>onStartPlan(plan)}>Start Workout</button>}
         </div>)})}
 
       {todayPlans.length===0&&<button className="btn btn-primary" style={{marginBottom:16,fontSize:16,padding:'18px 24px'}} onClick={onStartEmpty}>
