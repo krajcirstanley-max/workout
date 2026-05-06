@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -118,14 +118,26 @@ textarea.input{resize:vertical;min-height:80px;font-size:14px;font-weight:500}
 .greeting h1{font-size:34px;font-weight:900;letter-spacing:-1.2px;margin-bottom:4px;line-height:1.05;color:var(--text)}
 .greeting p{font-size:14px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.8px}
 
-.plan-hero{background:var(--surface);border:1px solid var(--border-light);border-radius:24px;padding:24px;margin-bottom:14px;position:relative;overflow:hidden;transition:transform .15s}
+/* Pro Hero */
+.pro-hero{padding:8px 0 24px;border-bottom:1px solid var(--border-light);margin-bottom:20px}
+.pro-hero-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px}
+.pro-hero-week{padding:3px 8px;background:var(--surface2);border-radius:4px;color:var(--primary)}
+.pro-hero-name{font-size:48px;font-weight:900;letter-spacing:-2.5px;line-height:.95;color:var(--text);margin-bottom:24px}
+.pro-stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--surface);border:1px solid var(--border-light);border-radius:14px;padding:14px 0;overflow:hidden}
+.pro-stat{display:flex;flex-direction:column;align-items:center;gap:4px;border-right:1px solid var(--border-light);padding:0 8px}
+.pro-stat:last-child{border-right:none}
+.pro-stat-num{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:var(--text);letter-spacing:-1px;line-height:1}
+.pro-stat-lbl{font-size:9px;font-weight:800;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase}
+
+.plan-hero{background:var(--surface);border:1px solid var(--border-light);border-radius:20px;padding:26px 22px;margin-bottom:14px;position:relative;overflow:hidden;transition:transform .15s}
 .plan-hero:active{transform:scale(.99)}
-.plan-hero-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--c,var(--primary));margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.plan-hero-label::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c,var(--primary))}
-.plan-hero-name{font-size:28px;font-weight:900;letter-spacing:-1px;margin-bottom:4px;color:var(--text)}
-.plan-hero-count{font-size:13px;color:var(--text3);font-weight:600;margin-bottom:18px;text-transform:uppercase;letter-spacing:.4px}
-.plan-hero-exercises{display:flex;flex-direction:column;gap:7px;margin-bottom:20px}
-.plan-hero-ex{font-size:14px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light)}
+.plan-hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,var(--primary))}
+.plan-hero-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px;color:var(--c,var(--primary));margin-bottom:16px;display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace}
+.plan-hero-label::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--c,var(--primary));box-shadow:0 0 0 4px color-mix(in srgb,var(--c,var(--primary)) 18%,transparent)}
+.plan-hero-name{font-size:32px;font-weight:900;letter-spacing:-1.4px;margin-bottom:6px;color:var(--text);line-height:1.05}
+.plan-hero-count{font-size:11px;color:var(--text3);font-weight:800;margin-bottom:20px;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace}
+.plan-hero-exercises{display:flex;flex-direction:column;gap:0;margin-bottom:20px}
+.plan-hero-ex{font-size:14px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--border-light);font-variant-numeric:tabular-nums}
 .plan-hero-ex:last-child{border-bottom:none}
 .plan-hero-ex::before{display:none}
 
@@ -1476,17 +1488,28 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
   const today=dateKey(Date.now());
   const todayWorkouts=workouts.filter(w=>dateKey(w.startTime)===today);
   const todayPlans=(planned||[]).filter(p=>p.date===today&&!todayWorkouts.some(w=>w.name===p.name));
-  const weekCount=workouts.filter(w=>Date.now()-w.startTime<7*864e5).length;
-  const monthCount=workouts.filter(w=>Date.now()-w.startTime<30*864e5).length;
-  const recent=[...workouts].reverse().slice(0,5);
+  const weekCount=workouts.filter(w=>w.athletes?.[activeAth]&&Date.now()-w.startTime<7*864e5).length;
+  const monthCount=workouts.filter(w=>w.athletes?.[activeAth]&&Date.now()-w.startTime<30*864e5).length;
+  const recent=[...workouts].filter(w=>w.athletes?.[activeAth]).reverse().slice(0,5);
+  const totalWk=workouts.filter(w=>w.athletes?.[activeAth]).length;
+  const lastWk=recent[0];const daysSince=lastWk?Math.floor((Date.now()-lastWk.startTime)/864e5):null;
 
-  return(<div className="screen pad">
+  return(<div className="screen" style={{padding:'0'}}>
+    <div style={{padding:'0 20px'}}>
     <AthleteBar athletes={athletes} active={activeAth} onSelect={onSelectAth}/>
-    <div style={{padding:'4px 0 0'}}>
-      <div className="greeting">
-        <h1>{greeting()}, {athlete?.name?.split(' ')[0]}</h1>
-        <p>{fullDate()}</p>
+    <div className="pro-hero">
+      <div className="pro-hero-meta">
+        <span className="pro-hero-date">{new Date().toLocaleDateString('en-US',{weekday:'short',day:'2-digit',month:'short'}).toUpperCase()}</span>
+        <span className="pro-hero-week">W{Math.ceil((((Date.now()-new Date(new Date().getFullYear(),0,1).getTime())/864e5)+new Date(new Date().getFullYear(),0,1).getDay())/7)}</span>
       </div>
+      <div className="pro-hero-name">{(athlete?.name||'').toUpperCase()}</div>
+      <div className="pro-stat-strip">
+        <div className="pro-stat"><span className="pro-stat-num">{weekCount}</span><span className="pro-stat-lbl">7D</span></div>
+        <div className="pro-stat"><span className="pro-stat-num">{monthCount}</span><span className="pro-stat-lbl">30D</span></div>
+        <div className="pro-stat"><span className="pro-stat-num">{totalWk}</span><span className="pro-stat-lbl">TOTAL</span></div>
+        <div className="pro-stat"><span className="pro-stat-num">{daysSince==null?'—':daysSince}</span><span className="pro-stat-lbl">D AGO</span></div>
+      </div>
+    </div>
 
       {remoteSession&&!remoteSession.planId&&<div className="plan-hero" style={{'--c':'#10b981',marginBottom:12}}>
         <div style={{position:'absolute',top:0,left:0,bottom:0,width:5,background:'#10b981'}}/>
@@ -1542,22 +1565,17 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
               <div className="wk-card-bottom"><div className="wk-card-meta">{tpl.exerciseIds.length} exercises</div></div>
             </div></button>)}</div></>}
 
-      {todayWorkouts.length>0&&<><div className="section-title">Today</div>
+      {todayWorkouts.length>0&&<><div className="section-title">Logged today</div>
         <div className="card-list">{todayWorkouts.map(wk=>
           <WorkoutCard key={wk.id} wk={wk} onClick={()=>onView(wk)}/>)}</div></>}
 
-      <div className="week-stats">
-        <div className="week-stat"><div className="week-stat-val">{weekCount}</div><div className="week-stat-label">This Week</div></div>
-        <div className="week-stat"><div className="week-stat-val">{monthCount}</div><div className="week-stat-label">This Month</div></div>
-      </div>
-
-      {recent.length>0&&<><div className="section-title">Recent</div>
+      {recent.length>0&&<><div className="section-title">Recent sessions</div>
         <div className="card-list">{recent.map(wk=>
           <WorkoutCard key={wk.id} wk={wk} onClick={()=>onView(wk)}/>)}</div></>}
 
-      {!recent.length&&!todayPlans.length&&<div className="empty"><div className="empty-icon">💪</div>
-        <div className="empty-text">Your workout journey starts here</div></div>}
-    </div></div>)}
+      {!recent.length&&!todayPlans.length&&<div className="empty">
+        <div className="empty-text">No sessions yet. Start your first one.</div></div>}
+    </div></div></div>)}
 
 function CalendarScreen({workouts,planned,exercises,competitions,onView}){
   const[selDate,setSelDate]=useState(new Date());
