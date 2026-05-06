@@ -2166,6 +2166,40 @@ function ProfileScreen({athletes,activeAth,onSelectAth,exercises,cm,workouts,onU
           <button className="btn btn-primary" onClick={saveAth} disabled={!athName.trim()}>Save</button></div></div></div>}
     </div>)}
 
+  if(view==='recovery'){
+    const lsW=(()=>{try{return JSON.parse(localStorage.getItem('wk2_workouts2')||'[]')}catch{return[]}})();
+    const backup=(()=>{try{return JSON.parse(localStorage.getItem('wk2_backup_workouts_pre_distance_v1')||'[]')}catch{return[]}})();
+    const fmtCount=ws=>{const dates=ws.map(w=>w.startTime?new Date(w.startTime).toISOString().slice(0,10):'?').sort();
+      return dates.length?`${dates.length} workout${dates.length===1?'':'s'} (${dates[0]} → ${dates[dates.length-1]})`:'empty'};
+    const pushLocal=async()=>{if(!confirm('Push '+lsW.length+' local workouts to cloud (overwrites cloud)?'))return;
+      try{await fetch(SB_URL+'/rest/v1/wk_store',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},body:JSON.stringify({key:'workouts2',value:lsW,updated_at:new Date().toISOString()})});alert('Pushed '+lsW.length+' workouts.')}catch(e){alert('Failed: '+e.message)}};
+    const restoreBackup=()=>{if(!backup.length){alert('No backup');return}
+      if(!confirm('Replace current workouts with backup ('+backup.length+')?'))return;
+      const merged=[...backup];const existing=new Set(merged.map(w=>w.id));
+      lsW.forEach(w=>{if(!existing.has(w.id))merged.push(w)});
+      onUpdateAthletes;localStorage.setItem('wk2_workouts2',JSON.stringify(merged));
+      alert('Restored. Reloading.');location.reload()};
+    return(<div className="screen pad">
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+        <button className="hdr-btn" onClick={()=>setView('main')}><Icon name="chevLeft" size={20}/></button>
+        <span style={{fontSize:18,fontWeight:800}}>Data Recovery</span></div>
+      <div className="card-list">
+        <div style={{padding:14,background:'var(--surface)',borderRadius:12,marginBottom:8}}>
+          <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.6px',marginBottom:4}}>This phone (local)</div>
+          <div style={{fontSize:14,fontWeight:600}}>{fmtCount(lsW)}</div></div>
+        <div style={{padding:14,background:'var(--surface)',borderRadius:12,marginBottom:8}}>
+          <div style={{fontSize:11,fontWeight:800,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.6px',marginBottom:4}}>Backup (pre-migration)</div>
+          <div style={{fontSize:14,fontWeight:600}}>{fmtCount(backup)}</div></div>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:14}}>
+        <button className="btn btn-primary" onClick={pushLocal} disabled={!lsW.length}>Push local → Cloud</button>
+        <button className="btn btn-secondary" onClick={restoreBackup} disabled={!backup.length}>Restore from backup</button>
+      </div>
+      <div style={{padding:14,marginTop:14,background:'#fef3c7',borderRadius:12,fontSize:12,color:'#92400e',lineHeight:1.5}}>
+        Run "Push local → Cloud" on the phone that DOES have your recent workouts. Then on the other phone, pull-to-refresh to download.
+      </div>
+    </div>)}
+
   return(<div className="screen pad">
     <div className="profile-hero">
       {ath?.photo?<img className="profile-photo" src={ath.photo} alt={ath.name}/>
@@ -2199,6 +2233,11 @@ function ProfileScreen({athletes,activeAth,onSelectAth,exercises,cm,workouts,onU
           <div className="menu-item-left">
             <div className="menu-item-icon" style={{background:'#f59e0b',color:'#fff'}}><Icon name="trophy" size={20}/></div>
             <div><div className="menu-item-label">Competitions</div><div className="menu-item-sub">{(competitions||[]).length} {(competitions||[]).length===1?'event':'events'}</div></div></div>
+          <div className="menu-item-right"><Icon name="chevRight" size={16}/></div></button>
+        <button className="menu-item" onClick={()=>setView('recovery')}>
+          <div className="menu-item-left">
+            <div className="menu-item-icon" style={{background:'#ef4444',color:'#fff'}}><Icon name="settings" size={20}/></div>
+            <div><div className="menu-item-label">Data Recovery</div><div className="menu-item-sub">Inspect local / backup / cloud</div></div></div>
           <div className="menu-item-right"><Icon name="chevRight" size={16}/></div></button>
       </div>
     </div></div>)}
