@@ -129,17 +129,19 @@ textarea.input{resize:vertical;min-height:80px;font-size:14px;font-weight:500}
 .pro-stat-num{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:var(--text);letter-spacing:-1px;line-height:1}
 .pro-stat-lbl{font-size:9px;font-weight:800;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase}
 
-.plan-hero{background:var(--surface);border:1px solid var(--border-light);border-radius:20px;padding:26px 22px;margin-bottom:14px;position:relative;overflow:hidden;transition:transform .15s}
+.plan-hero{background:linear-gradient(155deg,var(--c,var(--primary)) 0%,color-mix(in srgb,var(--c,var(--primary)) 75%,#000 25%) 100%);border-radius:24px;padding:28px 24px 24px;margin-bottom:16px;position:relative;overflow:hidden;transition:transform .15s;color:#0a0a0b;min-height:280px;display:flex;flex-direction:column;justify-content:space-between}
 .plan-hero:active{transform:scale(.99)}
-.plan-hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,var(--primary))}
-.plan-hero-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px;color:var(--c,var(--primary));margin-bottom:16px;display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace}
-.plan-hero-label::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--c,var(--primary));box-shadow:0 0 0 4px color-mix(in srgb,var(--c,var(--primary)) 18%,transparent)}
-.plan-hero-name{font-size:32px;font-weight:900;letter-spacing:-1.4px;margin-bottom:6px;color:var(--text);line-height:1.05}
-.plan-hero-count{font-size:11px;color:var(--text3);font-weight:800;margin-bottom:20px;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace}
-.plan-hero-exercises{display:flex;flex-direction:column;gap:0;margin-bottom:20px}
-.plan-hero-ex{font-size:14px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--border-light);font-variant-numeric:tabular-nums}
-.plan-hero-ex:last-child{border-bottom:none}
+.plan-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 100% 0%,rgba(255,255,255,.18),transparent 60%);pointer-events:none}
+.plan-hero-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.8px;color:rgba(0,0,0,.7);margin-bottom:auto;display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;position:relative;z-index:1}
+.plan-hero-label::before{content:'';width:6px;height:6px;border-radius:50%;background:#0a0a0b;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.plan-hero-name{font-size:40px;font-weight:900;letter-spacing:-1.8px;margin:18px 0 8px;color:#0a0a0b;line-height:.98;position:relative;z-index:1}
+.plan-hero-count{font-size:11px;color:rgba(0,0,0,.6);font-weight:800;margin-bottom:14px;text-transform:uppercase;letter-spacing:1.2px;font-family:'JetBrains Mono',monospace;position:relative;z-index:1}
+.plan-hero-exercises{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;position:relative;z-index:1;max-height:140px;overflow:hidden}
+.plan-hero-ex{font-size:12px;font-weight:700;color:#0a0a0b;background:rgba(0,0,0,.12);padding:6px 11px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;border-bottom:none;font-family:'JetBrains Mono',monospace;letter-spacing:-.2px}
 .plan-hero-ex::before{display:none}
+.plan-hero .btn{background:#0a0a0b;color:#fff;font-weight:900;letter-spacing:.5px;text-transform:uppercase;font-size:13px;border-radius:14px;position:relative;z-index:1}
+.plan-hero .btn:active{background:#27272a}
 
 .or-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:12px;font-weight:600}
 .or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border)}
@@ -1520,35 +1522,28 @@ function TodayScreen({athletes,activeAth,onSelectAth,workouts,planned,exercises,
         </div>
         <button className="btn btn-primary" style={{background:'#10b981',borderColor:'#10b981'}} onClick={onResume}>↩ Resume Workout</button>
       </div>}
-      {todayPlans.map(plan=>{const isLive=remoteSession?.planId===plan.id;return(
-        <div key={plan.id} className="plan-hero" style={{'--c':isLive?'#10b981':plan.color}}>
-        <div style={{position:'absolute',top:0,left:0,bottom:0,width:5,background:isLive?'#10b981':plan.color}}/>
-        <div className="plan-hero-label" style={isLive?{color:'#10b981'}:{}}>{isLive?'● Workout In Progress':"Today's Workout"}</div>
-        <div className="plan-hero-name">{plan.name}</div>
-        {isLive&&<div style={{fontSize:12,color:'var(--text3)',marginTop:4}}>Started {new Date(remoteSession.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>}
-        <div className="plan-hero-count">{plan.exerciseIds.length} exercises</div>
-        <div className="plan-hero-exercises">
-          {(()=>{const ss=(plan.supersets||[]).flat();const rendered=new Set();
-            return plan.exerciseIds.map(eid=>{
-              if(rendered.has(eid))return null;
-              const ssGroup=(plan.supersets||[]).find(g=>g.includes(eid));
-              if(ssGroup){ssGroup.forEach(id=>rendered.add(id));
-                return<div key={'ss-'+eid} style={{border:'1px solid var(--primary)',borderRadius:8,padding:'4px 8px',margin:'4px 0'}}>
-                  <div style={{fontSize:10,fontWeight:800,color:'var(--primary)',marginBottom:2}}>SUPERSET</div>
-                  {ssGroup.map(sid=>{const sex=exercises.find(e=>e.id===baseExId(sid));const cfg=plan.setConfigs?.[sid];const sets=cfg?cfg.length:3;
-                    const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
-                    const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
-                    return<div key={sid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {sex?.name||'?'}</div>})}</div>}
-              const ex=exercises.find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?cfg.length:3;
-              const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
-              const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
-              return<div key={eid} className="plan-hero-ex"><span style={{color:'var(--text3)',fontSize:12,minWidth:40,display:'inline-block'}}>{detail}</span> {ex?.name||'?'}</div>})})()}
-        </div>
-        {plan.notes&&<div style={{fontSize:11,color:'var(--text3)',marginTop:8,marginBottom:12,lineHeight:1.4,padding:'8px 10px',background:'var(--primary-dim)',borderRadius:8}}>{plan.notes}</div>}
-        {isLive
-          ?<button className="btn btn-primary" style={{background:'#10b981',borderColor:'#10b981'}} onClick={onResume}>↩ Resume Workout</button>
-          :<button className="btn btn-primary" onClick={()=>onStartPlan(plan)}>Start Workout</button>}
-      </div>)})}
+      {todayPlans.map(plan=>{const isLive=remoteSession?.planId===plan.id;
+        const exCount=plan.exerciseIds.length;
+        const totalSets=Object.values(plan.setConfigs||{}).reduce((a,s)=>a+(s?.length||0),0);
+        return(<div key={plan.id} className="plan-hero" style={{'--c':isLive?'#10b981':(plan.color||'#a3e635')}}>
+          <div className="plan-hero-label">{isLive?'In Progress':"Today's Mission"}</div>
+          <div>
+            <div className="plan-hero-name">{plan.name.toUpperCase()}</div>
+            <div className="plan-hero-count">{exCount} ex · {totalSets} sets{isLive?' · Started '+new Date(remoteSession.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div>
+            <div className="plan-hero-exercises">
+              {(()=>{const rendered=new Set();const chips=[];
+                plan.exerciseIds.forEach(eid=>{if(rendered.has(eid))return;rendered.add(eid);
+                  const ex=exercises.find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?.length||3;
+                  const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
+                  const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
+                  chips.push(<span key={eid} className="plan-hero-ex">{detail} {ex?.name||'?'}</span>)});
+                return chips})()}
+            </div>
+          </div>
+          {isLive
+            ?<button className="btn" onClick={onResume}>Resume Workout →</button>
+            :<button className="btn" onClick={()=>onStartPlan(plan)}>Start Workout →</button>}
+        </div>)})}
 
       {todayPlans.length===0&&<button className="btn btn-primary" style={{marginBottom:16,fontSize:16,padding:'18px 24px'}} onClick={onStartEmpty}>
         <Icon name="play" size={18}/> Start Workout</button>}
