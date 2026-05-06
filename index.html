@@ -2455,6 +2455,19 @@ function App(){
     if(!plannedSynced) return;
     setPlanned(p=>{
       let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-')&&!x.id.startsWith('pl-lj-progressive-'));
+      if(!r.find(x=>x.id==='pl-gym-3'))r=[...r,{id:'pl-gym-3',date:'2026-05-06',name:'Gym',color:'#3b82f6',
+        exerciseIds:['tb-jump','pogos-bands','step-up','nordics','seated-calf-raise','lower-back-ext'],
+        supersets:[],
+        setConfigs:{
+          'tb-jump':[{reps:4},{reps:4}],
+          'pogos-bands':[{reps:8},{reps:8}],
+          'step-up':[{reps:5},{reps:5}],
+          'nordics':[{reps:5},{reps:5}],
+          'seated-calf-raise':[{reps:10},{reps:10}],
+          'lower-back-ext':[{reps:10},{reps:10}]
+        },
+        notes:'TB Jump 2×4. Pogos w Bands 2×8. Step Up 2×5/nohu. Nordics 2×5. Seated Calf Raise 2×10. Lower Back Extensions 2×10.'
+      }];
       if(!r.find(x=>x.id==='pl-lj-progressive-1'))r=[...r,{id:'pl-lj-progressive-1',date:'2026-05-06',name:'LJ Progressive',color:'#8b5cf6',
         exerciseIds:['hurdle-jumps','short-app-popup','approach-jump-12','approach-jump-14','approach-jump-16','approach-jump-18','sl-bounds-pr-l','sl-bounds-pr-r','alt-bounds-jump'],
         supersets:[],
