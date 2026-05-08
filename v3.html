@@ -1903,6 +1903,21 @@ function EditAthleteModal({athlete,onSave,onClose}){
     </div>
   </div>)}
 
+// === ERROR BOUNDARY ===
+class ErrorBoundary extends React.Component{
+  constructor(p){super(p);this.state={err:null}}
+  static getDerivedStateFromError(err){return{err}}
+  componentDidCatch(err,info){console.error('Render error:',err,info)}
+  render(){if(this.state.err)return(
+    <div style={{padding:'40px 20px',color:'#0a0a0b',background:'#fff',height:'100vh',overflow:'auto'}}>
+      <h2 style={{fontStyle:'italic',fontWeight:900,fontSize:24,marginBottom:16,textTransform:'uppercase'}}>Render Error</h2>
+      <pre style={{fontSize:12,color:'#dc2626',background:'#fef2f2',padding:14,borderRadius:10,whiteSpace:'pre-wrap',marginBottom:14,fontFamily:'JetBrains Mono,monospace'}}>{String(this.state.err?.message||this.state.err)}</pre>
+      {this.state.err?.stack&&<pre style={{fontSize:10,color:'#52525b',background:'#f4f4f5',padding:12,borderRadius:8,whiteSpace:'pre-wrap',overflow:'auto',fontFamily:'JetBrains Mono,monospace'}}>{this.state.err.stack}</pre>}
+      <button style={{marginTop:18,padding:'14px 18px',background:'#2156f4',color:'#fff',border:'none',borderRadius:12,fontWeight:800}} onClick={()=>{
+        try{['wk2_activeSession','wk2_activePlan','wk2_activeSnapshot','wk2_v3_snap'].forEach(k=>localStorage.removeItem(k))}catch{}
+        location.reload()}}>Clear active session & reload</button>
+    </div>);return this.props.children}}
+
 // === APP ROOT ===
 function App(){
   const[athletes,setAthletes]=useStore('athletes',DEFAULT_ATHLETES);
@@ -1955,7 +1970,8 @@ function App(){
     _push(null,null,null);setActivePlan(null);setInWorkout(true)};
   const resumeRemote=()=>{if(!remoteSession)return;
     const plan=remoteSession.planId?(planned.find(p=>p.id===remoteSession.planId)||remoteSession.plan):remoteSession.plan;
-    if(remoteSession.snapshot)try{localStorage.setItem('wk2_activeSnapshot',JSON.stringify(remoteSession.snapshot))}catch{}
+    try{localStorage.removeItem('wk2_v3_snap')}catch{}
+    if(remoteSession.snapshot)try{localStorage.setItem('wk2_v3_snap',JSON.stringify(remoteSession.snapshot))}catch{}
     try{localStorage.setItem('wk2_activeSession','1');if(plan)localStorage.setItem('wk2_activePlan',JSON.stringify(plan))}catch{}
     setActivePlan(plan||null);setInWorkout(true)};
 
@@ -2075,7 +2091,7 @@ function App(){
     </nav>
   </>)}
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'})}
 </script>
