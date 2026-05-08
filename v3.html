@@ -992,18 +992,18 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         <button onClick={()=>setShowActions(true)} style={{position:'absolute',top:14,right:14,padding:6,color:'var(--text2)',background:'transparent',border:'none'}}><Ic n="more" s={20}/></button>
         <div className="ex-name" style={{paddingRight:36}}>{ex?.name||'?'}</div>
 
-        {(prWeight>0||lastSummary)&&<div className="ex-pr-card">
+        {(priorMaxW>0||lastSummary)&&<div className="ex-pr-card">
           <div className="ex-pr-l">
-            {prWeight>0?<div className="ex-pr-icon"><Ic n="trophy" s={18}/></div>:<div className="ex-pr-icon" style={{background:'var(--surface2)',color:'var(--text2)'}}><Ic n="weight" s={18}/></div>}
+            {priorMaxW>0?<div className="ex-pr-icon"><Ic n="trophy" s={18}/></div>:<div className="ex-pr-icon" style={{background:'var(--surface2)',color:'var(--text2)'}}><Ic n="weight" s={18}/></div>}
             <div className="ex-pr-meta">
-              <div className="ex-pr-h">{prWeight>0?'PR · Working Max':'Last Session'}</div>
-              <div className="ex-pr-v">{prWeight>0?`${prWeight} lb`:lastSummary}</div>
+              <div className="ex-pr-h">{priorMaxW>0?'PR · Working Max':'Last Session'}</div>
+              <div className="ex-pr-v">{priorMaxW>0?`${priorMaxW} lb`:lastSummary}</div>
             </div>
           </div>
           <button style={{color:'var(--text3)',padding:6}}><Ic n="chevR" s={18}/></button>
         </div>}
 
-        {lastSummary&&prWeight>0&&<div className="ex-stats-row">
+        {lastSummary&&priorMaxW>0&&<div className="ex-stats-row">
           <div className="ex-stat-card">
             <div className="ex-stat-h">Last</div>
             <div className="ex-stat-v">{lastSummary}</div>
