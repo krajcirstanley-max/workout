@@ -1483,7 +1483,7 @@ function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAd
       {dayPlans.length>0&&onAddPlan&&<div style={{padding:'4px 14px 14px'}}>
         <button onClick={()=>onAddPlan(selK)} style={{fontFamily:'var(--mono)',fontSize:11,fontWeight:800,letterSpacing:'.8px',textTransform:'uppercase',color:'var(--primary)',padding:'10px 14px',background:'var(--primary-dim)',borderRadius:10,border:'none',width:'100%'}}>+ Add Another Plan</button>
       </div>}
-      {dayWk.map(wk=><div key={wk.id} onClick={()=>onView(wk)}><WorkoutLogCard wk={wk} exercises={[]} onClick={()=>onView(wk)}/></div>)}
+      {dayWk.map(wk=><WorkoutLogCard key={wk.id} wk={wk} exercises={[]} onClick={()=>onView(wk)}/>)}
     </div>
   </div>)}
 
