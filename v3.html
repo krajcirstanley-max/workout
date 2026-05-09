@@ -328,7 +328,34 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 
 /* === FINISH FORM === */
 .finish-h{padding:calc(var(--safe-t) + 14px) 22px 6px;display:flex;align-items:center;justify-content:space-between}
-.finish-screen{position:fixed;inset:0;background:var(--bg);z-index:55;display:flex;flex-direction:column;overflow-y:auto}
+.finish-screen{position:fixed;inset:0;background:var(--surface2);z-index:55;display:flex;flex-direction:column;overflow-y:auto}
+.finish-title{font-size:18px;font-weight:900;font-style:italic;letter-spacing:-.4px;text-transform:uppercase;text-align:center;flex:1}
+.finish-x{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text2)}
+.fs-card{background:var(--bg);margin:0 0 12px;padding:22px 22px 26px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.fs-h{font-size:14px;font-weight:900;font-style:italic;letter-spacing:.6px;text-transform:uppercase;text-align:center;color:var(--text);margin-bottom:14px}
+.fs-rpe-label{text-align:center;font-size:14px;font-weight:600;color:var(--text);margin-bottom:18px}
+.fs-rpe-label b{font-weight:900}
+.fs-slider{position:relative;height:46px;margin:0 8px}
+.fs-slider-bar{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:8px;border-radius:4px;background:linear-gradient(90deg,#22c55e 0%,#eab308 45%,#ef4444 95%)}
+.fs-slider input[type=range]{position:absolute;left:0;right:0;top:0;bottom:0;width:100%;height:100%;opacity:0;-webkit-appearance:none;appearance:none;cursor:pointer;margin:0;z-index:2}
+.fs-slider-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;background:#fff;border:2.5px solid var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:var(--primary);box-shadow:0 4px 12px rgba(0,0,0,.15);font-style:italic;font-variant-numeric:tabular-nums;pointer-events:none;z-index:3}
+.fs-slider-ticks{display:flex;justify-content:space-between;margin-top:6px;padding:0 4px}
+.fs-slider-tick{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text3)}
+.fs-num-wrap{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:6px}
+.fs-num-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text2);font-size:16px}
+.fs-num-btn:active{transform:scale(.9)}
+.fs-num-input{width:90px;height:64px;border:1px solid var(--border);border-radius:6px;background:var(--bg);text-align:center;font-size:32px;font-weight:900;font-style:italic;color:var(--primary);font-variant-numeric:tabular-nums}
+.fs-num-input:focus{border-color:var(--primary);outline:none}
+.fs-num-label{font-size:12px;font-weight:600;color:var(--text2);text-align:center;margin-bottom:6px}
+.fs-notes{width:100%;min-height:90px;padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:14px;font-family:var(--display);color:var(--text);resize:vertical;line-height:1.5}
+.fs-notes:focus{border-color:var(--primary);outline:none}
+.fs-share{margin-top:14px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.fs-share-l{font-size:14px;font-weight:700;color:var(--text)}
+.fs-share-c{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center}
+.fs-final{padding:16px 22px calc(16px + var(--safe-b));background:var(--surface2);border-top:1px solid var(--border)}
+.fs-final-btn{width:100%;padding:18px;background:var(--primary);color:#fff;font-size:16px;font-weight:900;border:none;border-radius:6px;letter-spacing:.2px}
+.fs-final-btn:active{background:var(--primary-dark)}
+.fs-ath-tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:3px 10px;border-radius:8px;margin:0 auto 14px;display:block;width:fit-content}
 
 /* === PICKER === */
 .picker-search{padding:0 18px 14px}
@@ -1733,74 +1760,90 @@ function FinishFormFull({workout,athletes,exercises,elapsed,allTags,onSave,onCan
   const[weather,setWeather]=useState(null);
   const[tag,setTag]=useState(initialTag||workout.tag||null);
   const elSec=Math.floor(elapsed/1000);
-  const[durH,setDurH]=useState(String(Math.floor(elSec/3600)));
-  const[durM,setDurM]=useState(String(Math.floor((elSec%3600)/60)));
-  const[athData,setAthData]=useState(()=>{const d={};athletes.forEach(a=>{if(workout.athletes[a.id])d[a.id]={rpe:null,notes:''}});return d});
-  const customElapsed=(parseInt(durH||0)*3600+parseInt(durM||0)*60)*1000;
+  const[durMin,setDurMin]=useState(Math.max(1,Math.round(elSec/60)));
+  const[athData,setAthData]=useState(()=>{const d={};athletes.forEach(a=>{if(workout.athletes[a.id])d[a.id]={rpe:5,notes:'',share:true}});return d});
+  const customElapsed=durMin*60*1000;
   const tags=allTags||DEFAULT_TAGS;
+  const RPE_LABEL={1:'Very light',2:'Light',3:'Easy',4:'Somewhat',5:'Moderate',6:'Harder',7:'Very hard',8:'Very hard+',9:'Near max',10:'Max effort'};
+  const activeAths=athletes.filter(a=>workout.athletes[a.id]);
   return(<div className="finish-screen">
-    <div className="finish-h">
-      <button className="aw-back" onClick={onCancel}><Ic n="chevL" s={22}/></button>
-      <div className="aw-timer">{fmtT(Math.floor(customElapsed/1000))}</div>
+    <div className="top" style={{paddingBottom:14,background:'var(--bg)',borderBottom:'1px solid var(--border)'}}>
       <div style={{width:34}}/>
+      <div className="finish-title">Finish Session</div>
+      <button className="finish-x" onClick={onCancel}><Ic n="x" s={22}/></button>
     </div>
-    <div className="scroll no-tab">
-      <div style={{padding:'18px 22px'}}>
-        <div className="ex-name" style={{fontSize:36,marginBottom:24}}>FINISH</div>
-
-        <div className="form-g">
-          <label className="form-l">Workout Name</label>
-          <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="Workout name"/>
-        </div>
-
-        <div className="form-g">
-          <label className="form-l">Duration</label>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <input type="number" className="form-input" style={{width:80,textAlign:'center',fontSize:24,fontWeight:800,fontStyle:'italic'}} value={durH} onChange={e=>setDurH(e.target.value)}/>
-            <span style={{fontSize:18,fontWeight:800,color:'var(--text3)'}}>h</span>
-            <input type="number" className="form-input" style={{width:80,textAlign:'center',fontSize:24,fontWeight:800,fontStyle:'italic'}} value={durM} onChange={e=>setDurM(e.target.value)}/>
-            <span style={{fontSize:18,fontWeight:800,color:'var(--text3)'}}>min</span>
-          </div>
-        </div>
-
-        <div className="form-g">
-          <label className="form-l">Conditions</label>
-          <div className="weather-grid">
-            {WEATHER_OPT.map(w=>{const isOn=Array.isArray(weather)?weather.includes(w.k):weather===w.k;
-              return(<button key={w.k} className={'weather-btn'+(isOn?' on':'')} onClick={()=>{
-                const cur=Array.isArray(weather)?[...weather]:weather?[weather]:[];
-                const next=cur.includes(w.k)?cur.filter(x=>x!==w.k):[...cur,w.k];
-                setWeather(next.length?next:null)}}>
-                <span className="em">{w.e}</span>
-                <span className="lb">{w.l}</span>
-              </button>)})}
-          </div>
-        </div>
-
-        <div className="form-g">
-          <label className="form-l">Training Type</label>
-          <div className="tag-row">
-            {tags.map(t=>(<button key={t.id} className={'tag-chip'+(tag?.id===t.id?' on':'')} style={{borderColor:t.color,color:t.color,background:tag?.id===t.id?t.color:'transparent'}}
-              onClick={()=>setTag(tag?.id===t.id?null:t)}>{t.name}</button>))}
-          </div>
-        </div>
-
-        {athletes.filter(a=>workout.athletes[a.id]).map(a=>(<div key={a.id} style={{marginBottom:24,padding:18,background:'var(--surface2)',borderRadius:14}}>
-          <div style={{fontSize:14,fontWeight:900,color:a.color||'var(--text)',marginBottom:14,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'-.2px'}}>{a.name}</div>
-          <div className="form-g" style={{marginBottom:12}}>
-            <label className="form-l">RPE {athData[a.id]?.rpe?`— ${athData[a.id].rpe}/10`:''}</label>
-            <div className="rpe-row">
-              {[1,2,3,4,5,6,7,8,9,10].map(n=>(<button key={n} className={'rpe-num'+(athData[a.id]?.rpe===n?' on':'')} onClick={()=>setAthData(p=>({...p,[a.id]:{...p[a.id],rpe:n}}))}>{n}</button>))}
-            </div>
-          </div>
-          <div className="form-g" style={{marginBottom:0}}>
-            <label className="form-l">Notes</label>
-            <textarea className="form-input" placeholder="How did it go?" value={athData[a.id]?.notes||''} onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],notes:e.target.value}}))}/>
-          </div>
-        </div>))}
-
-        <button className="btn btn-primary" onClick={()=>onSave({name,weather,tag,athData,customDuration:customElapsed})}>Save Workout</button>
+    <div className="scroll no-tab" style={{padding:0,background:'var(--surface2)'}}>
+      {/* Workout name */}
+      <div className="fs-card">
+        <div className="fs-h">Session Name</div>
+        <input className="fs-notes" style={{minHeight:0,padding:'14px 16px',fontSize:16,fontWeight:700,textAlign:'center'}} value={name} onChange={e=>setName(e.target.value)} placeholder="Workout name"/>
       </div>
+
+      {/* Per-athlete intensity + notes */}
+      {activeAths.map(a=>{const rpe=athData[a.id]?.rpe||5;
+        return(<React.Fragment key={a.id}>
+          {activeAths.length>1&&<div style={{padding:'12px 22px 0',background:'var(--bg)'}}>
+            <span className="fs-ath-tag" style={{background:a.color+'22',color:a.color}}>{a.name}</span>
+          </div>}
+          <div className="fs-card">
+            <div className="fs-h">Intensity</div>
+            <div className="fs-rpe-label"><b>{rpe}</b> · {RPE_LABEL[rpe]}</div>
+            <div className="fs-slider">
+              <div className="fs-slider-bar"/>
+              <input type="range" min="0" max="10" step="1" value={rpe} onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],rpe:Number(e.target.value)}}))}/>
+              <div className="fs-slider-thumb" style={{left:`${(rpe/10)*100}%`,borderColor:a.color,color:a.color}}>{rpe}</div>
+            </div>
+            <div className="fs-slider-ticks"><span className="fs-slider-tick">0</span><span className="fs-slider-tick">10</span></div>
+          </div>
+        </React.Fragment>)})}
+
+      {/* Duration */}
+      <div className="fs-card">
+        <div className="fs-h">Training Duration</div>
+        <div className="fs-num-label">Minutes</div>
+        <div className="fs-num-wrap">
+          <button className="fs-num-btn" onClick={()=>setDurMin(d=>Math.max(1,d-1))}>▼</button>
+          <input className="fs-num-input" type="number" inputMode="numeric" value={durMin} onChange={e=>setDurMin(Math.max(1,Number(e.target.value)||0))}/>
+          <button className="fs-num-btn" onClick={()=>setDurMin(d=>d+1)}>▲</button>
+        </div>
+      </div>
+
+      {/* Per-athlete notes */}
+      {activeAths.map(a=>(<div key={a.id+'-notes'} className="fs-card">
+        <div className="fs-h">{activeAths.length>1?a.name+' · ':''}Session Notes</div>
+        <textarea className="fs-notes" placeholder="How did it go?" value={athData[a.id]?.notes||''} onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],notes:e.target.value}}))}/>
+        <div className="fs-share" onClick={()=>setAthData(p=>({...p,[a.id]:{...p[a.id],share:!p[a.id].share}}))}>
+          <span className="fs-share-l">Share with Coach</span>
+          {athData[a.id]?.share?<div className="fs-share-c"><Ic n="check" s={14}/></div>:<div style={{width:24,height:24,borderRadius:'50%',border:'1.5px solid var(--border)'}}/>}
+        </div>
+      </div>))}
+
+      {/* Tags + weather (compact) */}
+      {tags.length>0&&<div className="fs-card">
+        <div className="fs-h">Type</div>
+        <div className="tag-row" style={{justifyContent:'center'}}>
+          {tags.map(t=>(<button key={t.id} className={'tag-chip'+(tag?.id===t.id?' on':'')} style={{borderColor:t.color,color:t.color,background:tag?.id===t.id?t.color:'transparent'}}
+            onClick={()=>setTag(tag?.id===t.id?null:t)}>{t.name}</button>))}
+        </div>
+      </div>}
+
+      <div className="fs-card">
+        <div className="fs-h">Conditions</div>
+        <div className="weather-grid">
+          {WEATHER_OPT.map(w=>{const isOn=Array.isArray(weather)?weather.includes(w.k):weather===w.k;
+            return(<button key={w.k} className={'weather-btn'+(isOn?' on':'')} onClick={()=>{
+              const cur=Array.isArray(weather)?[...weather]:weather?[weather]:[];
+              const next=cur.includes(w.k)?cur.filter(x=>x!==w.k):[...cur,w.k];
+              setWeather(next.length?next:null)}}>
+              <span className="em">{w.e}</span>
+              <span className="lb">{w.l}</span>
+            </button>)})}
+        </div>
+      </div>
+    </div>
+
+    <div className="fs-final">
+      <button className="fs-final-btn" onClick={()=>onSave({name,weather,tag,athData,customDuration:customElapsed})}>Finish Session</button>
     </div>
   </div>)}
 
