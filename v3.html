@@ -487,6 +487,7 @@ const baseExId=eid=>(eid||'').split('__')[0];
 const fmtDur=ms=>{const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return h?`${h}h ${m}m`:`${m}m`};
 const fmtT=s=>{const m=Math.floor(Math.abs(s)/60);return`${m}:${(Math.abs(s)%60).toString().padStart(2,'0')}`};
 const initials=n=>(n||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+function noteFor(exNotes,eid,athId){const v=exNotes?.[eid];if(!v)return '';if(typeof v==='string')return v;return v[athId]||''}
 
 const METRIC_MAP={
   weight:{id:'weight',name:'Weight',unit:'kg',step:2.5},
@@ -1144,7 +1145,7 @@ function FinishForm({workout,athletes,elapsed,onSave,onCancel}){
   </div>)}
 
 // === WORKOUT DETAIL MODAL ===
-function WorkoutDetailModal({wk:initWk,athletes,exercises,onClose,onDelete,onRepeat,onUpdate,onSaveTemplate}){
+function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDelete,onRepeat,onUpdate,onSaveTemplate}){
   const[wk,setWk]=useState(initWk);
   const[editing,setEditing]=useState(false);
   const[selAth,setSelAth]=useState(athletes.find(a=>wk.athletes?.[a.id])?.id||athletes[0]?.id);
@@ -1156,6 +1157,20 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,onClose,onDelete,onRep
   const setVal=(eid,si,mid,v)=>setWk(w=>{const n=JSON.parse(JSON.stringify(w));n.athletes[selAth].sets[eid][si].values[mid]=v===''?'':Number(v);return n});
   const setName=v=>setWk(w=>({...w,name:v}));
   const setRpe=v=>setWk(w=>{const n=JSON.parse(JSON.stringify(w));if(n.athletes[selAth])n.athletes[selAth].rpe=v;return n});
+  // PR map: base exercise → metric → {best, lowerBetter}
+  const prMap=useMemo(()=>{const m={};
+    if(!workouts)return m;
+    const lowerBetter=mid=>{const md=METRIC_MAP[mid];return md?.unit==='s'||mid==='tf-time'||mid.startsWith('split-')||mid.startsWith('fly-')||mid.startsWith('time-')||mid.startsWith('seg-')};
+    workouts.forEach(w=>{const ad=w.athletes?.[selAth];if(!ad)return;
+      Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);
+        ad.sets[eid].filter(s=>s.completed&&!s.warmup).forEach(s=>{
+          Object.entries(s.values||{}).forEach(([mid,val])=>{const v=Number(val);if(!v||isNaN(v))return;
+            if(!m[base])m[base]={};
+            const lb=lowerBetter(mid);const cur=m[base][mid];
+            if(!cur||(lb?v<cur:v>cur))m[base][mid]=v})})})});
+    return m},[workouts,selAth]);
+  const isPR=(eid,mid,val)=>{const base=baseExId(eid);const v=Number(val);if(!v||isNaN(v))return false;
+    return prMap[base]?.[mid]===v};
   const copyText=()=>{const lines=[wk.name||'Workout',date,dur+(wk.weather?' · '+(Array.isArray(wk.weather)?wk.weather.join('/'):wk.weather):''),''];
     athletes.filter(a=>wk.athletes?.[a.id]).forEach(a=>{const adX=wk.athletes[a.id];if(athletes.length>1)lines.push(a.name);
       wk.exerciseIds.forEach(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));
@@ -1200,25 +1215,26 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,onClose,onDelete,onRep
         {wk.exerciseIds.map((eid,i)=>{const ex=exercises.find(e=>e.id===baseExId(eid));
           const sets=(ad?.sets?.[eid]||[]).filter(s=>s.completed);
           if(!sets.length)return null;
+          // Determine which metrics actually have values across this exercise's sets
+          const allMetrics=ex?.metrics||[];
+          const usedMetrics=allMetrics.filter(m=>sets.some(s=>s.values?.[m]!=null&&s.values[m]!==''));
+          const cols=`24px ${usedMetrics.map(()=>'minmax(0,1fr)').join(' ')}`;
           return(<div key={eid} style={{padding:'14px 0',borderBottom:'1px solid var(--border)'}}>
             <div style={{fontSize:16,fontWeight:900,fontStyle:'italic',letterSpacing:'-.3px',color:'var(--text)',marginBottom:8,textTransform:'uppercase'}}>{ex?.name||'?'}</div>
-            {wk.exNotes?.[eid]&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',marginBottom:8}}>{wk.exNotes[eid]}</div>}
+            {noteFor(wk.exNotes,eid,selAth)&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',marginBottom:8}}>{noteFor(wk.exNotes,eid,selAth)}</div>}
+            {usedMetrics.length>0&&<div style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0 6px',fontFamily:'var(--mono)',fontSize:9,fontWeight:800,color:'var(--text3)',letterSpacing:'.5px',textTransform:'uppercase'}}>
+              <span></span>
+              {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{name:m,unit:''};return<span key={m} style={{textAlign:'left'}}>{md.name||md.unit}</span>})}
+            </div>}
             {sets.map((s,j)=>{const v=s.values;
-              const hasDist=v.distance!=null&&v.distance!=='';const hasTfT=v['tf-time']!=null&&v['tf-time']!=='';
-              const hasW=v.weight!=null&&v.weight!=='';const hasR=v.reps!=null&&v.reps!=='';
-              const splits=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null);
-              let primary='',extra='';
-              if(hasDist&&hasTfT){primary=`${v.distance}m → ${v['tf-time']}s`;
-                if(splits.length)extra=' ('+splits.map(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');return lab+': '+v[k]}).join('  ')+')'}
-              else if(hasTfT){primary=`${v['tf-time']}s`;
-                if(splits.length)extra=' ('+splits.map(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');return lab+': '+v[k]}).join('  ')+')'}
-              else if(hasW){primary=`${v.weight}lb${hasR?' × '+v.reps:''}`}
-              else if(hasR){primary=`${v.reps} reps`}
-              else{primary=(ex?.metrics||[]).map(m=>v[m]!=null&&v[m]!==''?`${v[m]}${(METRIC_MAP[m]?.unit||'')}`:null).filter(Boolean).join(' · ')}
-              return(<div key={j} style={{display:'flex',gap:10,fontSize:14,color:'var(--text2)',padding:'3px 0',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums'}}>
-                <span style={{color:'var(--text3)',width:20,fontWeight:800}}>{j+1}</span>
-                <span style={{color:'var(--text)',fontWeight:700}}>{primary}</span>
-                {extra&&<span style={{color:'var(--text3)',fontSize:11}}>{extra}</span>}
+              return(<div key={j} style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums',fontSize:14}}>
+                <span style={{color:'var(--text3)',fontWeight:800}}>{j+1}</span>
+                {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{unit:''};const val=v[m];const has=val!=null&&val!=='';
+                  const pr=has&&isPR(eid,m,val);
+                  return(<span key={m} style={{color:has?'var(--text)':'var(--text3)',fontWeight:700,display:'flex',alignItems:'center',gap:4,minWidth:0}}>
+                    <span style={{overflow:'hidden',textOverflow:'ellipsis'}}>{has?val:'—'}{has&&md.unit?md.unit:''}</span>
+                    {pr&&<span title="Personal Best" style={{display:'inline-flex',alignItems:'center',gap:2,padding:'1px 5px',background:'linear-gradient(135deg,#fbbf24,#f59e0b)',color:'#fff',borderRadius:5,fontSize:9,fontWeight:900,letterSpacing:'.4px',fontFamily:'var(--display)',fontStyle:'italic',flexShrink:0}}>🏆 PB</span>}
+                  </span>)})}
               </div>)})}
           </div>)})}
         {dirty&&onUpdate&&<button className="btn btn-primary" style={{marginTop:18}} onClick={()=>{onUpdate(wk);setEditing(false)}}>Save Changes</button>}
@@ -2164,7 +2180,7 @@ function App(){
     {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote}/>}
     {tab==='me'&&<ProfileScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete} workouts={workouts}/>}
 
-    {viewing&&<WorkoutDetailModal wk={viewing} athletes={athletes} exercises={exercises}
+    {viewing&&<WorkoutDetailModal wk={viewing} athletes={athletes} exercises={exercises} workouts={workouts}
       onClose={()=>setViewing(null)}
       onDelete={id=>setWorkouts(p=>p.filter(w=>w.id!==id))}
       onUpdate={updated=>{setWorkouts(p=>p.map(w=>w.id===updated.id?updated:w));setViewing(updated)}}
