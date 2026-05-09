@@ -445,7 +445,7 @@ textarea.form-input{min-height:80px;font-size:14px;resize:vertical;font-family:v
 .profile-name{font-size:32px;font-weight:900;font-style:italic;letter-spacing:-.6px;text-transform:uppercase}
 .profile-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 14px 14px}
 .profile-stat{padding:14px;border:1px solid var(--border);border-radius:14px;text-align:center}
-.profile-stat-v{font-size:24px;font-weight:900;font-style:italic;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1}
+.profile-stat-v{font-size:20px;font-weight:900;font-style:italic;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .profile-stat-l{font-family:var(--mono);font-size:9px;font-weight:800;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-top:4px}
 .profile-menu{margin:0 14px}
 .profile-menu-item{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;width:100%;text-align:left;cursor:pointer}
@@ -1046,7 +1046,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
           </div>
           {workingMax&&<div className="ex-stat-card">
             <div className="ex-stat-h">Working Max</div>
-            <div className="ex-stat-v">{workingMax} lb</div>
+            <div className="ex-stat-v">{workingMax} kg</div>
           </div>}
         </div>}
 
@@ -1697,7 +1697,7 @@ function ExerciseDetail({exercise,athletes,activeAth,workouts,cm,onClose,onUpdat
               <div className="ex-pr-icon"><Ic n="trophy" s={18}/></div>
               <div className="ex-pr-meta">
                 <div className="ex-pr-h">Personal Record</div>
-                <div className="ex-pr-v">{maxW} lb</div>
+                <div className="ex-pr-v">{maxW} kg</div>
               </div>
             </div>
             <div className="pr-date">{new Date(maxWDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'})}</div>
@@ -1717,7 +1717,7 @@ function ExerciseDetail({exercise,athletes,activeAth,workouts,cm,onClose,onUpdat
               <div className="ex-pr-icon" style={{background:'var(--primary-dim)',color:'var(--primary)'}}><Ic n="bar" s={18}/></div>
               <div className="ex-pr-meta">
                 <div className="ex-pr-h">Est. 1RM</div>
-                <div className="ex-pr-v">{e1rm} lb</div>
+                <div className="ex-pr-v">{e1rm} kg</div>
               </div>
             </div>
             <div className="pr-date">{new Date(e1rmDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'})}</div>
