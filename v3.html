@@ -1157,20 +1157,24 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
   const setVal=(eid,si,mid,v)=>setWk(w=>{const n=JSON.parse(JSON.stringify(w));n.athletes[selAth].sets[eid][si].values[mid]=v===''?'':Number(v);return n});
   const setName=v=>setWk(w=>({...w,name:v}));
   const setRpe=v=>setWk(w=>{const n=JSON.parse(JSON.stringify(w));if(n.athletes[selAth])n.athletes[selAth].rpe=v;return n});
-  // PR map: base exercise → metric → {best, lowerBetter}
+  // PR map: base exercise → metric → {val, holder:{wkId, eid, setIdx}}.
+  // "Holder" = the SINGLE earliest set that achieved the PB (so ties don't all light up).
   const prMap=useMemo(()=>{const m={};
     if(!workouts)return m;
     const lowerBetter=mid=>{const md=METRIC_MAP[mid];return md?.unit==='s'||mid==='tf-time'||mid.startsWith('split-')||mid.startsWith('fly-')||mid.startsWith('time-')||mid.startsWith('seg-')};
-    workouts.forEach(w=>{const ad=w.athletes?.[selAth];if(!ad)return;
+    // Sort by start time so earliest set wins ties
+    [...workouts].sort((a,b)=>(a.startTime||0)-(b.startTime||0)).forEach(w=>{const ad=w.athletes?.[selAth];if(!ad)return;
       Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);
-        ad.sets[eid].filter(s=>s.completed&&!s.warmup).forEach(s=>{
+        ad.sets[eid].forEach((s,si)=>{if(!s.completed||s.warmup)return;
           Object.entries(s.values||{}).forEach(([mid,val])=>{const v=Number(val);if(!v||isNaN(v))return;
             if(!m[base])m[base]={};
             const lb=lowerBetter(mid);const cur=m[base][mid];
-            if(!cur||(lb?v<cur:v>cur))m[base][mid]=v})})})});
+            // STRICTLY better (not >=) so first occurrence keeps the crown
+            if(!cur||(lb?v<cur.val:v>cur.val))m[base][mid]={val:v,wkId:w.id,eid,setIdx:si}})})})});
     return m},[workouts,selAth]);
-  const isPR=(eid,mid,val)=>{const base=baseExId(eid);const v=Number(val);if(!v||isNaN(v))return false;
-    return prMap[base]?.[mid]===v};
+  const isPR=(eid,mid,val,setIdx)=>{const base=baseExId(eid);const v=Number(val);if(!v||isNaN(v))return false;
+    const h=prMap[base]?.[mid];if(!h)return false;
+    return h.val===v&&h.wkId===wk.id&&h.eid===eid&&h.setIdx===setIdx};
   const copyText=()=>{const lines=[wk.name||'Workout',date,dur+(wk.weather?' · '+(Array.isArray(wk.weather)?wk.weather.join('/'):wk.weather):''),''];
     athletes.filter(a=>wk.athletes?.[a.id]).forEach(a=>{const adX=wk.athletes[a.id];if(athletes.length>1)lines.push(a.name);
       wk.exerciseIds.forEach(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));
@@ -1230,7 +1234,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
               return(<div key={j} style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums',fontSize:14,alignItems:'center'}}>
                 <span style={{color:'var(--text3)',fontWeight:800}}>{j+1}</span>
                 {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{unit:''};const val=v[m];const has=val!=null&&val!=='';
-                  const pr=has&&isPR(eid,m,val);
+                  const pr=has&&isPR(eid,m,val,j);
                   if(editing)return(<input key={m} type="number" inputMode="decimal" step={md.step||0.01}
                     value={val??''} placeholder={md.unit||'—'}
                     onChange={e=>setVal(eid,j,m,e.target.value)}
