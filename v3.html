@@ -1227,10 +1227,14 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
               {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{name:m,unit:''};return<span key={m} style={{textAlign:'left'}}>{md.name||md.unit}</span>})}
             </div>}
             {sets.map((s,j)=>{const v=s.values;
-              return(<div key={j} style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums',fontSize:14}}>
+              return(<div key={j} style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums',fontSize:14,alignItems:'center'}}>
                 <span style={{color:'var(--text3)',fontWeight:800}}>{j+1}</span>
                 {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{unit:''};const val=v[m];const has=val!=null&&val!=='';
                   const pr=has&&isPR(eid,m,val);
+                  if(editing)return(<input key={m} type="number" inputMode="decimal" step={md.step||0.01}
+                    value={val??''} placeholder={md.unit||'—'}
+                    onChange={e=>setVal(eid,j,m,e.target.value)}
+                    style={{padding:'8px 6px',border:'1.5px solid var(--border)',borderRadius:8,background:'var(--bg)',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums',fontSize:14,fontWeight:700,color:'var(--text)',width:'100%',minWidth:0,textAlign:'center'}}/>);
                   return(<span key={m} style={{color:has?'var(--text)':'var(--text3)',fontWeight:700,display:'flex',alignItems:'center',gap:4,minWidth:0}}>
                     <span style={{overflow:'hidden',textOverflow:'ellipsis'}}>{has?val:'—'}{has&&md.unit?md.unit:''}</span>
                     {pr&&<span title="Personal Best" style={{display:'inline-flex',alignItems:'center',gap:2,padding:'1px 5px',background:'linear-gradient(135deg,#fbbf24,#f59e0b)',color:'#fff',borderRadius:5,fontSize:9,fontWeight:900,letterSpacing:'.4px',fontFamily:'var(--display)',fontStyle:'italic',flexShrink:0}}>🏆 PB</span>}
