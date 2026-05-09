@@ -462,7 +462,7 @@ const fmtT=s=>{const m=Math.floor(Math.abs(s)/60);return`${m}:${(Math.abs(s)%60)
 const initials=n=>(n||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 
 const METRIC_MAP={
-  weight:{id:'weight',name:'Weight',unit:'lb',step:2.5},
+  weight:{id:'weight',name:'Weight',unit:'kg',step:2.5},
   reps:{id:'reps',name:'Reps',unit:'',step:1},
   time:{id:'time',name:'Time',unit:'s',step:1},
   distance:{id:'distance',name:'Distance',unit:'m',step:1},
@@ -791,7 +791,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
           const c=cfgs[eid]?.[i]||{};const v={};ex.metrics.forEach(m=>{v[m]=c[m]??''});return{values:v,completed:false}})})})}
     return w});
   const[focusIdx,setFocusIdx]=useState(_sv?.focusIdx||0);
-  const[restStart,setRestStart]=useState(null);
+  const[restStarts,setRestStarts]=useState({});
   const[showFinish,setShowFinish]=useState(false);
   const[confirmCancel,setConfirmCancel]=useState(false);
   const[,tick]=useState(0);
@@ -826,7 +826,9 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   stateRef.current={workout,focusIdx};
   snapRef.current={workout,focusIdx};
   const elapsed=Date.now()-workout.startTime;
+  const restStart=restStarts[activeAth]||null;
   const restElapsed=restStart?Math.floor((Date.now()-restStart)/1000):0;
+  const setRestStart=v=>setRestStarts(p=>{const n={...p};if(v==null)delete n[activeAth];else n[activeAth]=v;return n});
   const restTarget=120;
 
   const flatIds=workout.exerciseIds;
@@ -841,7 +843,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     <div className="aw-top">
       <button className="aw-back" onClick={()=>setConfirmCancel(true)}><Ic n="chevL" s={22}/></button>
       <div className="aw-timer">{fmtT(Math.floor(elapsed/1000))}</div>
-      <button className="aw-x" onClick={()=>setShowFinish(true)}><Ic n="x" s={22}/></button>
+      <button className="aw-finish" onClick={()=>setShowFinish(true)}>Finish</button>
     </div>
     <div style={{padding:'40px 22px',textAlign:'center'}}>
       <div className="ex-name" style={{fontSize:32,marginBottom:14}}>EMPTY WORKOUT</div>
@@ -917,9 +919,9 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   // Stats
   const completed=sets.filter(s=>s.completed&&!s.warmup);
   const hasW=ex?.metrics.includes('weight');const hasR=ex?.metrics.includes('reps');
-  let totalReps=null,totalLb=null;
+  let totalReps=null,totalKg=null;
   if(hasR)totalReps=completed.reduce((a,s)=>a+(Number(s.values.reps)||0),0);
-  if(hasW&&hasR)totalLb=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);
+  if(hasW&&hasR)totalKg=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);
 
   // Last session
   const lastWk=[...workouts].reverse().find(w=>w.athletes?.[activeAth]?.sets?.[eid] && w.athletes[activeAth].sets[eid].some(s=>s.completed));
@@ -970,7 +972,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     <div className="aw-top">
       <button className="aw-back" onClick={()=>setConfirmCancel(true)}><Ic n="chevL" s={22}/></button>
       <div className="aw-timer">{fmtT(Math.floor(elapsed/1000))}</div>
-      <button className="aw-x" onClick={()=>setShowFinish(true)}><Ic n="x" s={22}/></button>
+      <button className="aw-finish" onClick={()=>setShowFinish(true)}>Finish</button>
     </div>
     <div className="aw-dots">
       {flatIds.map((id,i)=>{const isThis=i===safeIdx;
@@ -978,9 +980,9 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         const allDone=setsI.length>0&&setsI.every(s=>s.completed);
         return<div key={i} className={'aw-dot'+(isThis?' on':'')+(allDone&&!isThis?' done':'')} onClick={()=>setFocusIdx(i)}/>})}
     </div>
-    {(totalReps!=null||totalLb!=null)&&<div className="aw-totals">
+    {(totalReps!=null||totalKg!=null)&&<div className="aw-totals">
       {totalReps>0&&<div className="aw-tot"><span className="aw-tot-v">{totalReps}</span><span className="aw-tot-l">Reps</span></div>}
-      {totalLb>0&&<div className="aw-tot"><span className="aw-tot-v">{totalLb.toLocaleString()}</span><span className="aw-tot-l">Lb</span></div>}
+      {totalKg>0&&<div className="aw-tot"><span className="aw-tot-v">{totalKg.toLocaleString()}</span><span className="aw-tot-l">Kg</span></div>}
     </div>}
 
     {athletes.length>1&&<div style={{display:'flex',gap:6,padding:'8px 18px 4px',justifyContent:'center'}}>
@@ -997,7 +999,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
             {priorMaxW>0?<div className="ex-pr-icon"><Ic n="trophy" s={18}/></div>:<div className="ex-pr-icon" style={{background:'var(--surface2)',color:'var(--text2)'}}><Ic n="weight" s={18}/></div>}
             <div className="ex-pr-meta">
               <div className="ex-pr-h">{priorMaxW>0?'PR · Working Max':'Last Session'}</div>
-              <div className="ex-pr-v">{priorMaxW>0?`${priorMaxW} lb`:lastSummary}</div>
+              <div className="ex-pr-v">{priorMaxW>0?`${priorMaxW} kg`:lastSummary}</div>
             </div>
           </div>
           <button style={{color:'var(--text3)',padding:6}}><Ic n="chevR" s={18}/></button>
@@ -1129,7 +1131,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,onClose,onDelete,onRep
           if(v.distance&&v['tf-time']){let l=v.distance+'m → '+v['tf-time']+'s';
             const sp=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null).map(k=>k.replace('split-','').replace('fly-','fly')+': '+v[k]);
             if(sp.length)l+=' ('+sp.join(' ')+')';parts.push(l)}
-          else if(v.weight){parts.push(v.weight+'lb'+(v.reps?' × '+v.reps:''))}
+          else if(v.weight){parts.push(v.weight+'kg'+(v.reps?' × '+v.reps:''))}
           else parts.push(Object.entries(v).filter(([_,vv])=>vv!==''&&vv!=null).map(([k,vv])=>vv+(METRIC_MAP[k]?.unit||'')).join(' · '));
           lines.push('    '+(j+1)+'. '+parts.join(' · '))});
         if(wk.exNotes?.[eid])lines.push('    → '+(typeof wk.exNotes[eid]==='string'?wk.exNotes[eid]:wk.exNotes[eid][a.id]||''))});
@@ -1209,24 +1211,55 @@ function Confirm({title,message,danger,onConfirm,onCancel}){
   </div>)}
 
 // === STAT SCREEN with PRs ===
-function StatScreen({workouts,activeAth,exercises,onView,onSelectEx}){
+function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSession,onResume}){
   const myWk=workouts.filter(w=>w.athletes?.[activeAth]);
-  // Build PRs per exercise (max weight, best time)
+  // Build per-exercise PRs (across all metrics: best per metric)
   const prMap={};
   myWk.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;
     Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);
+      const ex=exercises.find(e=>e.id===base);if(!ex)return;
       ad.sets[eid].filter(s=>s.completed&&!s.warmup).forEach(s=>{
-        const v=s.values||{};const mw=Number(v.weight)||0;const mt=Number(v['tf-time'])||0;
-        if(!prMap[base])prMap[base]={maxW:0,bestT:Infinity,date:0,name:exercises.find(e=>e.id===base)?.name||base};
-        if(mw>prMap[base].maxW){prMap[base].maxW=mw;prMap[base].mwDate=w.startTime}
-        if(mt>0&&mt<prMap[base].bestT){prMap[base].bestT=mt;prMap[base].btDate=w.startTime;prMap[base].btDist=v.distance}
-      })})});
-  const prList=Object.entries(prMap).filter(([_,p])=>p.maxW>0||p.bestT<Infinity).sort(([,a],[,b])=>(b.maxW||0)-(a.maxW||0));
-  // Volume by week (last 8 weeks)
-  const weeks=Array.from({length:8},(_,i)=>{const end=Date.now()-i*7*864e5;const start=end-7*864e5;
-    const cnt=myWk.filter(w=>w.startTime>=start&&w.startTime<end).length;
-    return{label:i===0?'This':i+'w',count:cnt}}).reverse();
-  const maxC=Math.max(1,...weeks.map(w=>w.count));
+        const v=s.values||{};
+        if(!prMap[base])prMap[base]={name:ex.name,category:ex.category,metrics:{},lastDate:0};
+        ex.metrics.forEach(m=>{const val=Number(v[m]);if(!val||isNaN(val))return;
+          const md=METRIC_MAP[m]||{name:m,unit:''};
+          // Time metrics: lower is better. Distance/weight/reps: higher is better.
+          const lowerBetter=md.unit==='s'||m==='tf-time'||m.startsWith('split-')||m.startsWith('fly-')||m.startsWith('time-');
+          const cur=prMap[base].metrics[m];
+          if(!cur||(lowerBetter?val<cur.val:val>cur.val)){
+            prMap[base].metrics[m]={val,unit:md.unit,name:md.name,date:w.startTime,lowerBetter}}});
+        prMap[base].lastDate=Math.max(prMap[base].lastDate,w.startTime)})})});
+
+  // Group: Sprint PBs (start-*), Resisted Sprint PBs (resisted-*), Fly (fly-*), Everything else
+  const isSprint=id=>id.startsWith('start-');
+  const isResisted=id=>id.startsWith('resisted-');
+  const isFly=id=>id.startsWith('fly-')&&!id.startsWith('fly-sprint');
+  const sprintIds=Object.keys(prMap).filter(isSprint);
+  const resistedIds=Object.keys(prMap).filter(isResisted);
+  const flyIds=Object.keys(prMap).filter(isFly);
+  const otherIds=Object.keys(prMap).filter(id=>!isSprint(id)&&!isResisted(id)&&!isFly(id));
+  // Sort sprint distances numerically: start-10m → 10
+  const distOrd=id=>{const m=id.match(/(\d+)m/);return m?parseInt(m[1]):999};
+  sprintIds.sort((a,b)=>distOrd(a)-distOrd(b));
+  resistedIds.sort((a,b)=>distOrd(a)-distOrd(b));
+  flyIds.sort((a,b)=>distOrd(a)-distOrd(b));
+  otherIds.sort((a,b)=>(prMap[a].lastDate||0)<(prMap[b].lastDate||0)?1:-1);
+
+  const renderRow=(eid)=>{const p=prMap[eid];const ex=exercises.find(e=>e.id===eid);
+    const mets=Object.entries(p.metrics);if(!mets.length)return null;
+    return(<button key={eid} className="recent-row" style={{display:'block',textAlign:'left'}} onClick={()=>ex&&onSelectEx&&onSelectEx(ex)}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+        <div className="recent-name" style={{textTransform:'uppercase',fontSize:14}}>{p.name}</div>
+        <Ic n="chevR" s={16}/>
+      </div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:'6px 14px'}}>
+        {mets.map(([m,r])=>(<div key={m} style={{display:'flex',alignItems:'baseline',gap:5}}>
+          <span style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:700,color:'var(--text3)',letterSpacing:'.4px',textTransform:'uppercase'}}>{r.name}</span>
+          <span style={{fontFamily:'var(--mono)',fontSize:14,fontWeight:900,color:'var(--text)',letterSpacing:'-.3px'}}>{r.val}<span style={{fontSize:10,color:'var(--text3)',fontWeight:700,marginLeft:2}}>{r.unit}</span></span>
+        </div>))}
+      </div>
+    </button>)};
+
   return(<div className="shell">
     <div className="top" style={{paddingBottom:14}}>
       <div className="top-month">STATS</div>
@@ -1248,31 +1281,41 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx}){
         </div>
       </div>
 
-      <div className="s-title">8-Week Volume</div>
-      <div className="wcard" style={{margin:'0 14px 14px',padding:'18px 20px'}}>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:8,alignItems:'flex-end',height:90}}>
-          {weeks.map((w,i)=>(<div key={i} style={{height:Math.max(8,(w.count/maxC)*90)+'px',background:i===weeks.length-1?'var(--primary)':'var(--surface3)',borderRadius:6}}/>))}
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:8,marginTop:6,fontFamily:'var(--mono)',fontSize:9,color:'var(--text3)',textAlign:'center',fontWeight:800,letterSpacing:'.4px'}}>
-          {weeks.map((w,i)=><div key={i}>{w.label}</div>)}
-        </div>
-      </div>
-
-      <div className="s-title">Personal Records</div>
-      {prList.length===0?<div className="empty"><div className="empty-text">Log workouts to see PRs</div></div>
-        :<div className="recent">{prList.slice(0,40).map(([eid,p])=>{const ex=exercises.find(e=>e.id===eid);
-          return(<button key={eid} className="recent-row" onClick={()=>ex&&onSelectEx&&onSelectEx(ex)}>
-            <div className="ex-pr-icon" style={{background:'var(--green-soft)',color:'var(--green)'}}><Ic n="trophy" s={18}/></div>
+      {remoteSession&&<>
+        <div className="s-title">In Progress</div>
+        <div className="recent">
+          <button className="recent-row" onClick={onResume}>
+            <div className="ex-pr-icon" style={{background:'#10b981',color:'#fff',borderRadius:8}}><Ic n="play" s={14}/></div>
             <div className="recent-info">
-              <div className="recent-name" style={{textTransform:'uppercase'}}>{p.name}</div>
-              <div className="recent-meta">
-                {p.maxW>0&&<span>{p.maxW} LB</span>}
-                {p.maxW>0&&p.bestT<Infinity&&<span> · </span>}
-                {p.bestT<Infinity&&<span>{p.btDist?p.btDist+'M ':''}{p.bestT}S</span>}
-              </div>
+              <div className="recent-name">{remoteSession.plan?.name||'Live Workout'}</div>
+              <div className="recent-meta">Started {new Date(remoteSession.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
             </div>
             <Ic n="chevR" s={16}/>
-          </button>)})}</div>}
+          </button>
+        </div>
+      </>}
+
+      {sprintIds.length>0&&<>
+        <div className="s-title">Sprint PBs</div>
+        <div className="recent">{sprintIds.map(renderRow)}</div>
+      </>}
+
+      {flyIds.length>0&&<>
+        <div className="s-title">Fly PBs</div>
+        <div className="recent">{flyIds.map(renderRow)}</div>
+      </>}
+
+      {resistedIds.length>0&&<>
+        <div className="s-title">Resisted Sprint PBs</div>
+        <div className="recent">{resistedIds.map(renderRow)}</div>
+      </>}
+
+      {otherIds.length>0&&<>
+        <div className="s-title">Everything Else</div>
+        <div className="recent">{otherIds.map(renderRow)}</div>
+      </>}
+
+      {Object.keys(prMap).length===0&&<div className="empty"><div className="empty-text">Log workouts to see PBs</div></div>}
     </div>
   </div>)}
 
@@ -2054,7 +2097,7 @@ function App(){
       onAddPlan={d=>setPlanEdit({date:d||dateKey(Date.now())})}
       onEditPlan={p=>setPlanEdit({plan:p})}/>}
     {tab==='lib'&&<LibraryScreen exercises={exercises} onSelect={setViewEx} onCreate={ex2=>setExercises(p=>[...p,ex2])}/>}
-    {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx}/>}
+    {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote}/>}
     {tab==='me'&&<ProfileScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete} workouts={workouts}/>}
 
     {viewing&&<WorkoutDetailModal wk={viewing} athletes={athletes} exercises={exercises}
