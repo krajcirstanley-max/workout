@@ -2159,6 +2159,37 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length]);
 
+  // One-shot seed: speed session (sprints, wickets, hurdle jumps, med ball)
+  useEffect(()=>{const KEY='wk2_v3_seed_speed_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exercises.length)return; // wait for exercises to load
+    const newExs=[
+      {id:'accel-30m',name:'Accel 30m',category:'T&F',metrics:['tf-time','split-10m','split-20m','split-30m']},
+      {id:'overspeed-40m',name:'Overspeed 40m',category:'T&F',metrics:['tf-time','split-10m','split-20m','split-30m','split-40m']},
+      {id:'sprint-50m',name:'Sprint 50m',category:'T&F',metrics:['tf-time','split-10m','split-20m','split-30m','split-40m','split-50m']},
+      {id:'wickets-8',name:'8 Wickets',category:'T&F',metrics:['tf-time','reps','steps']},
+      {id:'high-hurdle-jumps',name:'High Hurdle Jumps',category:'Legs',metrics:['reps','height']},
+      {id:'side-throw-med-ball',name:'Side Throw Med Ball',category:'Core',metrics:['weight','reps','distance']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing]);
+    setPlanned(p=>{if(p.find(x=>x.id==='pl-speed-1'))return p;
+      return[...p,{id:'pl-speed-1',date:'2026-05-11',name:'Speed Session',color:'#06b6d4',
+        exerciseIds:['accel-30m','overspeed-40m','sprint-50m','wickets-8','high-hurdle-jumps','side-throw-med-ball'],
+        supersets:[],
+        setConfigs:{
+          'accel-30m':[{},{},{}],
+          'overspeed-40m':[{},{},{}],
+          'sprint-50m':[{},{},{}],
+          'wickets-8':[{reps:8},{reps:8},{reps:8}],
+          'high-hurdle-jumps':[{},{},{}],
+          'side-throw-med-ball':[{},{},{}]},
+        notes:'3×30m accel · 3×40m overspeed · 3×50m sprint · 3×8 wickets · High Hurdle Jumps · Side Throw Med Ball'
+      }]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length]);
+
   useEffect(()=>{const c=ath?.color||'#2156f4';
     document.documentElement.style.setProperty('--primary',c);
     const dark=c.replace(/^#/,'');const r=parseInt(dark.slice(0,2),16),g=parseInt(dark.slice(2,4),16),b=parseInt(dark.slice(4,6),16);
