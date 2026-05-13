@@ -2190,6 +2190,52 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length]);
 
+  // One-shot seed: 2026-05-13 LJ Session (ARM BLOCK)
+  useEffect(()=>{const KEY='wk2_v3_seed_lj_session_3';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'drop-jump',name:'Drop Jump',category:'Legs',metrics:['reps']},
+      {id:'standing-arm-block',name:'Standing Arm Block Drill',category:'T&F',metrics:['reps']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing]);
+    setPlanned(p=>{if(p.find(x=>x.id==='pl-lj-session-3'))return p;
+      return[...p,{id:'pl-lj-session-3',date:'2026-05-13',name:'Long Jump Session',color:'#8b5cf6',
+        exerciseIds:['drop-jump','standing-arm-block','short-app-popup','full-app-runthrough','full-app-popup','approach-jump-12','approach-jump-14','approach-jump-16','sl-bounds-pr-l','sl-bounds-pr-r','alt-bounds-jump'],
+        supersets:[],
+        setConfigs:{
+          'drop-jump':[{reps:5},{reps:5},{reps:5}],
+          'standing-arm-block':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
+          'short-app-popup':[{reps:3},{reps:3},{reps:3},{reps:3}],
+          'full-app-runthrough':[{reps:1},{reps:1}],
+          'full-app-popup':[{reps:1},{reps:1},{reps:1},{reps:1}],
+          'approach-jump-12':[{},{},{}],
+          'approach-jump-14':[{},{},{}],
+          'approach-jump-16':[{},{},{},{}],
+          'sl-bounds-pr-l':[{},{},{}],
+          'sl-bounds-pr-r':[{},{},{}],
+          'alt-bounds-jump':[{},{},{}]
+        },
+        exNotes:{
+          'drop-jump':'3×5. CNS primer.',
+          'standing-arm-block':'6× nácvik — pripraviť ARM BLOCK pattern.',
+          'short-app-popup':'5 krokov, 4×3. Cue: ARM BLOCK.',
+          'full-app-runthrough':'16 krokov, 2×. Freelap + značky check.',
+          'full-app-popup':'16 krokov, 4×. Freelap + video. Cue: ARM BLOCK.',
+          'approach-jump-12':'Z DOSKY, 3×. ARM BLOCK — nastaviť.',
+          'approach-jump-14':'Z DOSKY, 3×. ARM BLOCK — bridge.',
+          'approach-jump-16':'Z DOSKY, 4×. ARM BLOCK — hlavná práca. Freelap + video, 5 min pauzy.',
+          'sl-bounds-pr-l':'3×/nohu.',
+          'sl-bounds-pr-r':'3×/nohu.',
+          'alt-bounds-jump':'4×.'
+        },
+        notes:'Drop Jump 3×5 (CNS primer). Standing arm block drill 6×. Short approach pop-upy 5 krokov 4×3 (cue: ARM BLOCK). Full approach run-throughs 16 krokov 2× (Freelap, značky check). Full approach pop-upy 16 krokov 4× (Freelap, video, ARM BLOCK). Skoky z DOSKY: 12-step 3× (nastaviť), 14-step 3× (bridge), 16-step 4× (hlavná práca) — Freelap, video, 5 min pauzy na KAŽDOM. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×. Hlavná téma: ARM BLOCK.'
+      }]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length]);
+
   useEffect(()=>{const c=ath?.color||'#2156f4';
     document.documentElement.style.setProperty('--primary',c);
     const dark=c.replace(/^#/,'');const r=parseInt(dark.slice(0,2),16),g=parseInt(dark.slice(2,4),16),b=parseInt(dark.slice(4,6),16);
