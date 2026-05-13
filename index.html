@@ -641,6 +641,7 @@ const DEFAULT_EXERCISES=[
   {id:'tb-deadlift',name:'TB Deadlift',category:'Legs',metrics:['weight','reps']},
   {id:'afsm',name:'AFSM',category:'Legs',metrics:['weight','reps']},
   {id:'step-up',name:'Step Up',category:'Legs',metrics:['weight','reps']},
+  {id:'drop-jump',name:'Drop Jump',category:'Legs',metrics:['reps']},
   {id:'drop-jump-sl',name:'Drop Jump SL',category:'Legs',metrics:['reps']},
   {id:'seated-calf-raise',name:'Seated Calf Raise',category:'Legs',metrics:['weight','reps']},
   {id:'nordics',name:'Nordics',category:'Legs',metrics:['reps']},
@@ -2591,10 +2592,10 @@ function App(){
     setPlanned(p=>{
       let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-')&&!x.id.startsWith('pl-lj-progressive-'));
       if(!r.find(x=>x.id==='pl-lj-session-3'))r=[...r,{id:'pl-lj-session-3',date:'2026-05-13',name:'Long Jump Session',color:'#8b5cf6',
-        exerciseIds:['drop-jump-rsi','standing-arm-block','short-app-popup','full-app-runthrough','full-app-popup','approach-jump-12','approach-jump-14','approach-jump-16','sl-bounds-pr-l','sl-bounds-pr-r','alt-bounds-jump'],
+        exerciseIds:['drop-jump','standing-arm-block','short-app-popup','full-app-runthrough','full-app-popup','approach-jump-12','approach-jump-14','approach-jump-16','sl-bounds-pr-l','sl-bounds-pr-r','alt-bounds-jump'],
         supersets:[],
         setConfigs:{
-          'drop-jump-rsi':[{reps:5},{reps:5},{reps:5}],
+          'drop-jump':[{reps:5},{reps:5},{reps:5}],
           'standing-arm-block':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
           'short-app-popup':[{reps:3},{reps:3},{reps:3},{reps:3}],
           'full-app-runthrough':[{reps:1},{reps:1}],
@@ -2607,7 +2608,7 @@ function App(){
           'alt-bounds-jump':[{},{},{},{}]
         },
         exNotes:{
-          'drop-jump-rsi':'3×5. GCT pod 200ms — CNS primer.',
+          'drop-jump':'3×5. CNS primer.',
           'standing-arm-block':'6× nácvik — pripraviť ARM BLOCK pattern.',
           'short-app-popup':'5 krokov, 4×3. Cue: ARM BLOCK.',
           'full-app-runthrough':'16 krokov, 2×. Freelap + značky check.',
@@ -2619,7 +2620,7 @@ function App(){
           'sl-bounds-pr-r':'3×/nohu.',
           'alt-bounds-jump':'4×.'
         },
-        notes:'Drop Jump RSI 3×5 (GCT pod 200ms, CNS primer). Standing arm block drill 6×. Short approach pop-upy 5 krokov 4×3 (cue: ARM BLOCK). Full approach run-throughs 16 krokov 2× (Freelap, značky check). Full approach pop-upy 16 krokov 4× (Freelap, video, ARM BLOCK). Skoky z DOSKY: 12-step 3× (nastaviť), 14-step 3× (bridge), 16-step 4× (hlavná práca) — Freelap, video, 5 min pauzy na KAŽDOM. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×. Hlavná téma: ARM BLOCK.'
+        notes:'Drop Jump 3×5 (CNS primer). Standing arm block drill 6×. Short approach pop-upy 5 krokov 4×3 (cue: ARM BLOCK). Full approach run-throughs 16 krokov 2× (Freelap, značky check). Full approach pop-upy 16 krokov 4× (Freelap, video, ARM BLOCK). Skoky z DOSKY: 12-step 3× (nastaviť), 14-step 3× (bridge), 16-step 4× (hlavná práca) — Freelap, video, 5 min pauzy na KAŽDOM. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×. Hlavná téma: ARM BLOCK.'
       }];
       if(!r.find(x=>x.id==='pl-gym-3'))r=[...r,{id:'pl-gym-3',date:'2026-05-06',name:'Gym',color:'#3b82f6',
         exerciseIds:['tb-jump','pogos-bands','step-up','nordics','seated-calf-raise','lower-back-ext'],
