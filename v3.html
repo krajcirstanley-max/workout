@@ -256,7 +256,9 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .set-input::placeholder{color:var(--text4);font-weight:600;font-size:13px}
 .set-check{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:transparent;border:1.5px solid var(--border);color:transparent;justify-self:center;flex-shrink:0;transition:all .15s}
 .set-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.set-check.flop{background:var(--red);border-color:var(--red);color:#fff}
 .set-check:active{transform:scale(.88)}
+.set-row.flop .set-input{opacity:.45;text-decoration:line-through}
 .set-pr{position:absolute;right:42px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:50%;color:#fff;font-size:13px;line-height:1;box-shadow:0 4px 12px rgba(251,191,36,.5),0 0 0 2px rgba(251,191,36,.2);animation:prPop .55s cubic-bezier(.16,1.4,.3,1) backwards;pointer-events:none;z-index:1}
 @keyframes prPop{0%{transform:translateY(-50%) scale(0) rotate(-180deg);opacity:0}55%{transform:translateY(-50%) scale(1.4) rotate(15deg);opacity:1}80%{transform:translateY(-50%) scale(.9) rotate(-5deg)}100%{transform:translateY(-50%) scale(1) rotate(0);opacity:1}}
 .set-pr.pulse{animation:prPop .55s cubic-bezier(.16,1.4,.3,1) backwards,prPulse 2s ease-in-out 1s 3}
@@ -896,16 +898,18 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const eid=flatIds[safeIdx];
   const ex=exercises.find(e=>e.id===baseExId(eid));
   const sets=workout.athletes[activeAth]?.sets?.[eid]||[];
-  const allSetsDone=sets.length>0&&sets.every(s=>s.completed);
+  const allSetsDone=sets.length>0&&sets.every(s=>s.completed||s.flop);
   const ss=workout.supersets?.find(s=>s.includes(eid));
 
   const updateSet=(si,mid,v)=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s,i)=>i===si?{...s,values:{...s.values,[mid]:v}}:s)}}}}));
-  const toggleSet=si=>setWorkout(w=>{const s=w.athletes[activeAth].sets[eid][si];const was=s.completed;
-    if(!was&&Object.values(s.values).every(v=>v===''||v==null))return w;
-    if(!was)setRestStart(Date.now());
+  // tap cycles: none → done → flop → none. done works even with empty values (drills / unmeasured jumps).
+  const toggleSet=si=>setWorkout(w=>{const s=w.athletes[activeAth].sets[eid][si];
+    const state=s.flop?'flop':s.completed?'done':'none';
+    const next=state==='none'?'done':state==='done'?'flop':'none';
+    if(state==='none')setRestStart(Date.now());
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
-      sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s2,i)=>i===si?{...s2,completed:!s2.completed}:s2)}}}}});
+      sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s2,i)=>i===si?{...s2,completed:next==='done',flop:next==='flop'}:s2)}}}}});
   const toggleWarmup=si=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s,i)=>i===si?{...s,warmup:!s.warmup}:s)}}}}));
   const addSet=()=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const last=ss[ss.length-1];
@@ -1012,7 +1016,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     <div className="aw-dots">
       {flatIds.map((id,i)=>{const isThis=i===safeIdx;
         const setsI=workout.athletes[activeAth]?.sets?.[id]||[];
-        const allDone=setsI.length>0&&setsI.every(s=>s.completed);
+        const allDone=setsI.length>0&&setsI.every(s=>s.completed||s.flop);
         return<div key={i} className={'aw-dot'+(isThis?' on':'')+(allDone&&!isThis?' done':'')} onClick={()=>setFocusIdx(i)}/>})}
     </div>
     {(totalReps!=null||totalKg!=null)&&<div className="aw-totals">
@@ -1059,16 +1063,17 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
             {mds.map(m=><span key={m.id}>{m.name||m.unit}</span>)}
             <span></span>
           </div>
-          {sets.map((s,i)=>(<div key={i} className={'set-row'+(s.warmup?' warmup':'')} style={{gridTemplateColumns:gridCols}}>
+          {sets.map((s,i)=>{const emptyDone=s.completed&&mds.every(m=>s.values[m.id]===''||s.values[m.id]==null);
+            return(<div key={i} className={'set-row'+(s.warmup?' warmup':'')+(s.flop?' flop':'')} style={{gridTemplateColumns:gridCols}}>
             <button className={'set-num-btn'+(s.warmup?' warmup':'')} onClick={()=>toggleWarmup(i)}>{s.warmup?'W':i+1}</button>
             {mds.map((m,mi)=>(<div key={m.id} style={{position:'relative'}}>
               <input type="number" inputMode="decimal" className="set-input" step={m.step||0.01}
-                value={s.values[m.id]??''} placeholder={m.unit||''}
+                value={s.values[m.id]??''} placeholder={s.flop?'flop':emptyDone?'not measured':(m.unit||'')}
                 onChange={e=>updateSet(i,m.id,e.target.value===''?'':Number(e.target.value))}/>
               {prSetIdxs.has(i)&&mi===mds.length-1&&<span key={i+'-'+mi+'-'+(s.values[m.id]||'')} className="set-pr pulse" title="Personal Record">🏆</span>}
             </div>))}
-            <button className={'set-check'+(s.completed?' done':'')} onClick={()=>toggleSet(i)}>{s.completed&&<Ic n="check" s={18}/>}</button>
-          </div>))}
+            <button className={'set-check'+(s.completed?' done':'')+(s.flop?' flop':'')} onClick={()=>toggleSet(i)} title={s.flop?'Flop — tap to clear':s.completed?'Done — tap for flop':'Tap to mark done'}>{s.completed&&<Ic n="check" s={18}/>}{s.flop&&<Ic n="x" s={16}/>}</button>
+          </div>)})}
           <div className="set-controls">
             <button className="set-ctrl-btn" onClick={delSet} disabled={sets.length<=1}>−</button>
             <span className="set-ctrl-lbl">Set</span>
@@ -1151,7 +1156,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
   const[selAth,setSelAth]=useState(athletes.find(a=>wk.athletes?.[a.id])?.id||athletes[0]?.id);
   const ad=wk.athletes?.[selAth];
   const dur=wk.endTime?fmtDur(wk.endTime-wk.startTime):'—';
-  const totalSets=Object.values(ad?.sets||{}).reduce((a,s)=>a+s.filter(x=>x.completed).length,0);
+  const totalSets=Object.values(ad?.sets||{}).reduce((a,s)=>a+s.filter(x=>x.completed||x.flop).length,0);
   const date=new Date(wk.startTime).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   const dirty=JSON.stringify(wk)!==JSON.stringify(initWk);
   const setVal=(eid,si,mid,v)=>setWk(w=>{const n=JSON.parse(JSON.stringify(w));n.athletes[selAth].sets[eid][si].values[mid]=v===''?'':Number(v);return n});
@@ -1217,7 +1222,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
         </div>:ad?.rpe&&<div style={{textAlign:'center',marginBottom:18,fontSize:13,color:'var(--text2)'}}>RPE <strong style={{color:'var(--text)',fontSize:18,fontStyle:'italic'}}>{ad.rpe}/10</strong></div>}
         {ad?.notes&&!editing&&<div style={{padding:14,background:'var(--surface2)',borderRadius:12,marginBottom:18,fontSize:14,color:'var(--text2)',fontStyle:'italic'}}>{ad.notes}</div>}
         {wk.exerciseIds.map((eid,i)=>{const ex=exercises.find(e=>e.id===baseExId(eid));
-          const sets=(ad?.sets?.[eid]||[]).filter(s=>s.completed);
+          const sets=(ad?.sets?.[eid]||[]).filter(s=>s.completed||s.flop);
           if(!sets.length)return null;
           // Determine which metrics actually have values across this exercise's sets
           const allMetrics=ex?.metrics||[];
@@ -1231,6 +1236,13 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
               {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{name:m,unit:''};return<span key={m} style={{textAlign:'left'}}>{md.name||md.unit}</span>})}
             </div>}
             {sets.map((s,j)=>{const v=s.values;
+              const measured=usedMetrics.some(m=>v[m]!=null&&v[m]!=='');
+              if(!editing&&(s.flop||!measured))return(<div key={j} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',fontFamily:'var(--mono)',fontSize:13}}>
+                <span style={{color:'var(--text3)',fontWeight:800,minWidth:14}}>{j+1}</span>
+                {s.flop
+                  ?<span style={{display:'inline-flex',alignItems:'center',gap:3,padding:'2px 7px',background:'var(--red)',color:'#fff',borderRadius:5,fontSize:9,fontWeight:900,letterSpacing:'.5px',fontFamily:'var(--display)',fontStyle:'italic'}}>✕ FLOP</span>
+                  :<span style={{color:'var(--text3)',fontStyle:'italic',fontSize:12}}>Not measured</span>}
+              </div>);
               return(<div key={j} style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums',fontSize:14,alignItems:'center'}}>
                 <span style={{color:'var(--text3)',fontWeight:800}}>{j+1}</span>
                 {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{unit:''};const val=v[m];const has=val!=null&&val!=='';
