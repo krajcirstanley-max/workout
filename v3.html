@@ -439,6 +439,8 @@ textarea.form-input{min-height:80px;font-size:14px;resize:vertical;font-family:v
 .cal-cell.today{background:var(--text);color:#fff;font-weight:900}
 .cal-cell .pdot{position:absolute;bottom:6px;width:5px;height:5px;border-radius:50%;background:var(--green)}
 .cal-cell.today .pdot{background:#fff}
+.cal-cell.dhigh,.month-cell.dhigh,.date-cell.dhigh{box-shadow:inset 0 0 0 2px var(--red)}
+.cal-cell.dlow,.month-cell.dlow,.date-cell.dlow{box-shadow:inset 0 0 0 2px var(--green)}
 
 /* === PROFILE === */
 .profile-hero{text-align:center;padding:32px 22px 20px}
@@ -565,7 +567,7 @@ function TopBar({athletes,activeAth,setActiveAth,monthName,onMonthClick,monthOpe
   </div>)}
 
 // === DATE STRIP ===
-function DateStrip({selectedDate,onSelectDate,workouts,planned,activeAth,onExpand}){
+function DateStrip({selectedDate,onSelectDate,workouts,planned,activeAth,onExpand,dayTypes}){
   const today=new Date();today.setHours(0,0,0,0);
   const sel=new Date(selectedDate);sel.setHours(0,0,0,0);
   const days=[];
@@ -575,9 +577,9 @@ function DateStrip({selectedDate,onSelectDate,workouts,planned,activeAth,onExpan
   return(<>
     <div className="dates">
       {days.map((d,i)=>{const k=dateKey(d.getTime());const isSel=k===dateKey(sel.getTime());
-        const hasW=wkSet.has(k);const hasP=planSet.has(k);
+        const hasW=wkSet.has(k);const hasP=planSet.has(k);const dt=dayTypes?.[k];
         const dow=['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
-        return(<button key={i} className={'date-cell'+(isSel?' on':'')} onClick={()=>onSelectDate(d)}>
+        return(<button key={i} className={'date-cell'+(isSel?' on':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':'')} onClick={()=>onSelectDate(d)}>
           <span className="date-dow">{dow}</span>
           <span className="date-num">{d.getDate()}</span>
           {(hasW||hasP)&&<span className="date-dot" style={{background:isSel?'#fff':(hasW?'var(--green)':'var(--primary)')}}/>}
@@ -589,7 +591,7 @@ function DateStrip({selectedDate,onSelectDate,workouts,planned,activeAth,onExpan
   </>)}
 
 // === MONTH GRID ===
-function MonthGrid({month,onSelectDate,onClose,workouts,planned,activeAth}){
+function MonthGrid({month,onSelectDate,onClose,workouts,planned,activeAth,dayTypes}){
   const first=new Date(month);first.setDate(1);
   const dim=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
   const startDow=(first.getDay()+6)%7;
@@ -602,11 +604,24 @@ function MonthGrid({month,onSelectDate,onClose,workouts,planned,activeAth}){
   const planSet=new Set((planned||[]).map(p=>p.date));
   return(<div className="month-grid">
     {['M','T','W','T','F','S','S'].map((x,i)=><div key={i} className="month-day-h">{x}</div>)}
-    {cells.map((c,i)=>{const k=dateKey(c.d.getTime());const has=wkSet.has(k)||planSet.has(k);
-      return(<button key={i} className={'month-cell'+(c.dim?' dim':'')+(has?' has':'')+(k===todayK?' today':'')}
+    {cells.map((c,i)=>{const k=dateKey(c.d.getTime());const has=wkSet.has(k)||planSet.has(k);const dt=dayTypes?.[k];
+      return(<button key={i} className={'month-cell'+(c.dim?' dim':'')+(has?' has':'')+(k===todayK?' today':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':'')}
         onClick={()=>{onSelectDate(c.d);onClose()}}>
         {c.d.getDate()}{has&&<span className="pdot"/>}
       </button>)})}
+  </div>)}
+
+// === DAY TYPE TOGGLE (High / Low intensity) ===
+function DayTypeToggle({type,onSet}){
+  return(<div style={{display:'flex',gap:8,padding:'4px 22px 12px'}}>
+    {[['high','HIGH','var(--red)'],['low','LOW','var(--green)']].map(([t,lbl,col])=>(
+      <button key={t} onClick={()=>onSet&&onSet(t)}
+        style={{flex:1,padding:'10px 0',borderRadius:11,fontFamily:'var(--mono)',fontSize:11,fontWeight:800,letterSpacing:'.9px',
+          border:'1.5px solid '+(type===t?col:'var(--border)'),
+          background:type===t?col:'transparent',
+          color:type===t?'#fff':'var(--text2)',transition:'all .15s'}}>
+        {lbl} DAY
+      </button>))}
   </div>)}
 
 // === SPARKLINE ===
@@ -620,7 +635,7 @@ function Sparkline({values,w=180,h=40}){
   </svg>)}
 
 // === TODAY SCREEN ===
-function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises,templates,onStartPlan,onStartEmpty,onView,onAddPlan,onEditPlan,remoteSession,onResume,selDate,setSelDate}){
+function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises,templates,onStartPlan,onStartEmpty,onView,onAddPlan,onEditPlan,remoteSession,onResume,selDate,setSelDate,dayTypes,onSetDayType}){
   const ath=athletes.find(a=>a.id===activeAth);
   const[monthOpen,setMonthOpen]=useState(false);
   const today=dateKey(selDate.getTime());
@@ -638,10 +653,11 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
       onTodayClick={()=>setSelDate(new Date())}/>
 
     {monthOpen
-      ?<MonthGrid month={selDate} onSelectDate={d=>setSelDate(d)} onClose={()=>setMonthOpen(false)} workouts={workouts} planned={planned} activeAth={activeAth}/>
-      :<DateStrip selectedDate={selDate} onSelectDate={d=>setSelDate(d)} workouts={workouts} planned={planned} activeAth={activeAth} onExpand={()=>setMonthOpen(true)}/>}
+      ?<MonthGrid month={selDate} onSelectDate={d=>setSelDate(d)} onClose={()=>setMonthOpen(false)} workouts={workouts} planned={planned} activeAth={activeAth} dayTypes={dayTypes}/>
+      :<DateStrip selectedDate={selDate} onSelectDate={d=>setSelDate(d)} workouts={workouts} planned={planned} activeAth={activeAth} onExpand={()=>setMonthOpen(true)} dayTypes={dayTypes}/>}
 
     <div className="scroll">
+      <DayTypeToggle type={dayTypes?.[today]} onSet={t=>onSetDayType&&onSetDayType(today,t)}/>
       {/* Live workout banner if shared session active and matches no plan */}
       {remoteSession&&!dayPlans.some(p=>p.id===remoteSession.planId)&&!remoteSession.planId&&isToday&&
         <WorkoutCard plan={{name:'Empty Workout',exerciseIds:[],setConfigs:{},color:'#22c55e'}} program="Live" exercises={exercises} live onAction={onResume} actionLabel="Resume Workout"/>}
@@ -1439,7 +1455,7 @@ function ProfileScreen({athletes,activeAth,setActiveAth,onEditAthlete,workouts})
   </div>)}
 
 // === CALENDAR ===
-function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAddPlan,onEditPlan}){
+function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAddPlan,onEditPlan,dayTypes,onSetDayType}){
   const[sel,setSel]=useState(new Date());
   const[m,setM]=useState(()=>{const d=new Date();d.setDate(1);return d});
   const monthName=m.toLocaleDateString('en-US',{month:'long',year:'numeric'});
@@ -1470,17 +1486,21 @@ function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAd
       <div style={{padding:'0 22px'}}>
         <div className="cal-grid">{['M','T','W','T','F','S','S'].map((x,i)=><div key={i} className="cal-day-h">{x}</div>)}</div>
         <div className="cal-grid" style={{marginBottom:18}}>
-          {cells.map((c,i)=>{const k=dateKey(c.d.getTime());const hasW=workouts.some(w=>w.athletes?.[activeAth]&&dateKey(w.startTime)===k);
-            const hasP=(planned||[]).some(p=>p.date===k);
+          {cells.map((c,i)=>{const k=dateKey(c.d.getTime());
+            const dWk=workouts.find(w=>w.athletes?.[activeAth]&&dateKey(w.startTime)===k);
+            const dPl=(planned||[]).find(p=>p.date===k);
+            const dt=dayTypes?.[k];
             const isSel=k===selK;
-            return(<button key={i} className={'cal-cell'+(c.dim?' dim':'')+(hasW?' has':'')+(k===todayK?' today':'')}
+            const dotColor=dWk?(dWk.color||'var(--green)'):dPl?(dPl.color||'var(--primary)'):null;
+            return(<button key={i} className={'cal-cell'+(c.dim?' dim':'')+(dWk?' has':'')+(k===todayK?' today':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':'')}
               onClick={()=>setSel(new Date(c.d))}
               style={isSel&&k!==todayK?{background:'var(--surface3)'}:{}}>
-              {c.d.getDate()}{(hasP||hasW)&&<span className="pdot" style={{background:hasW?'var(--green)':'var(--primary)'}}/>}
+              {c.d.getDate()}{dotColor&&<span className="pdot" style={{background:dotColor}}/>}
             </button>)})}
         </div>
       </div>
       <div className="s-title">{sel.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase()}</div>
+      <DayTypeToggle type={dayTypes?.[selK]} onSet={t=>onSetDayType&&onSetDayType(selK,t)}/>
       {dayWk.length===0&&dayPlans.length===0&&<div style={{padding:'20px 14px',textAlign:'center'}}>
         <div className="empty-text" style={{marginBottom:14}}>Nothing scheduled or logged</div>
         {onAddPlan&&<button className="btn btn-secondary" onClick={()=>onAddPlan(selK)}><Ic n="plus" s={16}/> Plan This Day</button>}
@@ -2067,6 +2087,8 @@ function App(){
   const[exercises,setExercises,exSynced]=useStore('exercises',[]);
   const[workouts,setWorkouts]=useStore('workouts2',[]);
   const[planned,setPlanned,plannedSynced]=useStore('planned2',[]);
+  const[dayTypes,setDayTypes]=useStore('dayTypes',{});
+  const setDayType=(k,t)=>setDayTypes(p=>{const n={...p};if(p[k]===t)delete n[k];else n[k]=t;return n});
   const[customTags,setCustomTags]=useStore('customTags',[]);
   const[templates,setTemplates]=useStore('templates',[]);
   const allTags=[...DEFAULT_TAGS,...customTags];
@@ -2347,11 +2369,13 @@ function App(){
       onAddPlan={d=>setPlanEdit({date:d||dateKey(Date.now())})}
       onEditPlan={p=>setPlanEdit({plan:p})}
       remoteSession={remoteSession} onResume={resumeRemote}
-      selDate={selDate} setSelDate={setSelDate}/>}
+      selDate={selDate} setSelDate={setSelDate}
+      dayTypes={dayTypes} onSetDayType={setDayType}/>}
     {tab==='train'&&<CalScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth}
       workouts={workouts} planned={planned} onView={setViewing}
       onAddPlan={d=>setPlanEdit({date:d||dateKey(Date.now())})}
-      onEditPlan={p=>setPlanEdit({plan:p})}/>}
+      onEditPlan={p=>setPlanEdit({plan:p})}
+      dayTypes={dayTypes} onSetDayType={setDayType}/>}
     {tab==='lib'&&<LibraryScreen exercises={exercises} onSelect={setViewEx} onCreate={ex2=>setExercises(p=>[...p,ex2])}/>}
     {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote}/>}
     {tab==='me'&&<ProfileScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete} workouts={workouts}/>}
