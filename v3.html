@@ -2239,15 +2239,79 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
-  // Repair: if 2026-05-13 plan was seeded but its exercises got overwritten by Supabase pull, re-add them
+  // One-shot seed: 2026-05-15 LJ Session (box jumps, telemark, bounds)
+  useEffect(()=>{const KEY='wk2_v3_seed_lj_session_4';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'standing-lj',name:'Standing Long Jump',category:'T&F',metrics:['tf-dist']},
+      {id:'telemark-hold',name:'Telemark Drill (Hold)',category:'T&F',metrics:['reps']},
+      {id:'telemark-switch',name:'Telemark Drill (Výmena)',category:'T&F',metrics:['reps']},
+      {id:'lj-box-6step',name:'6-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+      {id:'lj-box-8step',name:'8-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+      {id:'lj-box-10step',name:'10-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+      {id:'lj-landing-drill',name:'LJ Landing Drill',category:'T&F',metrics:['reps']},
+      {id:'slider-ecc-curl',name:'Slider Eccentric Curl',category:'Legs',metrics:['reps']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    setPlanned(p=>{if(p.find(x=>x.id==='pl-lj-session-4'))return p;
+      return[...p,{id:'pl-lj-session-4',date:'2026-05-15',name:'Long Jump Session',color:'#8b5cf6',
+        exerciseIds:['standing-lj','telemark-hold','lj-box-6step','telemark-switch','lj-box-8step','lj-landing-drill','lj-box-10step','alt-bounds-jump','sl-bounds-pr-l','sl-bounds-pr-r','heel-drops','tibialis-raise','slider-ecc-curl'],
+        supersets:[],
+        setConfigs:{
+          'standing-lj':[{},{},{}],
+          'telemark-hold':[{reps:1},{reps:1},{reps:1},{reps:1}],
+          'lj-box-6step':[{},{},{},{}],
+          'telemark-switch':[{reps:1},{reps:1},{reps:1},{reps:1}],
+          'lj-box-8step':[{},{},{},{}],
+          'lj-landing-drill':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
+          'lj-box-10step':[{},{},{},{},{},{}],
+          'alt-bounds-jump':[{},{},{}],
+          'sl-bounds-pr-l':[{},{},{}],
+          'sl-bounds-pr-r':[{},{},{}],
+          'heel-drops':[{reps:10},{reps:10}],
+          'tibialis-raise':[{reps:20},{reps:20}],
+          'slider-ecc-curl':[{reps:3},{reps:3}]
+        },
+        exNotes:{
+          'standing-lj':'3×. Standing long jump — max effort.',
+          'telemark-hold':'4×. Telemark pozícia — výdrž.',
+          'lj-box-6step':'6 krokov z boxu, 4×. Posledné 2 pridať cones.',
+          'telemark-switch':'4×. Telemark drill — výmena nôh.',
+          'lj-box-8step':'8 krokov z boxu, 4×. Klobúčiky.',
+          'lj-landing-drill':'5×. Nácvik dopadu.',
+          'lj-box-10step':'10 krokov z boxu, 6×. Posledné 3 ubrať klobúčiky.',
+          'alt-bounds-jump':'3× s pre-run.',
+          'sl-bounds-pr-l':'3×/ľavá noha, s pre-run.',
+          'sl-bounds-pr-r':'3×/pravá noha, s pre-run.',
+          'heel-drops':'2×10.',
+          'tibialis-raise':'2×20.',
+          'slider-ecc-curl':'2×3+3 (3/nohu).'
+        },
+        notes:'Standing LJ 3×. Telemark Drill (hold) 4×. 6-step LJ z boxu 4× (posledné 2 pridať cones). Telemark Drill (výmena) 4×. 8-step LJ z boxu 4× (klobúčiky). LJ Landing Drill 5×. 10-step LJ z boxu 6× (posledné 3 ubrať klobúčiky). Alternate Bounds w pre-run 3×. SL Bounds w pre-run 3+3×. Heel Drops 2×10. Tibialis 2×20. Hamstring Slider 2×3+3.'
+      }]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
+  // Repair: if seeded plans lost their exercises to a Supabase pull race, re-add them
   useEffect(()=>{if(!exSynced)return;
-    const need=['drop-jump','standing-arm-block'];
     const defs={
       'drop-jump':{id:'drop-jump',name:'Drop Jump',category:'Legs',metrics:['reps']},
-      'standing-arm-block':{id:'standing-arm-block',name:'Standing Arm Block Drill',category:'T&F',metrics:['reps']}
+      'standing-arm-block':{id:'standing-arm-block',name:'Standing Arm Block Drill',category:'T&F',metrics:['reps']},
+      'standing-lj':{id:'standing-lj',name:'Standing Long Jump',category:'T&F',metrics:['tf-dist']},
+      'telemark-hold':{id:'telemark-hold',name:'Telemark Drill (Hold)',category:'T&F',metrics:['reps']},
+      'telemark-switch':{id:'telemark-switch',name:'Telemark Drill (Výmena)',category:'T&F',metrics:['reps']},
+      'lj-box-6step':{id:'lj-box-6step',name:'6-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+      'lj-box-8step':{id:'lj-box-8step',name:'8-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+      'lj-box-10step':{id:'lj-box-10step',name:'10-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+      'lj-landing-drill':{id:'lj-landing-drill',name:'LJ Landing Drill',category:'T&F',metrics:['reps']},
+      'slider-ecc-curl':{id:'slider-ecc-curl',name:'Slider Eccentric Curl',category:'Legs',metrics:['reps']}
     };
     const have=new Set(exercises.map(e=>e.id));
-    const missing=need.filter(id=>!have.has(id)).map(id=>defs[id]);
+    const missing=Object.keys(defs).filter(id=>!have.has(id)).map(id=>defs[id]);
     if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
   },[exSynced,exercises.length]);
 

@@ -647,6 +647,14 @@ const DEFAULT_EXERCISES=[
   {id:'nordics',name:'Nordics',category:'Legs',metrics:['reps']},
   {id:'hurdle-jumps',name:'Hurdle Jumps',category:'T&F',metrics:['reps']},
   {id:'standing-arm-block',name:'Standing Arm Block Drill',category:'T&F',metrics:['reps']},
+  {id:'standing-lj',name:'Standing Long Jump',category:'T&F',metrics:['tf-dist']},
+  {id:'telemark-hold',name:'Telemark Drill (Hold)',category:'T&F',metrics:['reps']},
+  {id:'telemark-switch',name:'Telemark Drill (Výmena)',category:'T&F',metrics:['reps']},
+  {id:'lj-box-6step',name:'6-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+  {id:'lj-box-8step',name:'8-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+  {id:'lj-box-10step',name:'10-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
+  {id:'lj-landing-drill',name:'LJ Landing Drill',category:'T&F',metrics:['reps']},
+  {id:'slider-ecc-curl',name:'Slider Eccentric Curl',category:'Legs',metrics:['reps']},
   {id:'short-app-popup',name:'Short Approach Pop-up',category:'T&F',metrics:['reps']},
   {id:'full-app-runthrough',name:'Full Approach Run-through',category:'T&F',metrics:['reps']},
   {id:'full-app-popup',name:'Full Approach Pop-up',category:'T&F',metrics:['reps']},
@@ -2591,6 +2599,41 @@ function App(){
     if(!plannedSynced) return;
     setPlanned(p=>{
       let r=p.filter(x=>!x.id.startsWith('pl-sprint-')&&!x.id.startsWith('pl-lj-drills-')&&!x.id.startsWith('pl-gym-')&&!x.id.startsWith('pl-lj-session-')&&!x.id.startsWith('pl-lj-progressive-'));
+      if(!r.find(x=>x.id==='pl-lj-session-4'))r=[...r,{id:'pl-lj-session-4',date:'2026-05-15',name:'Long Jump Session',color:'#8b5cf6',
+        exerciseIds:['standing-lj','telemark-hold','lj-box-6step','telemark-switch','lj-box-8step','lj-landing-drill','lj-box-10step','alt-bounds-jump','sl-bounds-pr-l','sl-bounds-pr-r','heel-drops','tibialis-raise','slider-ecc-curl'],
+        supersets:[],
+        setConfigs:{
+          'standing-lj':[{},{},{}],
+          'telemark-hold':[{reps:1},{reps:1},{reps:1},{reps:1}],
+          'lj-box-6step':[{},{},{},{}],
+          'telemark-switch':[{reps:1},{reps:1},{reps:1},{reps:1}],
+          'lj-box-8step':[{},{},{},{}],
+          'lj-landing-drill':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
+          'lj-box-10step':[{},{},{},{},{},{}],
+          'alt-bounds-jump':[{},{},{}],
+          'sl-bounds-pr-l':[{},{},{}],
+          'sl-bounds-pr-r':[{},{},{}],
+          'heel-drops':[{reps:10},{reps:10}],
+          'tibialis-raise':[{reps:20},{reps:20}],
+          'slider-ecc-curl':[{reps:3},{reps:3}]
+        },
+        exNotes:{
+          'standing-lj':'3×. Standing long jump — max effort.',
+          'telemark-hold':'4×. Telemark pozícia — výdrž.',
+          'lj-box-6step':'6 krokov z boxu, 4×. Posledné 2 pridať cones.',
+          'telemark-switch':'4×. Telemark drill — výmena nôh.',
+          'lj-box-8step':'8 krokov z boxu, 4×. Klobúčiky.',
+          'lj-landing-drill':'5×. Nácvik dopadu.',
+          'lj-box-10step':'10 krokov z boxu, 6×. Posledné 3 ubrať klobúčiky.',
+          'alt-bounds-jump':'3× s pre-run.',
+          'sl-bounds-pr-l':'3×/ľavá noha, s pre-run.',
+          'sl-bounds-pr-r':'3×/pravá noha, s pre-run.',
+          'heel-drops':'2×10.',
+          'tibialis-raise':'2×20.',
+          'slider-ecc-curl':'2×3+3 (3/nohu).'
+        },
+        notes:'Standing LJ 3×. Telemark Drill (hold) 4×. 6-step LJ z boxu 4× (posledné 2 pridať cones). Telemark Drill (výmena) 4×. 8-step LJ z boxu 4× (klobúčiky). LJ Landing Drill 5×. 10-step LJ z boxu 6× (posledné 3 ubrať klobúčiky). Alternate Bounds w pre-run 3×. SL Bounds w pre-run 3+3×. Heel Drops 2×10. Tibialis 2×20. Hamstring Slider 2×3+3.'
+      }];
       if(!r.find(x=>x.id==='pl-lj-session-3'))r=[...r,{id:'pl-lj-session-3',date:'2026-05-13',name:'Long Jump Session',color:'#8b5cf6',
         exerciseIds:['drop-jump','standing-arm-block','short-app-popup','full-app-runthrough','full-app-popup','approach-jump-12','approach-jump-14','approach-jump-16','sl-bounds-pr-l','sl-bounds-pr-r','alt-bounds-jump'],
         supersets:[],
