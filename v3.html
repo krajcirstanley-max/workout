@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#ffffff">
-<title>JumpLab</title>
+<title>Hero</title>
 <link rel="manifest" href="manifest-v3.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -778,7 +778,7 @@ function WorkoutCard({plan,program,exercises,live,isPast,onAction,actionLabel}){
   </div>)}
 
 function WorkoutLogCard({wk,exercises,onClick}){
-  const dur=wk.endTime?fmtDur(wk.endTime-wk.startTime):'—';
+  const dur=wk.endTime?fmtDur(wk.endTime-wk.startTime):'-';
   const sets=Object.values(wk.athletes||{}).reduce((a,ad)=>a+Object.values(ad.sets||{}).reduce((b,s)=>b+s.filter(x=>x.completed).length,0),0);
   return(<div className="wcard" style={{cursor:'pointer'}} onClick={onClick}>
     <div className="wcard-head">
@@ -806,14 +806,14 @@ function WorkoutLogCard({wk,exercises,onClick}){
       </div>
       <div className="wcard-stat">
         <div className="wcard-stat-l">RPE</div>
-        <div className="wcard-stat-v">{Object.values(wk.athletes||{})[0]?.rpe||'—'}</div>
+        <div className="wcard-stat-v">{Object.values(wk.athletes||{})[0]?.rpe||'-'}</div>
       </div>
     </div>
   </div>)}
 
 function RecentRow({wk,onClick}){
   const d=new Date(wk.startTime);
-  const dur=wk.endTime?fmtDur(wk.endTime-wk.startTime):'—';
+  const dur=wk.endTime?fmtDur(wk.endTime-wk.startTime):'-';
   const tagColor=wk.tag?.color||wk.color||'var(--text3)';
   return(<button className="recent-row" onClick={onClick}>
     <div className="recent-date">
@@ -899,7 +899,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     setFocusIdx(nw.exerciseIds.length-1);return nw});setShowPicker(false)};
   if(!flatIds.length){return(<div className="shell">
     <div className="aw-top">
-      <button className="aw-back" onClick={()=>setConfirmCancel(true)}><Ic n="chevD" s={24}/></button>
+      <button className="aw-back" onClick={()=>onMinimize&&onMinimize()}><Ic n="chevD" s={24}/></button>
       <div className="aw-timer">{fmtT(Math.floor(elapsed/1000))}</div>
       <button className="aw-finish" onClick={()=>setShowFinish(true)}>Finish</button>
     </div>
@@ -912,19 +912,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       onSelect={ex2=>_addExercise(ex2)} onClose={()=>setShowPicker(false)}
       onCreateNew={()=>{setShowPicker(false);setShowNewEx(true)}}/>}
     {showNewEx&&<NewExerciseModal onSave={ex2=>{setExercises&&setExercises(p=>[...p,ex2]);_addExercise(ex2)}} onClose={()=>setShowNewEx(false)}/>}
-    {confirmCancel&&<div className="over" onClick={e=>e.target===e.currentTarget&&setConfirmCancel(false)}>
-      <div className="modal" style={{maxWidth:380,margin:'auto auto 14px',borderRadius:24}}>
-        <div className="confirm-body">
-          <h3>Leave workout?</h3>
-          <p>Keep it running and pick up where you left off, or discard it.</p>
-          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:10}}>
-            <button className="btn btn-primary" onClick={()=>onMinimize?onMinimize():setConfirmCancel(false)}>Leave — keep it running</button>
-            <button className="btn btn-secondary" onClick={()=>setConfirmCancel(false)}>Stay in workout</button>
-            <button className="btn btn-secondary" style={{color:'var(--red)',borderColor:'var(--red)'}} onClick={()=>onCancel()}>Discard workout</button>
-          </div>
-        </div>
-      </div>
-    </div>}
+    {confirmCancel&&<Confirm title="Discard workout?" message="This deletes the workout and everything logged in it." danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}
   </div>)}
 
   const safeIdx=Math.min(focusIdx,flatIds.length-1);
@@ -996,7 +984,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   if(hasR)totalReps=completed.reduce((a,s)=>a+(Number(s.values.reps)||0),0);
   if(hasW&&hasR)totalKg=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);
 
-  // Last session — actual logged values from the most recent workout with this exercise
+  // Last session - actual logged values from the most recent workout with this exercise
   const lastWk=[...workouts].reverse().find(w=>{const ws=w.athletes?.[activeAth]?.sets;if(!ws)return false;
     return Object.keys(ws).some(k=>baseExId(k)===baseExId(eid)&&ws[k].some(s=>s.completed))});
   let lastSets=[],lastNote='';
@@ -1019,7 +1007,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     }
   }
 
-  // PR highlight — collect priors from PAST workouts only (not current)
+  // PR highlight - collect priors from PAST workouts only (not current)
   const allPrior=[];workouts.forEach(w=>{if(w.id===workout.id)return;
     const baseId=baseExId(eid);
     Object.keys(w.athletes?.[activeAth]?.sets||{}).filter(k=>baseExId(k)===baseId).forEach(k=>{
@@ -1054,7 +1042,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
 
   return(<div className="shell">
     <div className="aw-top">
-      <button className="aw-back" onClick={()=>setConfirmCancel(true)}><Ic n="chevD" s={24}/></button>
+      <button className="aw-back" onClick={()=>onMinimize&&onMinimize()}><Ic n="chevD" s={24}/></button>
       <div className="aw-timer">{fmtT(Math.floor(elapsed/1000))}</div>
       <button className="aw-finish" onClick={()=>setShowFinish(true)}>Finish</button>
     </div>
@@ -1101,7 +1089,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
                 onChange={e=>updateSet(i,m.id,e.target.value===''?'':Number(e.target.value))}/>
               {prSetIdxs.has(i)&&mi===mds.length-1&&<span key={i+'-'+mi+'-'+(s.values[m.id]||'')} className="set-pr pulse" title="Personal Record">🏆</span>}
             </div>))}
-            <button className={'set-check'+(s.completed?' done':'')+(s.flop?' flop':'')} onClick={()=>toggleSet(i)} title={s.flop?'Flop — tap to clear':s.completed?'Done — tap for flop':'Tap to mark done'}>{s.completed&&<Ic n="check" s={18}/>}{s.flop&&<Ic n="x" s={16}/>}</button>
+            <button className={'set-check'+(s.completed?' done':'')+(s.flop?' flop':'')} onClick={()=>toggleSet(i)} title={s.flop?'Flop - tap to clear':s.completed?'Done - tap for flop':'Tap to mark done'}>{s.completed&&<Ic n="check" s={18}/>}{s.flop&&<Ic n="x" s={16}/>}</button>
           </div>)})}
           <div className="set-controls">
             <button className="set-ctrl-btn" onClick={delSet} disabled={sets.length<=1}>−</button>
@@ -1110,6 +1098,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
           </div>
         </div>
         <button className="btn btn-secondary" style={{marginTop:18}} onClick={()=>{setReplacingIdx(null);setShowPicker(true)}}>+ Add Exercise</button>
+        <button onClick={()=>setConfirmCancel(true)} style={{display:'block',margin:'14px auto 0',background:'transparent',border:'none',color:'var(--text3)',fontSize:13,fontWeight:700,padding:8}}>Discard workout</button>
       </div>
     </div>
 
@@ -1133,19 +1122,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       <button className="next" disabled={safeIdx>=flatIds.length-1} onClick={()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1))}>Next <Ic n="chevR" s={16}/></button>
     </div>
 
-    {confirmCancel&&<div className="over" onClick={e=>e.target===e.currentTarget&&setConfirmCancel(false)}>
-      <div className="modal" style={{maxWidth:380,margin:'auto auto 14px',borderRadius:24}}>
-        <div className="confirm-body">
-          <h3>Leave workout?</h3>
-          <p>Keep it running and pick up where you left off, or discard it.</p>
-          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:10}}>
-            <button className="btn btn-primary" onClick={()=>onMinimize?onMinimize():setConfirmCancel(false)}>Leave — keep it running</button>
-            <button className="btn btn-secondary" onClick={()=>setConfirmCancel(false)}>Stay in workout</button>
-            <button className="btn btn-secondary" style={{color:'var(--red)',borderColor:'var(--red)'}} onClick={()=>onCancel()}>Discard workout</button>
-          </div>
-        </div>
-      </div>
-    </div>}
+    {confirmCancel&&<Confirm title="Discard workout?" message="This deletes the workout and everything logged in it." danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}
     {burstKey>0&&<><div key={'burst-'+burstKey} className="pr-burst">🏆</div><div key={'toast-'+burstKey} className="pr-toast">New PR!</div></>}
     {showPicker&&<ExercisePicker exercises={exercises} exclude={replacingIdx==null?workout.exerciseIds:[]}
       onSelect={ex2=>replacingIdx!=null?replaceExercise(ex2):addExercise(ex2)}
@@ -1160,7 +1137,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       onEditNote={()=>{setShowActions(false);setShowNote(true)}}
       onToggleAthlete={toggleAthleteAssignment}/>}
     {showMetrics&&ex&&<MetricsEditor current={effMetrics} onChange={changeMetrics} onClose={()=>setShowMetrics(false)}/>}
-    {showNote&&<NoteEditor initial={noteFor(eid)} onSave={changeNote} onClose={()=>setShowNote(false)} title={`Notes — ${ex?.name||''}`}/>}
+    {showNote&&<NoteEditor initial={noteFor(eid)} onSave={changeNote} onClose={()=>setShowNote(false)} title={`Notes - ${ex?.name||''}`}/>}
   </div>)}
 
 function FinishForm({workout,athletes,elapsed,onSave,onCancel}){
@@ -1196,7 +1173,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
   const[editing,setEditing]=useState(false);
   const[selAth,setSelAth]=useState(athletes.find(a=>wk.athletes?.[a.id])?.id||athletes[0]?.id);
   const ad=wk.athletes?.[selAth];
-  const dur=wk.endTime?fmtDur(wk.endTime-wk.startTime):'—';
+  const dur=wk.endTime?fmtDur(wk.endTime-wk.startTime):'-';
   const totalSets=Object.values(ad?.sets||{}).reduce((a,s)=>a+s.filter(x=>x.completed||x.flop).length,0);
   const date=new Date(wk.startTime).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   const dirty=JSON.stringify(wk)!==JSON.stringify(initWk);
@@ -1258,7 +1235,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
           <div className="profile-stat"><div className="profile-stat-v">{totalSets}</div><div className="profile-stat-l">Sets</div></div>
         </div>
         {editing?<div style={{marginBottom:18}}>
-          <div style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,color:'var(--text3)',letterSpacing:'1px',textTransform:'uppercase',marginBottom:8}}>RPE — {ad?.rpe||'—'}/10</div>
+          <div style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,color:'var(--text3)',letterSpacing:'1px',textTransform:'uppercase',marginBottom:8}}>RPE - {ad?.rpe||'-'}/10</div>
           <input type="range" min="1" max="10" value={ad?.rpe||5} onChange={e=>setRpe(Number(e.target.value))} style={{width:'100%'}}/>
         </div>:ad?.rpe&&<div style={{textAlign:'center',marginBottom:18,fontSize:13,color:'var(--text2)'}}>RPE <strong style={{color:'var(--text)',fontSize:18,fontStyle:'italic'}}>{ad.rpe}/10</strong></div>}
         {ad?.notes&&!editing&&<div style={{padding:14,background:'var(--surface2)',borderRadius:12,marginBottom:18,fontSize:14,color:'var(--text2)',fontStyle:'italic'}}>{ad.notes}</div>}
@@ -1289,11 +1266,11 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
                 {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{unit:''};const val=v[m];const has=val!=null&&val!=='';
                   const pr=has&&isPR(eid,m,val,j);
                   if(editing)return(<input key={m} type="number" inputMode="decimal" step={md.step||0.01}
-                    value={val??''} placeholder={md.unit||'—'}
+                    value={val??''} placeholder={md.unit||'-'}
                     onChange={e=>setVal(eid,j,m,e.target.value)}
                     style={{padding:'8px 6px',border:'1.5px solid var(--border)',borderRadius:8,background:'var(--bg)',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums',fontSize:14,fontWeight:700,color:'var(--text)',width:'100%',minWidth:0,textAlign:'center'}}/>);
                   return(<span key={m} style={{color:has?'var(--text)':'var(--text3)',fontWeight:700,display:'flex',alignItems:'center',gap:4,minWidth:0}}>
-                    <span style={{overflow:'hidden',textOverflow:'ellipsis'}}>{has?val:'—'}{has&&md.unit?md.unit:''}</span>
+                    <span style={{overflow:'hidden',textOverflow:'ellipsis'}}>{has?val:'-'}{has&&md.unit?md.unit:''}</span>
                     {pr&&<span title="Personal Best" style={{display:'inline-flex',alignItems:'center',gap:2,padding:'1px 5px',background:'linear-gradient(135deg,#fbbf24,#f59e0b)',color:'#fff',borderRadius:5,fontSize:9,fontWeight:900,letterSpacing:'.4px',fontFamily:'var(--display)',fontStyle:'italic',flexShrink:0}}>🏆 PB</span>}
                   </span>)})}
               </div>)})}
@@ -2015,7 +1992,7 @@ function PlanModal({plan,date,exercises,onSave,onDelete,onClose}){
               {cfg[0]&&ex&&ex.metrics.map(m=>{const md=METRIC_MAP[m]||{name:m,unit:''};
                 return(<div key={m} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                   <span style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:700,color:'var(--text3)',letterSpacing:'.4px',textTransform:'uppercase',width:60}}>{md.name}</span>
-                  <input type="number" className="form-input" style={{padding:'8px 10px',fontSize:13}} placeholder={md.unit||'—'}
+                  <input type="number" className="form-input" style={{padding:'8px 10px',fontSize:13}} placeholder={md.unit||'-'}
                     value={cfg[0][m]??''} onChange={e=>cfg.forEach((_,si)=>updateRep(eid,si,m,e.target.value))}/>
                 </div>)})}
               {i<exIds.length-1&&<button onClick={()=>toggleSuperset(eid,exIds[i+1])} style={{marginTop:6,padding:'6px 12px',fontFamily:'var(--mono)',fontSize:10,fontWeight:800,letterSpacing:'.8px',textTransform:'uppercase',color:'var(--primary)',background:'var(--primary-dim)',borderRadius:8,border:'none'}}>{ss&&supersets.find(s=>s.includes(eid)&&s.includes(exIds[i+1]))?'Unlink ↓':'Link ↓'}</button>}
@@ -2175,7 +2152,7 @@ function App(){
   const cancelWorkout=()=>{['activeSession','activePlan','activeSnapshot'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
     try{localStorage.removeItem('wk2_v3_snap')}catch{}
     _clear();setInWorkout(false);setMinimized(false);setActivePlan(null)};
-  // Leave the workout running — keeps the session + snapshot so it can be resumed
+  // Leave the workout running - keeps the session + snapshot so it can be resumed
   const minimizeWorkout=()=>{setMinimized(true);setInWorkout(false)};
   const resumeWorkout=()=>{setMinimized(false);setInWorkout(true)};
 
@@ -2289,9 +2266,9 @@ function App(){
           'short-app-popup':'Cue: ARM BLOCK.',
           'full-app-runthrough':'Freelap + značky check.',
           'full-app-popup':'Freelap + video. Cue: ARM BLOCK.',
-          'approach-jump-12':'Z DOSKY. ARM BLOCK — nastaviť.',
-          'approach-jump-14':'Z DOSKY. ARM BLOCK — bridge.',
-          'approach-jump-16':'Z DOSKY. ARM BLOCK — hlavná práca. Freelap + video.'
+          'approach-jump-12':'Z DOSKY. ARM BLOCK - nastaviť.',
+          'approach-jump-14':'Z DOSKY. ARM BLOCK - bridge.',
+          'approach-jump-16':'Z DOSKY. ARM BLOCK - hlavná práca. Freelap + video.'
         },
         notes:'Hlavná téma: ARM BLOCK'
       }]});
@@ -2337,9 +2314,9 @@ function App(){
         },
         exNotes:{
           'standing-lj':'Max effort.',
-          'telemark-hold':'Telemark pozícia — výdrž.',
+          'telemark-hold':'Telemark pozícia - výdrž.',
           'lj-box-6step':'Posledné 2 pridať cones.',
-          'telemark-switch':'Telemark — výmena nôh.',
+          'telemark-switch':'Telemark - výmena nôh.',
           'lj-box-8step':'Klobúčiky.',
           'lj-landing-drill':'Nácvik dopadu.',
           'lj-box-10step':'Posledné 3 ubrať klobúčiky.'
@@ -2349,7 +2326,7 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
-  // One-shot seed: 2026-05-16 Gym — 3 circuits (ankle / back / posterior chain)
+  // One-shot seed: 2026-05-16 Gym - 3 circuits (ankle / back / posterior chain)
   useEffect(()=>{const KEY='wk2_v3_seed_gym_4';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
@@ -2443,7 +2420,7 @@ function App(){
     if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
   },[exSynced,exercises.length]);
 
-  // Migration: strip the bulk-dump plan notes — dosage now shows inline per exercise
+  // Migration: strip the bulk-dump plan notes - dosage now shows inline per exercise
   useEffect(()=>{const KEY='wk2_v3_fix_notes_2';
     if(localStorage.getItem(KEY)==='1')return;
     if(!plannedSynced)return;
@@ -2454,13 +2431,13 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[plannedSynced,planned]);
 
-  // Migration: strip dosage out of exercise notes — dosage lives in sets/reps, not notes
-  useEffect(()=>{const KEY='wk2_v3_fix_exnotes_1';
+  // Migration: strip dosage out of exercise notes - dosage lives in sets/reps, not notes
+  useEffect(()=>{const KEY='wk2_v3_fix_exnotes_3';
     if(localStorage.getItem(KEY)==='1')return;
     if(!plannedSynced)return;
     const fix={
-      'pl-lj-session-3':{'standing-arm-block':'Pripraviť ARM BLOCK pattern.','short-app-popup':'Cue: ARM BLOCK.','full-app-runthrough':'Freelap + značky check.','full-app-popup':'Freelap + video. Cue: ARM BLOCK.','approach-jump-12':'Z DOSKY. ARM BLOCK — nastaviť.','approach-jump-14':'Z DOSKY. ARM BLOCK — bridge.','approach-jump-16':'Z DOSKY. ARM BLOCK — hlavná práca. Freelap + video.'},
-      'pl-lj-session-4':{'standing-lj':'Max effort.','telemark-hold':'Telemark pozícia — výdrž.','lj-box-6step':'Posledné 2 pridať cones.','telemark-switch':'Telemark — výmena nôh.','lj-box-8step':'Klobúčiky.','lj-landing-drill':'Nácvik dopadu.','lj-box-10step':'Posledné 3 ubrať klobúčiky.'},
+      'pl-lj-session-3':{'standing-arm-block':'Pripraviť ARM BLOCK pattern.','short-app-popup':'Cue: ARM BLOCK.','full-app-runthrough':'Freelap + značky check.','full-app-popup':'Freelap + video. Cue: ARM BLOCK.','approach-jump-12':'Z DOSKY. ARM BLOCK - nastaviť.','approach-jump-14':'Z DOSKY. ARM BLOCK - bridge.','approach-jump-16':'Z DOSKY. ARM BLOCK - hlavná práca. Freelap + video.'},
+      'pl-lj-session-4':{'standing-lj':'Max effort.','telemark-hold':'Telemark pozícia - výdrž.','lj-box-6step':'Posledné 2 pridať cones.','telemark-switch':'Telemark - výmena nôh.','lj-box-8step':'Klobúčiky.','lj-landing-drill':'Nácvik dopadu.','lj-box-10step':'Posledné 3 ubrať klobúčiky.'},
       'pl-gym-4':{'ankle-isometric':'3 pozície.','calf-ecc-slam':'5s dole, slam board.','tibialis-raise-w':'S váhou.','lower-back-ext-rot':'S rotáciou.','mb-catch-rotational':'Chytiť + rotačný hod.','half-squat-jump-oh':'Váha nad hlavou.','sl-hamstring-rdl':'Hand-to-hand.','leg-press-sl-ecc':'5s dole, excentrika.'}
     };
     setPlanned(p=>{let changed=false;

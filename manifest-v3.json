@@ -1,6 +1,6 @@
 {
-  "name": "JumpLab",
-  "short_name": "JumpLab",
+  "name": "Hero",
+  "short_name": "Hero",
   "id": "/workout/v3.html",
   "start_url": "v3.html",
   "scope": "./",
