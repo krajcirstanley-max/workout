@@ -1117,7 +1117,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     {workout.exerciseIds.length>0&&<div className="aw-nav">
       <button disabled={safeBlk===0} onClick={()=>setBlockIdx(Math.max(0,safeBlk-1))}><Ic n="chevL" s={16}/> Back</button>
       <button className="timer" onClick={()=>setShowOrganize(true)}><Ic n="edit" s={15}/> Exercises</button>
-      <button className="next" disabled={isLastBlock} onClick={()=>setBlockIdx(Math.min(blocks.length-1,safeBlk+1))}>Next <Ic n="chevR" s={16}/></button>
+      <button className="next" onClick={()=>isLastBlock?setShowFinish(true):setBlockIdx(Math.min(blocks.length-1,safeBlk+1))}>{isLastBlock?'Finish':<>Next <Ic n="chevR" s={16}/></>}</button>
     </div>}
 
     {showPicker&&<ExercisePicker exercises={exercises} exclude={replacingEid==null?workout.exerciseIds:[]}
@@ -1842,9 +1842,9 @@ function FinishFormFull({workout,athletes,exercises,elapsed,allTags,onSave,onCan
   const activeAths=athletes.filter(a=>workout.athletes[a.id]);
   return(<div className="finish-screen">
     <div className="top" style={{paddingBottom:14,background:'var(--bg)',borderBottom:'1px solid var(--border)'}}>
-      <div style={{width:34}}/>
+      <button onClick={onCancel} style={{display:'flex',alignItems:'center',gap:2,background:'transparent',border:'none',color:'var(--text2)',fontSize:14,fontWeight:700,padding:4}}><Ic n="chevL" s={20}/>Workout</button>
       <div className="finish-title">Finish Session</div>
-      <button className="finish-x" onClick={onCancel}><Ic n="x" s={22}/></button>
+      <div style={{width:64}}/>
     </div>
     <div className="scroll no-tab" style={{padding:0,background:'var(--surface2)'}}>
       {/* Workout name */}
