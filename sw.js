@@ -1,14 +1,12 @@
-const CACHE='workout-v88';
+const CACHE='workout-v89';
 
 const PRECACHE=[
-  './',
-  './index.html',
-  './manifest.json',
+  './v3.html',
+  './manifest-v3.json',
   './icon-192.png',
   './icon-512.png',
   'https://unpkg.com/react@18/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-  'https://unpkg.com/@babel/standalone/babel.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'
 ];
