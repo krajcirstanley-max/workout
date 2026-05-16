@@ -984,16 +984,27 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   if(hasR)totalReps=completed.reduce((a,s)=>a+(Number(s.values.reps)||0),0);
   if(hasW&&hasR)totalKg=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);
 
-  // Last session
-  const lastWk=[...workouts].reverse().find(w=>w.athletes?.[activeAth]?.sets?.[eid] && w.athletes[activeAth].sets[eid].some(s=>s.completed));
-  const lastSets=lastWk?lastWk.athletes[activeAth].sets[eid].filter(s=>s.completed):[];
-  let lastSummary=null;
-  if(lastSets.length>0){
-    if(hasW&&hasR){const r=lastSets[0]?.values?.reps;const w=lastSets[0]?.values?.weight;
-      if(r&&w)lastSummary=`${lastSets.length} x ${r} @ ${w} lb`}
-    else lastSummary=`${lastSets.length} sets`;
+  // Last session — actual logged values from the most recent workout with this exercise
+  const lastWk=[...workouts].reverse().find(w=>{const ws=w.athletes?.[activeAth]?.sets;if(!ws)return false;
+    return Object.keys(ws).some(k=>baseExId(k)===baseExId(eid)&&ws[k].some(s=>s.completed))});
+  let lastSets=[],lastNote='';
+  if(lastWk){const ws=lastWk.athletes[activeAth].sets;
+    const lk=Object.keys(ws).find(k=>baseExId(k)===baseExId(eid)&&ws[k].some(s=>s.completed));
+    lastSets=ws[lk].filter(s=>s.completed);
+    const _ln=lastWk.exNotes?.[lk];lastNote=typeof _ln==='string'?_ln:(_ln?.[activeAth]||'');}
+  let lastSummary='';
+  if(lastSets.length){
+    if(hasW&&hasR){
+      const reps=lastSets.map(s=>s.values.reps).filter(v=>v!=null&&v!=='');
+      const ws=lastSets.map(s=>s.values.weight).filter(v=>v!=null&&v!=='');
+      const sameR=reps.length&&reps.every(r=>r===reps[0]);
+      lastSummary=`${lastSets.length}×${sameR?reps[0]:'·'}`+(ws.length?` @ ${ws.join(', ')} kg`:'');
+    }else{
+      const pm=effMetrics[0];const md=METRIC_MAP[pm]||{unit:''};
+      const vals=lastSets.map(s=>s.values[pm]).filter(v=>v!=null&&v!=='');
+      lastSummary=vals.length?vals.join(', ')+(md.unit?` ${md.unit}`:''):`${lastSets.length} sets`;
+    }
   }
-  // Working max from last session
   const workingMax=hasW?Math.max(...lastSets.map(s=>Number(s.values?.weight)||0))||null:null;
 
   // PR highlight — collect priors from PAST workouts only (not current)
@@ -1055,26 +1066,14 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         <button onClick={()=>setShowActions(true)} style={{position:'absolute',top:14,right:14,padding:6,color:'var(--text2)',background:'transparent',border:'none'}}><Ic n="more" s={20}/></button>
         <div className="ex-name" style={{paddingRight:36}}>{ex?.name||'?'}</div>
 
-        {(priorMaxW>0||lastSummary)&&<div className="ex-pr-card">
-          <div className="ex-pr-l">
-            {priorMaxW>0?<div className="ex-pr-icon"><Ic n="trophy" s={18}/></div>:<div className="ex-pr-icon" style={{background:'var(--surface2)',color:'var(--text2)'}}><Ic n="weight" s={18}/></div>}
-            <div className="ex-pr-meta">
-              <div className="ex-pr-h">{priorMaxW>0?'PR · Working Max':'Last Session'}</div>
-              <div className="ex-pr-v">{priorMaxW>0?`${priorMaxW} kg`:lastSummary}</div>
-            </div>
+        {lastSummary&&<div className="ex-pr-card" style={{flexDirection:'column',alignItems:'stretch',gap:8}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:10}}>
+            <span style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,letterSpacing:'.8px',color:'var(--text3)'}}>LAST SESSION</span>
+            {workingMax&&<span style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,letterSpacing:'.4px',color:'var(--text3)'}}>WORKING MAX <strong style={{color:'var(--text)',fontSize:13,fontStyle:'italic'}}>{workingMax} kg</strong></span>}
           </div>
-          <button style={{color:'var(--text3)',padding:6}}><Ic n="chevR" s={18}/></button>
-        </div>}
-
-        {lastSummary&&priorMaxW>0&&<div className="ex-stats-row">
-          <div className="ex-stat-card">
-            <div className="ex-stat-h">Last</div>
-            <div className="ex-stat-v">{lastSummary}</div>
-          </div>
-          {workingMax&&<div className="ex-stat-card">
-            <div className="ex-stat-h">Working Max</div>
-            <div className="ex-stat-v">{workingMax} kg</div>
-          </div>}
+          <div style={{fontSize:16,fontWeight:800,fontStyle:'italic',color:'var(--primary)',letterSpacing:'-.3px'}}>{lastSummary}</div>
+          {lastNote&&<div style={{display:'flex',gap:6,padding:'8px 10px',background:'var(--surface2)',borderRadius:8,fontSize:12.5,color:'var(--text2)',lineHeight:1.4}}>
+            <span style={{flexShrink:0}}>📝</span><span>{lastNote}</span></div>}
         </div>}
 
         {noteFor(eid)&&<div className="ex-note">{noteFor(eid)}</div>}
