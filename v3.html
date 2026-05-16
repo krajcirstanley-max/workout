@@ -646,7 +646,7 @@ function DayTypeToggle({type,onSet}){
 // Line chart of a metric's progression, coloured by whether it is improving
 function TrendChart({values,lowerBetter}){
   const W=320,H=84,pad=15;
-  if(!values||values.length<2)return(<div style={{height:60,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text4)',fontFamily:'var(--mono)',fontSize:10,fontWeight:800,letterSpacing:'.6px',textTransform:'uppercase'}}>Not enough sessions yet</div>);
+  if(!values||values.length<2)return(<div style={{height:30,display:'flex',alignItems:'center',color:'var(--text4)',fontFamily:'var(--mono)',fontSize:9.5,fontWeight:800,letterSpacing:'.6px',textTransform:'uppercase',margin:'2px 0 8px'}}>Trend appears after 2+ sessions</div>);
   const min=Math.min(...values),max=Math.max(...values),range=max-min||1;
   const X=i=>pad+(i/(values.length-1))*(W-2*pad);
   const Y=v=>H-pad-((v-min)/range)*(H-2*pad);
@@ -2593,11 +2593,15 @@ function App(){
 
     {tab==='today'&&!minimized&&<button className="fab" onClick={startEmpty}><Ic n="plus" s={22}/></button>}
 
-    {minimized&&<button onClick={resumeWorkout} style={{position:'fixed',left:0,right:0,bottom:'calc(var(--tab-h) + var(--safe-b))',zIndex:28,background:'var(--primary)',color:'#fff',border:'none',padding:'13px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',boxShadow:'0 -4px 16px rgba(0,0,0,.12)'}}>
-      <span style={{display:'flex',alignItems:'center',gap:9,fontSize:15,fontWeight:800,fontStyle:'italic'}}>
-        <span style={{width:9,height:9,borderRadius:'50%',background:'#fff'}}/>Workout in progress</span>
-      <span style={{display:'flex',alignItems:'center',gap:3,fontSize:14,fontWeight:800}}>Resume<Ic n="chevR" s={16}/></span>
-    </button>}
+    {minimized&&<div style={{position:'fixed',left:0,right:0,bottom:'calc(var(--tab-h) + var(--safe-b))',zIndex:28,background:'var(--primary)',color:'#fff',display:'flex',alignItems:'stretch',boxShadow:'0 -4px 16px rgba(0,0,0,.12)'}}>
+      <button onClick={resumeWorkout} style={{flex:1,background:'transparent',border:'none',color:'#fff',padding:'13px 6px 13px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <span style={{display:'flex',alignItems:'center',gap:9,fontSize:15,fontWeight:800,fontStyle:'italic'}}>
+          <span style={{width:9,height:9,borderRadius:'50%',background:'#fff'}}/>Workout in progress</span>
+        <span style={{display:'flex',alignItems:'center',gap:3,fontSize:14,fontWeight:800}}>Resume<Ic n="chevR" s={16}/></span>
+      </button>
+      <button onClick={()=>{if(window.confirm('Discard the workout in progress?'))cancelWorkout()}}
+        style={{background:'transparent',border:'none',borderLeft:'1px solid rgba(255,255,255,.25)',color:'rgba(255,255,255,.85)',padding:'0 18px',display:'flex',alignItems:'center'}}><Ic n="x" s={20}/></button>
+    </div>}
 
     <nav className="tabs">
       {[
