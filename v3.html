@@ -100,7 +100,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .h-italic{font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.6px;color:var(--text);line-height:1}
 
 /* === WORKOUT CARD === */
-.wcard{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px;margin:14px 14px;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.02)}
+.wcard{background:var(--surface2);border:none;border-radius:18px;padding:18px;margin:14px 14px;position:relative}
 .wcard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
 .wcard-coach{display:flex;align-items:center;gap:10px}
 .wcard-coach-icon{width:34px;height:34px;border-radius:8px;background:var(--text);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
@@ -162,9 +162,8 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 /* === BOTTOM TABS === */
 .tabs{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);background:var(--bg);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);align-items:stretch;z-index:30}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text3);font-size:10px;font-weight:700;background:transparent;border-radius:14px;margin:6px 4px;position:relative}
-.tab.on{color:var(--text)}
-.tab.on::before{content:'';position:absolute;inset:0;background:var(--yellow);border-radius:14px;z-index:-1;opacity:0}
-.tab.on{background:var(--yellow)}
+.tab.on{color:var(--primary)}
+.tab.on svg{stroke-width:2.4}
 .tab svg{width:22px;height:22px}
 .tab .lbl{font-size:10px;font-weight:700;letter-spacing:.2px}
 .tab-ath{width:24px;height:24px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;color:var(--text2);overflow:hidden}
@@ -854,7 +853,7 @@ function RestBar({startedAt,target,onStop}){
 }
 
 // One exercise card in the scrolling workout
-function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,workouts,onUpdateSet,onToggleSet,onToggleWarmup,onAddSet,onDelSet,onCheckAll,onActions,onSetAthleteNote}){
+function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,workouts,onUpdateSet,onToggleSet,onToggleWarmup,onAddSet,onDelSet,onCheckAll,onActions,onSetAthleteNote,onHistory}){
   const ex=exercises.find(e=>e.id===baseExId(eid));
   const sets=workout.athletes[activeAth]?.sets?.[eid]||[];
   const effMetrics=workout.exerciseMetrics?.[eid]||ex?.metrics||[];
@@ -906,10 +905,13 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
       <div className="ex-name" style={{flex:1,marginBottom:8}}>{ex?.name||'?'}</div>
       <button onClick={()=>onActions(eid)} style={{padding:6,color:'var(--text2)',background:'transparent',border:'none',flexShrink:0}}><Ic n="more" s={20}/></button>
     </div>
-    {lastSummary&&<div className="ex-pr-card" style={{flexDirection:'column',alignItems:'stretch',gap:2,border:'none',background:'var(--surface2)',marginBottom:8}}>
-      <span style={{fontSize:13,fontWeight:700,color:'var(--text3)'}}>Last session</span>
+    {lastSummary&&<button onClick={()=>onHistory&&onHistory(eid)} className="ex-pr-card" style={{flexDirection:'column',alignItems:'stretch',gap:2,border:'none',background:'var(--surface2)',marginBottom:8,width:'100%',textAlign:'left',cursor:'pointer'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <span style={{fontSize:13,fontWeight:700,color:'var(--text3)'}}>Last session</span>
+        <span style={{display:'flex',alignItems:'center',gap:1,fontSize:11,fontWeight:800,color:'var(--text3)',fontFamily:'var(--mono)',letterSpacing:'.4px'}}>HISTORY<Ic n="chevR" s={13}/></span>
+      </div>
       <div style={{fontSize:19,fontWeight:800,fontStyle:'italic',color:'var(--text)',letterSpacing:'-.3px'}}>{lastSummary}</div>
-    </div>}
+    </button>}
     {coachNote&&<div style={{display:'flex',gap:8,padding:'10px 12px',background:'var(--primary-dim)',borderRadius:10,marginBottom:8}}>
       <span style={{fontSize:10,fontWeight:800,color:'var(--primary)',fontFamily:'var(--mono)',letterSpacing:'.6px',flexShrink:0,paddingTop:2}}>COACH</span>
       <span style={{fontSize:14,color:'var(--text)',lineHeight:1.4}}>{coachNote}</span>
@@ -967,6 +969,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const[confirmCancel,setConfirmCancel]=useState(false);
   const[blockIdx,setBlockIdx]=useState(0);
   const[showOrganize,setShowOrganize]=useState(false);
+  const[historyEid,setHistoryEid]=useState(null);
   const stateRef=useRef();
   stateRef.current={workout};
   // Save snapshot on every change + on backgrounding
@@ -1105,7 +1108,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       {curBlock&&curBlock.eids.map(eid=><ExerciseCard key={eid} eid={eid} blockLabel={curBlock.letter} isSuperset={curBlock.superset}
         workout={workout} activeAth={activeAth} exercises={exercises} workouts={workouts}
         onUpdateSet={updateSet} onToggleSet={toggleSet} onToggleWarmup={toggleWarmup} onAddSet={addSet} onDelSet={delSet}
-        onCheckAll={checkAll} onActions={setActionsEid} onSetAthleteNote={setAthleteNote}/>)}
+        onCheckAll={checkAll} onActions={setActionsEid} onSetAthleteNote={setAthleteNote} onHistory={setHistoryEid}/>)}
       {isLastBlock&&workout.exerciseIds.length>0&&<div style={{padding:'12px 14px 0'}}>
         <button className="btn btn-primary" style={{width:'100%',padding:'17px',fontSize:17}} onClick={()=>setShowFinish(true)}>End Workout</button>
         <button onClick={()=>setConfirmCancel(true)} style={{display:'block',margin:'14px auto 4px',background:'transparent',border:'none',color:'var(--text3)',fontSize:13,fontWeight:700,padding:8}}>Discard workout</button>
@@ -1133,6 +1136,9 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       onEditMetrics={()=>{setMetricsEid(actionsEid);setActionsEid(null)}}
       onToggleAthlete={toggleAthleteAssignment}/>}
     {metricsEid&&<MetricsEditor current={metricsEff} onChange={changeMetrics} onClose={()=>setMetricsEid(null)}/>}
+    {historyEid&&exercises.find(e=>e.id===baseExId(historyEid))&&<ExerciseDetail
+      exercise={exercises.find(e=>e.id===baseExId(historyEid))} athletes={athletes} activeAth={activeAth}
+      workouts={workouts} onClose={()=>setHistoryEid(null)}/>}
     {showOrganize&&<div className="over" onClick={e=>e.target===e.currentTarget&&setShowOrganize(false)}>
       <div className="modal" style={{maxHeight:'88vh'}}>
         <div className="modal-h">
