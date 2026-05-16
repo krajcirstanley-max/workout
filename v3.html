@@ -705,9 +705,13 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
               {b.eids.map(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?.length||3;
                 const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
                 const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
+                const note=noteFor(plan.exNotes,eid,activeAth);
                 return(<div key={eid} className="block-rep">
                   <b>{detail}</b>
-                  <span style={{flex:1}}>{ex?.name||'?'}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <span>{ex?.name||'?'}</span>
+                    {note&&<div style={{fontSize:11,color:'var(--text3)',fontWeight:500,marginTop:2,lineHeight:1.35}}>{note}</div>}
+                  </div>
                 </div>)})}
             </div>
           </div>))})()}
@@ -2268,7 +2272,7 @@ function App(){
           'sl-bounds-pr-r':'3×/nohu.',
           'alt-bounds-jump':'4×.'
         },
-        notes:'Drop Jump 3×5 (CNS primer). Standing arm block drill 6×. Short approach pop-upy 5 krokov 4×3 (cue: ARM BLOCK). Full approach run-throughs 16 krokov 2× (Freelap, značky check). Full approach pop-upy 16 krokov 4× (Freelap, video, ARM BLOCK). Skoky z DOSKY: 12-step 3× (nastaviť), 14-step 3× (bridge), 16-step 4× (hlavná práca) — Freelap, video, 5 min pauzy na KAŽDOM. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×. Hlavná téma: ARM BLOCK.'
+        notes:'Hlavná téma: ARM BLOCK'
       }]});
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
@@ -2325,7 +2329,7 @@ function App(){
           'tibialis-raise':'2×20.',
           'slider-ecc-curl':'2×3+3 (3/nohu).'
         },
-        notes:'Standing LJ 3×. Telemark Drill (hold) 4×. 6-step LJ z boxu 4× (posledné 2 pridať cones). Telemark Drill (výmena) 4×. 8-step LJ z boxu 4× (klobúčiky). LJ Landing Drill 5×. 10-step LJ z boxu 6× (posledné 3 ubrať klobúčiky). Alternate Bounds w pre-run 3×. SL Bounds w pre-run 3+3×. Heel Drops 2×10. Tibialis 2×20. Hamstring Slider 2×3+3.'
+        notes:''
       }]});
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
@@ -2391,7 +2395,7 @@ function App(){
           'copenhagen-plank':'15s/stranu.',
           'lunges':'8/nohu.'
         },
-        notes:'3 okruhy, každý 3 kolá. ① Ankle Complex: Knee-over-toe w band 10/nohu · Ankle isometric 3×10s/nohu · Calf ecc slam board 8/nohu (5s dole) · Slam board pogos 10× · Tibialis raises w weight 15×. ② Back + Postural Integrity: Lower back ext w rotation 8/stranu · Suitcase carry 20m/strana · MB catch + rotational throw 5/stranu · Half squat jump w weight overhead 6×. ③ Posterior Chain: SL hamstring RDL hand-to-hand 6/nohu · Leg press SL ecc 6/nohu (5s dole) · Copenhagen plank 15s/stranu · Lunges 8/nohu.'
+        notes:'① Ankle Complex · ② Back + Postural Integrity · ③ Posterior Chain'
       }]});
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
@@ -2428,6 +2432,17 @@ function App(){
     const missing=Object.keys(defs).filter(id=>!have.has(id)).map(id=>defs[id]);
     if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
   },[exSynced,exercises.length]);
+
+  // Migration: strip the bulk-dump plan notes — dosage now shows inline per exercise
+  useEffect(()=>{const KEY='wk2_v3_fix_notes_2';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!plannedSynced)return;
+    const fix={'pl-gym-4':'① Ankle Complex · ② Back + Postural Integrity · ③ Posterior Chain','pl-lj-session-3':'Hlavná téma: ARM BLOCK','pl-lj-session-4':''};
+    setPlanned(p=>{let changed=false;
+      const n=p.map(pl=>{if(Object.keys(fix).includes(pl.id)&&(pl.notes||'')!==fix[pl.id]){changed=true;return{...pl,notes:fix[pl.id]}}return pl});
+      return changed?n:p});
+    localStorage.setItem(KEY,'1')
+  },[plannedSynced,planned]);
 
   useEffect(()=>{const c=ath?.color||'#2156f4';
     document.documentElement.style.setProperty('--primary',c);
