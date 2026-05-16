@@ -325,6 +325,16 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .recent{padding:0 14px}
 .recent-row{background:var(--surface2);border:none;border-radius:16px;padding:15px 16px;margin-bottom:8px;display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;cursor:pointer;transition:background .12s}
 .recent-row:active{background:var(--surface3)}
+.velo-hero{margin:16px 14px 4px;background:linear-gradient(160deg,#16161c,#0c0c10);border-radius:20px;padding:18px 18px 6px;color:#fff}
+.velo-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.velo-label{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.velo-best{font-family:var(--mono);font-size:10px;font-weight:700;color:rgba(255,255,255,.45)}
+.velo-big{font-size:52px;font-weight:900;font-style:italic;letter-spacing:-2px;line-height:1;color:#fff}
+.velo-unit{font-size:18px;font-weight:800;font-style:normal;color:rgba(255,255,255,.5);margin-left:6px;letter-spacing:0}
+.velo-delta{font-size:12px;font-weight:800;margin:8px 0 2px}
+.velo-hero svg polyline{stroke:#f5a623!important}
+.velo-hero svg circle{fill:#f5a623!important}
+.velo-hero svg polygon{fill:#f5a623!important}
 .stat-summary{display:flex;margin:16px 14px 8px;background:var(--surface2);border-radius:18px;padding:18px 6px}
 .stat-cell{flex:1;text-align:center}
 .stat-cell-v{font-size:27px;font-weight:900;font-style:italic;color:var(--text);letter-spacing:-.9px;line-height:1;font-variant-numeric:tabular-nums}
@@ -1053,9 +1063,9 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     const onVis=()=>{if(document.visibilityState==='visible'&&!lock&&!cancelled)acquire()};
     document.addEventListener('visibilitychange',onVis);
     return()=>{cancelled=true;document.removeEventListener('visibilitychange',onVis);if(lock)lock.release().catch(()=>{})}},[]);
-  // Shared-session push every 15s
+  // Shared-session push every 15s, paused while the app is backgrounded (battery)
   useEffect(()=>{if(!sb)return;const planId=initialPlan?.id||null;
-    const push=()=>{const s=stateRef.current;if(!s)return;
+    const push=()=>{const s=stateRef.current;if(!s||document.visibilityState==='hidden')return;
       sb.from('wk_store').upsert({key:'sharedActiveSession',value:{planId,plan:initialPlan||null,snapshot:s,updatedAt:Date.now()},updated_at:new Date().toISOString()}).then(()=>{})};
     push();const iv=setInterval(push,15000);return()=>clearInterval(iv)},[]);
 
@@ -1447,6 +1457,17 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
   const matchQ=eid=>!q.trim()||prMap[eid].name.toLowerCase().includes(q.trim().toLowerCase());
   const section=(title,ids)=>{const f=ids.filter(matchQ);return f.length>0?<><div className="s-title">{title}</div><div className="recent">{f.map(renderRow)}</div></>:null};
   const noMatch=Object.keys(prMap).length>0&&!Object.keys(prMap).some(matchQ);
+  // Velocity trend: fastest free 10m fly per session, as m/s
+  const FLY10=['fly-10m-1','fly-10m-2','fly-10m-3'];
+  const velo=[];
+  [...myWk].sort((a,b)=>a.startTime-b.startTime).forEach(w=>{const ad=w.athletes[activeAth];if(!ad)return;
+    let fastest=Infinity;
+    Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);
+      if(base.includes('overspeed')||base.includes('resisted'))return;
+      ad.sets[eid].filter(s=>s.completed&&!s.warmup).forEach(s=>{const v=s.values||{};
+        FLY10.forEach(m=>{const t=Number(v[m]);if(t>0&&t<fastest)fastest=t});
+        if(base==='fly-10m'){const t=Number(v['tf-time']);if(t>0&&t<fastest)fastest=t}})});
+    if(fastest<Infinity&&fastest>0)velo.push(Math.round(1000/fastest)/100)});
   const d30=myWk.filter(w=>Date.now()-w.startTime<30*864e5).length;
   const d7=myWk.filter(w=>Date.now()-w.startTime<7*864e5).length;
 
@@ -1458,10 +1479,23 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
           {a.photo?<img src={a.photo} alt=""/>:<span>{initials(a.name||'')}</span>}
         </button>))}
       </div>
-      <div className="top-month">STATS</div>
+      <div className="top-month">INSIGHTS</div>
       <div className="top-spacer"/>
     </div>
     <div className="scroll">
+      {velo.length>=1&&(()=>{const last=velo[velo.length-1];const best=Math.max(...velo);
+        const hasPrev=velo.length>=2;const delta=hasPrev?last-velo[velo.length-2]:0;
+        return(<div className="velo-hero">
+          <div className="velo-head">
+            <span className="velo-label">Top Speed · 10m Fly</span>
+            {hasPrev&&<span className="velo-best">Best {best.toFixed(2)} m/s</span>}
+          </div>
+          <div className="velo-big">{last.toFixed(2)}<span className="velo-unit">m/s</span></div>
+          {hasPrev?<><div className="velo-delta" style={{color:delta>0?'#16a34a':delta<0?'#ef4444':'rgba(255,255,255,.5)'}}>
+            {delta>0?'▲':delta<0?'▼':'•'} {Math.abs(delta).toFixed(2)} m/s vs last session</div>
+            <TrendChart values={velo} lowerBetter={false}/></>
+            :<div className="velo-delta" style={{color:'rgba(255,255,255,.5)'}}>Log another speed session to see the trend</div>}
+        </div>)})()}
       <div className="stat-summary">
         {[[myWk.length,'Sessions'],[d30,'30 Days'],[d7,'This Week']].map(([v,l],i)=>(
           <div key={l} className="stat-cell" style={i?{borderLeft:'1px solid var(--border)'}:{}}>
@@ -2608,7 +2642,7 @@ function App(){
         {id:'today',ic:'home',l:'Home'},
         {id:'train',ic:'cal',l:'Training'},
         {id:'lib',ic:'book',l:'Library'},
-        {id:'stats',ic:'bar',l:'Stats'},
+        {id:'stats',ic:'bar',l:'Insights'},
         {id:'me',ic:'user',l:'Me',ath:true},
       ].map(t=>(<button key={t.id} className={'tab'+(tab===t.id?' on':'')} onClick={()=>setTab(t.id)}>
         {t.ath?<div className="tab-ath" style={{background:ath?.color||'var(--surface3)',color:'#fff'}}>{ath?.photo?<img src={ath.photo}/>:initials(ath?.name||'')}</div>
