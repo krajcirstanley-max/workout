@@ -828,7 +828,7 @@ function RecentRow({wk,onClick}){
   </button>)}
 
 // === ACTIVE WORKOUT ===
-function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,workouts,initialPlan,onFinish,onCancel,allTags}){
+function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,workouts,initialPlan,onFinish,onCancel,onMinimize,allTags}){
   const[showPicker,setShowPicker]=useState(false);
   const[showNewEx,setShowNewEx]=useState(false);
   const[showActions,setShowActions]=useState(false);
@@ -899,7 +899,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     setFocusIdx(nw.exerciseIds.length-1);return nw});setShowPicker(false)};
   if(!flatIds.length){return(<div className="shell">
     <div className="aw-top">
-      <button className="aw-back" onClick={()=>setConfirmCancel(true)}><Ic n="chevL" s={22}/></button>
+      <button className="aw-back" onClick={()=>setConfirmCancel(true)}><Ic n="chevD" s={24}/></button>
       <div className="aw-timer">{fmtT(Math.floor(elapsed/1000))}</div>
       <button className="aw-finish" onClick={()=>setShowFinish(true)}>Finish</button>
     </div>
@@ -912,7 +912,19 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       onSelect={ex2=>_addExercise(ex2)} onClose={()=>setShowPicker(false)}
       onCreateNew={()=>{setShowPicker(false);setShowNewEx(true)}}/>}
     {showNewEx&&<NewExerciseModal onSave={ex2=>{setExercises&&setExercises(p=>[...p,ex2]);_addExercise(ex2)}} onClose={()=>setShowNewEx(false)}/>}
-    {confirmCancel&&<Confirm title="Discard workout?" message="All progress will be lost." danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}
+    {confirmCancel&&<div className="over" onClick={e=>e.target===e.currentTarget&&setConfirmCancel(false)}>
+      <div className="modal" style={{maxWidth:380,margin:'auto auto 14px',borderRadius:24}}>
+        <div className="confirm-body">
+          <h3>Leave workout?</h3>
+          <p>Keep it running and pick up where you left off, or discard it.</p>
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:10}}>
+            <button className="btn btn-primary" onClick={()=>onMinimize?onMinimize():setConfirmCancel(false)}>Leave — keep it running</button>
+            <button className="btn btn-secondary" onClick={()=>setConfirmCancel(false)}>Stay in workout</button>
+            <button className="btn btn-secondary" style={{color:'var(--red)',borderColor:'var(--red)'}} onClick={()=>onCancel()}>Discard workout</button>
+          </div>
+        </div>
+      </div>
+    </div>}
   </div>)}
 
   const safeIdx=Math.min(focusIdx,flatIds.length-1);
@@ -1002,10 +1014,10 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     }else{
       const pm=effMetrics[0];const md=METRIC_MAP[pm]||{unit:''};
       const vals=lastSets.map(s=>s.values[pm]).filter(v=>v!=null&&v!=='');
-      lastSummary=vals.length?vals.join(', ')+(md.unit?` ${md.unit}`:''):`${lastSets.length} sets`;
+      // drills logged with no values get no Last card
+      lastSummary=vals.length?vals.join(', ')+(md.unit?` ${md.unit}`:''):'';
     }
   }
-  const workingMax=hasW?Math.max(...lastSets.map(s=>Number(s.values?.weight)||0))||null:null;
 
   // PR highlight — collect priors from PAST workouts only (not current)
   const allPrior=[];workouts.forEach(w=>{if(w.id===workout.id)return;
@@ -1042,7 +1054,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
 
   return(<div className="shell">
     <div className="aw-top">
-      <button className="aw-back" onClick={()=>setConfirmCancel(true)}><Ic n="chevL" s={22}/></button>
+      <button className="aw-back" onClick={()=>setConfirmCancel(true)}><Ic n="chevD" s={24}/></button>
       <div className="aw-timer">{fmtT(Math.floor(elapsed/1000))}</div>
       <button className="aw-finish" onClick={()=>setShowFinish(true)}>Finish</button>
     </div>
@@ -1066,14 +1078,10 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         <button onClick={()=>setShowActions(true)} style={{position:'absolute',top:14,right:14,padding:6,color:'var(--text2)',background:'transparent',border:'none'}}><Ic n="more" s={20}/></button>
         <div className="ex-name" style={{paddingRight:36}}>{ex?.name||'?'}</div>
 
-        {lastSummary&&<div className="ex-pr-card" style={{flexDirection:'column',alignItems:'stretch',gap:8}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:10}}>
-            <span style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,letterSpacing:'.8px',color:'var(--text3)'}}>LAST SESSION</span>
-            {workingMax&&<span style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,letterSpacing:'.4px',color:'var(--text3)'}}>WORKING MAX <strong style={{color:'var(--text)',fontSize:13,fontStyle:'italic'}}>{workingMax} kg</strong></span>}
-          </div>
-          <div style={{fontSize:16,fontWeight:800,fontStyle:'italic',color:'var(--primary)',letterSpacing:'-.3px'}}>{lastSummary}</div>
-          {lastNote&&<div style={{display:'flex',gap:6,padding:'8px 10px',background:'var(--surface2)',borderRadius:8,fontSize:12.5,color:'var(--text2)',lineHeight:1.4}}>
-            <span style={{flexShrink:0}}>📝</span><span>{lastNote}</span></div>}
+        {lastSummary&&<div className="ex-pr-card" style={{flexDirection:'column',alignItems:'stretch',gap:3}}>
+          <span style={{fontSize:14,fontWeight:700,color:'var(--text3)'}}>Last session</span>
+          <div style={{fontSize:21,fontWeight:800,fontStyle:'italic',color:'var(--text)',letterSpacing:'-.4px'}}>{lastSummary}</div>
+          {lastNote&&<div style={{marginTop:6,fontSize:14,color:'var(--text2)',lineHeight:1.45}}>{lastNote}</div>}
         </div>}
 
         {noteFor(eid)&&<div className="ex-note">{noteFor(eid)}</div>}
@@ -1125,7 +1133,19 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       <button className="next" disabled={safeIdx>=flatIds.length-1} onClick={()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1))}>Next <Ic n="chevR" s={16}/></button>
     </div>
 
-    {confirmCancel&&<Confirm title="Discard workout?" message="All progress will be lost." danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}
+    {confirmCancel&&<div className="over" onClick={e=>e.target===e.currentTarget&&setConfirmCancel(false)}>
+      <div className="modal" style={{maxWidth:380,margin:'auto auto 14px',borderRadius:24}}>
+        <div className="confirm-body">
+          <h3>Leave workout?</h3>
+          <p>Keep it running and pick up where you left off, or discard it.</p>
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:10}}>
+            <button className="btn btn-primary" onClick={()=>onMinimize?onMinimize():setConfirmCancel(false)}>Leave — keep it running</button>
+            <button className="btn btn-secondary" onClick={()=>setConfirmCancel(false)}>Stay in workout</button>
+            <button className="btn btn-secondary" style={{color:'var(--red)',borderColor:'var(--red)'}} onClick={()=>onCancel()}>Discard workout</button>
+          </div>
+        </div>
+      </div>
+    </div>}
     {burstKey>0&&<><div key={'burst-'+burstKey} className="pr-burst">🏆</div><div key={'toast-'+burstKey} className="pr-toast">New PR!</div></>}
     {showPicker&&<ExercisePicker exercises={exercises} exclude={replacingIdx==null?workout.exerciseIds:[]}
       onSelect={ex2=>replacingIdx!=null?replaceExercise(ex2):addExercise(ex2)}
@@ -2103,6 +2123,7 @@ function App(){
   const[tab,setTab]=useState('today');
   const[selDate,setSelDate]=useState(new Date());
   const[inWorkout,setInWorkout]=useState(()=>localStorage.getItem('wk2_activeSession')==='1');
+  const[minimized,setMinimized]=useState(false);
   const[activePlan,setActivePlan]=useState(()=>{try{return JSON.parse(localStorage.getItem('wk2_activePlan')||'null')}catch{return null}});
   const[viewing,setViewing]=useState(null);
   const[viewEx,setViewEx]=useState(null);
@@ -2150,10 +2171,13 @@ function App(){
     _clear();
     if(wk.exerciseIds.length>0)setWorkouts(p=>[...p,wk]);
     if(activePlan&&!activePlan.id?.startsWith('tpl-'))setPlanned(p=>p.filter(pl=>pl.id!==activePlan.id));
-    setInWorkout(false);setActivePlan(null)};
+    setInWorkout(false);setMinimized(false);setActivePlan(null)};
   const cancelWorkout=()=>{['activeSession','activePlan','activeSnapshot'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
     try{localStorage.removeItem('wk2_v3_snap')}catch{}
-    _clear();setInWorkout(false);setActivePlan(null)};
+    _clear();setInWorkout(false);setMinimized(false);setActivePlan(null)};
+  // Leave the workout running — keeps the session + snapshot so it can be resumed
+  const minimizeWorkout=()=>{setMinimized(true);setInWorkout(false)};
+  const resumeWorkout=()=>{setMinimized(false);setInWorkout(true)};
 
   const ath=athletes.find(a=>a.id===activeAth);
 
@@ -2261,17 +2285,13 @@ function App(){
           'alt-bounds-jump':[{},{},{}]
         },
         exNotes:{
-          'drop-jump':'3×5. CNS primer.',
-          'standing-arm-block':'6× nácvik — pripraviť ARM BLOCK pattern.',
-          'short-app-popup':'5 krokov, 4×3. Cue: ARM BLOCK.',
-          'full-app-runthrough':'16 krokov, 2×. Freelap + značky check.',
-          'full-app-popup':'16 krokov, 4×. Freelap + video. Cue: ARM BLOCK.',
-          'approach-jump-12':'Z DOSKY, 3×. ARM BLOCK — nastaviť.',
-          'approach-jump-14':'Z DOSKY, 3×. ARM BLOCK — bridge.',
-          'approach-jump-16':'Z DOSKY, 4×. ARM BLOCK — hlavná práca. Freelap + video, 5 min pauzy.',
-          'sl-bounds-pr-l':'3×/nohu.',
-          'sl-bounds-pr-r':'3×/nohu.',
-          'alt-bounds-jump':'4×.'
+          'standing-arm-block':'Pripraviť ARM BLOCK pattern.',
+          'short-app-popup':'Cue: ARM BLOCK.',
+          'full-app-runthrough':'Freelap + značky check.',
+          'full-app-popup':'Freelap + video. Cue: ARM BLOCK.',
+          'approach-jump-12':'Z DOSKY. ARM BLOCK — nastaviť.',
+          'approach-jump-14':'Z DOSKY. ARM BLOCK — bridge.',
+          'approach-jump-16':'Z DOSKY. ARM BLOCK — hlavná práca. Freelap + video.'
         },
         notes:'Hlavná téma: ARM BLOCK'
       }]});
@@ -2316,19 +2336,13 @@ function App(){
           'slider-ecc-curl':[{reps:3},{reps:3}]
         },
         exNotes:{
-          'standing-lj':'3×. Standing long jump — max effort.',
-          'telemark-hold':'4×. Telemark pozícia — výdrž.',
-          'lj-box-6step':'6 krokov z boxu, 4×. Posledné 2 pridať cones.',
-          'telemark-switch':'4×. Telemark drill — výmena nôh.',
-          'lj-box-8step':'8 krokov z boxu, 4×. Klobúčiky.',
-          'lj-landing-drill':'5×. Nácvik dopadu.',
-          'lj-box-10step':'10 krokov z boxu, 6×. Posledné 3 ubrať klobúčiky.',
-          'alt-bounds-jump':'3× s pre-run.',
-          'sl-bounds-pr-l':'3×/ľavá noha, s pre-run.',
-          'sl-bounds-pr-r':'3×/pravá noha, s pre-run.',
-          'heel-drops':'2×10.',
-          'tibialis-raise':'2×20.',
-          'slider-ecc-curl':'2×3+3 (3/nohu).'
+          'standing-lj':'Max effort.',
+          'telemark-hold':'Telemark pozícia — výdrž.',
+          'lj-box-6step':'Posledné 2 pridať cones.',
+          'telemark-switch':'Telemark — výmena nôh.',
+          'lj-box-8step':'Klobúčiky.',
+          'lj-landing-drill':'Nácvik dopadu.',
+          'lj-box-10step':'Posledné 3 ubrať klobúčiky.'
         },
         notes:''
       }]});
@@ -2382,19 +2396,14 @@ function App(){
           'lunges':[{reps:8},{reps:8},{reps:8}]
         },
         exNotes:{
-          'knee-over-toe-band':'10/nohu.',
-          'ankle-isometric':'3 pozície × 10s/nohu.',
-          'calf-ecc-slam':'8/nohu, 5s dole (slam board).',
-          'slam-board-pogos':'10×.',
-          'tibialis-raise-w':'S váhou. 15×.',
-          'lower-back-ext-rot':'8/stranu, s rotáciou.',
-          'suitcase-carry':'20m/strana.',
-          'mb-catch-rotational':'5/stranu — chytiť + rotačný hod.',
-          'half-squat-jump-oh':'6×, váha nad hlavou.',
-          'sl-hamstring-rdl':'6/nohu, hand-to-hand.',
-          'leg-press-sl-ecc':'6/nohu, 5s dole (excentrika).',
-          'copenhagen-plank':'15s/stranu.',
-          'lunges':'8/nohu.'
+          'ankle-isometric':'3 pozície.',
+          'calf-ecc-slam':'5s dole, slam board.',
+          'tibialis-raise-w':'S váhou.',
+          'lower-back-ext-rot':'S rotáciou.',
+          'mb-catch-rotational':'Chytiť + rotačný hod.',
+          'half-squat-jump-oh':'Váha nad hlavou.',
+          'sl-hamstring-rdl':'Hand-to-hand.',
+          'leg-press-sl-ecc':'5s dole, excentrika.'
         },
         notes:'① Ankle Complex · ② Back + Postural Integrity · ③ Posterior Chain'
       }]});
@@ -2445,6 +2454,21 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[plannedSynced,planned]);
 
+  // Migration: strip dosage out of exercise notes — dosage lives in sets/reps, not notes
+  useEffect(()=>{const KEY='wk2_v3_fix_exnotes_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!plannedSynced)return;
+    const fix={
+      'pl-lj-session-3':{'standing-arm-block':'Pripraviť ARM BLOCK pattern.','short-app-popup':'Cue: ARM BLOCK.','full-app-runthrough':'Freelap + značky check.','full-app-popup':'Freelap + video. Cue: ARM BLOCK.','approach-jump-12':'Z DOSKY. ARM BLOCK — nastaviť.','approach-jump-14':'Z DOSKY. ARM BLOCK — bridge.','approach-jump-16':'Z DOSKY. ARM BLOCK — hlavná práca. Freelap + video.'},
+      'pl-lj-session-4':{'standing-lj':'Max effort.','telemark-hold':'Telemark pozícia — výdrž.','lj-box-6step':'Posledné 2 pridať cones.','telemark-switch':'Telemark — výmena nôh.','lj-box-8step':'Klobúčiky.','lj-landing-drill':'Nácvik dopadu.','lj-box-10step':'Posledné 3 ubrať klobúčiky.'},
+      'pl-gym-4':{'ankle-isometric':'3 pozície.','calf-ecc-slam':'5s dole, slam board.','tibialis-raise-w':'S váhou.','lower-back-ext-rot':'S rotáciou.','mb-catch-rotational':'Chytiť + rotačný hod.','half-squat-jump-oh':'Váha nad hlavou.','sl-hamstring-rdl':'Hand-to-hand.','leg-press-sl-ecc':'5s dole, excentrika.'}
+    };
+    setPlanned(p=>{let changed=false;
+      const n=p.map(pl=>{if(fix[pl.id]&&JSON.stringify(pl.exNotes||{})!==JSON.stringify(fix[pl.id])){changed=true;return{...pl,exNotes:fix[pl.id]}}return pl});
+      return changed?n:p});
+    localStorage.setItem(KEY,'1')
+  },[plannedSynced,planned]);
+
   useEffect(()=>{const c=ath?.color||'#2156f4';
     document.documentElement.style.setProperty('--primary',c);
     const dark=c.replace(/^#/,'');const r=parseInt(dark.slice(0,2),16),g=parseInt(dark.slice(2,4),16),b=parseInt(dark.slice(4,6),16);
@@ -2455,7 +2479,7 @@ function App(){
 
   if(inWorkout)return(<ActiveWorkout athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth}
     exercises={exercises} setExercises={setExercises} workouts={workouts} initialPlan={activePlan}
-    onFinish={finishWorkout} onCancel={cancelWorkout} allTags={allTags}/>);
+    onFinish={finishWorkout} onCancel={cancelWorkout} onMinimize={minimizeWorkout} allTags={allTags}/>);
 
   return(<>
     <PullRefresh/>
@@ -2493,7 +2517,13 @@ function App(){
       onUpdateMetrics={(id,m)=>{setExercises(p=>p.map(e=>e.id===id?{...e,metrics:m}:e));setViewEx(e=>({...e,metrics:m}))}}/>}
     {editAthlete&&<EditAthleteModal athlete={editAthlete} onSave={a=>setAthletes(p=>p.map(x=>x.id===a.id?a:x))} onClose={()=>setEditAthlete(null)}/>}
 
-    {tab==='today'&&<button className="fab" onClick={startEmpty}><Ic n="plus" s={22}/></button>}
+    {tab==='today'&&!minimized&&<button className="fab" onClick={startEmpty}><Ic n="plus" s={22}/></button>}
+
+    {minimized&&<button onClick={resumeWorkout} style={{position:'fixed',left:0,right:0,bottom:'calc(var(--tab-h) + var(--safe-b))',zIndex:28,background:'var(--primary)',color:'#fff',border:'none',padding:'13px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',boxShadow:'0 -4px 16px rgba(0,0,0,.12)'}}>
+      <span style={{display:'flex',alignItems:'center',gap:9,fontSize:15,fontWeight:800,fontStyle:'italic'}}>
+        <span style={{width:9,height:9,borderRadius:'50%',background:'#fff'}}/>Workout in progress</span>
+      <span style={{display:'flex',alignItems:'center',gap:3,fontSize:14,fontWeight:800}}>Resume<Ic n="chevR" s={16}/></span>
+    </button>}
 
     <nav className="tabs">
       {[
