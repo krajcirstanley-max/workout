@@ -319,8 +319,8 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 
 /* === RECENT === */
 .recent{padding:0 14px}
-.recent-row{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;cursor:pointer}
-.recent-row:active{background:var(--surface2)}
+.recent-row{background:var(--surface2);border:none;border-radius:16px;padding:15px 16px;margin-bottom:8px;display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;cursor:pointer;transition:background .12s}
+.recent-row:active{background:var(--surface3)}
 .recent-date{font-family:var(--mono);font-size:10px;font-weight:800;color:var(--text2);letter-spacing:.4px;text-align:center;text-transform:uppercase;line-height:1}
 .recent-date .d{font-size:18px;font-weight:900;color:var(--text);display:block;letter-spacing:-.5px;font-style:italic}
 .recent-info{min-width:0}
@@ -366,8 +366,8 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .picker-chip{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:800;background:var(--surface2);color:var(--text2);white-space:nowrap;border:none;cursor:pointer;flex-shrink:0}
 .picker-chip.on{background:var(--text);color:#fff}
 .picker-list{padding:0 14px}
-.picker-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1px solid var(--border);border-radius:12px;margin-bottom:6px;cursor:pointer;background:var(--surface);width:100%;text-align:left}
-.picker-row:active{background:var(--surface2)}
+.picker-row{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border:none;border-radius:14px;margin-bottom:7px;cursor:pointer;background:var(--surface2);width:100%;text-align:left;transition:background .12s}
+.picker-row:active{background:var(--surface3)}
 .picker-row-info{display:flex;flex-direction:column;gap:2px}
 .picker-row-name{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.2px}
 .picker-row-meta{font-family:var(--mono);font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
@@ -448,7 +448,7 @@ textarea.form-input{min-height:80px;font-size:14px;resize:vertical;font-family:v
 .profile-photo img{width:100%;height:100%;object-fit:cover}
 .profile-name{font-size:32px;font-weight:900;font-style:italic;letter-spacing:-.6px;text-transform:uppercase}
 .profile-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 14px 14px}
-.profile-stat{padding:14px;border:1px solid var(--border);border-radius:14px;text-align:center}
+.profile-stat{padding:16px 12px;border:none;background:var(--surface2);border-radius:16px;text-align:center}
 .profile-stat-v{font-size:20px;font-weight:900;font-style:italic;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .profile-stat-l{font-family:var(--mono);font-size:9px;font-weight:800;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-top:4px}
 .profile-menu{margin:0 14px}
@@ -1299,7 +1299,7 @@ function Confirm({title,message,danger,onConfirm,onCancel}){
   </div>)}
 
 // === STAT SCREEN with PRs ===
-function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSession,onResume}){
+function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSession,onResume,athletes,setActiveAth}){
   const myWk=workouts.filter(w=>w.athletes?.[activeAth]);
   // Build per-exercise PRs (across all metrics: best per metric)
   const prMap={};
@@ -1350,6 +1350,12 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
 
   return(<div className="shell">
     <div className="top" style={{paddingBottom:14}}>
+      <div className="ath-stack">
+        {(athletes||[]).map(a=>(<button key={a.id} className={'ath-circle'+(a.id===activeAth?' on':'')}
+          style={{'--ac':a.color||'#2156f4'}} onClick={()=>setActiveAth&&setActiveAth(a.id)}>
+          {a.photo?<img src={a.photo} alt=""/>:<span>{initials(a.name||'')}</span>}
+        </button>))}
+      </div>
       <div className="top-month">STATS</div>
       <div className="top-spacer"/>
     </div>
@@ -2121,7 +2127,14 @@ function App(){
       const v=data?.value||null;
       if(v&&Date.now()-(v.updatedAt||0)>4*3600*1000){setRemoteSession(null);return}
       setRemoteSession(v)}).catch(()=>{})},[]);
-  useEffect(()=>{_pull();const iv=setInterval(_pull,20000);return()=>clearInterval(iv)},[_pull]);
+  // Poll for a shared session, but pause when the app is backgrounded (battery)
+  useEffect(()=>{let iv=null;
+    const start=()=>{if(iv)return;_pull();iv=setInterval(_pull,20000)};
+    const stop=()=>{if(iv){clearInterval(iv);iv=null}};
+    const onVis=()=>{document.visibilityState==='hidden'?stop():start()};
+    onVis();
+    document.addEventListener('visibilitychange',onVis);
+    return()=>{stop();document.removeEventListener('visibilitychange',onVis)}},[_pull]);
 
   const _push=(planId,plan,snapshot)=>{if(!sb)return;
     sb.from('wk_store').upsert({key:'sharedActiveSession',value:{planId,plan:plan||null,snapshot:snapshot||null,updatedAt:Date.now()},updated_at:new Date().toISOString()}).then(()=>{})};
@@ -2474,7 +2487,7 @@ function App(){
       onEditPlan={p=>setPlanEdit({plan:p})}
       dayTypes={dayTypes} onSetDayType={setDayType}/>}
     {tab==='lib'&&<LibraryScreen exercises={exercises} onSelect={setViewEx} onCreate={ex2=>setExercises(p=>[...p,ex2])}/>}
-    {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote}/>}
+    {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote} athletes={athletes} setActiveAth={setActiveAth}/>}
     {tab==='me'&&<ProfileScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete} workouts={workouts}/>}
 
     {viewing&&<WorkoutDetailModal wk={viewing} athletes={athletes} exercises={exercises} workouts={workouts}
