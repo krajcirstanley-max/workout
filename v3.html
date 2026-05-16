@@ -54,7 +54,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 
 /* === SHELL === */
 .shell{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--tab-h) + var(--safe-b) + 30px)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--tab-h) + var(--safe-b) + 86px)}
 .scroll.no-tab{padding-bottom:calc(var(--safe-b) + 24px)}
 
 /* === TOP BAR === */
@@ -613,14 +613,15 @@ function MonthGrid({month,onSelectDate,onClose,workouts,planned,activeAth,dayTyp
 
 // === DAY TYPE TOGGLE (High / Low intensity) ===
 function DayTypeToggle({type,onSet}){
-  return(<div style={{display:'flex',gap:8,padding:'4px 22px 12px'}}>
+  return(<div style={{display:'flex',alignItems:'center',gap:6,padding:'2px 22px 10px'}}>
+    <span style={{fontFamily:'var(--mono)',fontSize:9,fontWeight:800,letterSpacing:'.6px',color:'var(--text3)',marginRight:2}}>DAY</span>
     {[['high','HIGH','var(--red)'],['low','LOW','var(--green)']].map(([t,lbl,col])=>(
       <button key={t} onClick={()=>onSet&&onSet(t)}
-        style={{flex:1,padding:'10px 0',borderRadius:11,fontFamily:'var(--mono)',fontSize:11,fontWeight:800,letterSpacing:'.9px',
+        style={{flex:1,padding:'7px 0',borderRadius:9,fontFamily:'var(--mono)',fontSize:10.5,fontWeight:800,letterSpacing:'.7px',
           border:'1.5px solid '+(type===t?col:'var(--border)'),
           background:type===t?col:'transparent',
           color:type===t?'#fff':'var(--text2)',transition:'all .15s'}}>
-        {lbl} DAY
+        {lbl}
       </button>))}
   </div>)}
 
@@ -642,7 +643,7 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
   const dayWk=workouts.filter(w=>w.athletes?.[activeAth]&&dateKey(w.startTime)===today);
   const dayPlans=(planned||[]).filter(p=>p.date===today&&!dayWk.some(w=>w.name===p.name));
   const recent=workouts.filter(w=>w.athletes?.[activeAth]).slice(-12).reverse();
-  const monthName=selDate.toLocaleDateString('en-US',{month:'short',year:'2-digit'}).replace(/\s/,' \''+selDate.getFullYear().toString().slice(-2)).replace(/\s\d{2}$/,'').toUpperCase()+' \''+selDate.getFullYear().toString().slice(-2);
+  const monthName=selDate.toLocaleDateString('en-US',{month:'short'}).toUpperCase()+" '"+selDate.getFullYear().toString().slice(-2);
 
   const isToday=dateKey(Date.now())===today;
   const isPast=selDate.getTime()<Date.now()-24*3600*1000&&!isToday;
@@ -838,7 +839,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const[workout,setWorkout]=useState(()=>{
     if(_sv?.workout)return _sv.workout;
     const w={id:'wk-'+uid(),name:initialPlan?.name||'Workout',startTime:Date.now(),endTime:null,
-      color:initialPlan?.color||'#2156f4',tag:null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:{}};
+      color:initialPlan?.color||'#2156f4',tag:null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{}};
     athletes.forEach(a=>{w.athletes[a.id]={sets:{}}});
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
       const cfgs=initialPlan.setConfigs||{};
