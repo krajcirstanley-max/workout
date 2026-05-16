@@ -655,6 +655,19 @@ const DEFAULT_EXERCISES=[
   {id:'lj-box-10step',name:'10-Step LJ from Box',category:'T&F',metrics:['tf-dist']},
   {id:'lj-landing-drill',name:'LJ Landing Drill',category:'T&F',metrics:['reps']},
   {id:'slider-ecc-curl',name:'Slider Eccentric Curl',category:'Legs',metrics:['reps']},
+  {id:'knee-over-toe-band',name:'Knee-Over-Toe w/ Band',category:'Legs',metrics:['reps']},
+  {id:'ankle-isometric',name:'Ankle Isometric',category:'Legs',metrics:['time']},
+  {id:'calf-ecc-slam',name:'Calf Ecc (Slam Board)',category:'Legs',metrics:['reps']},
+  {id:'slam-board-pogos',name:'Slam Board Pogos',category:'Legs',metrics:['reps']},
+  {id:'tibialis-raise-w',name:'Tibialis Raise (Weighted)',category:'Legs',metrics:['weight','reps']},
+  {id:'lower-back-ext-rot',name:'Lower Back Ext. (w/ Rotation)',category:'Back',metrics:['reps']},
+  {id:'suitcase-carry',name:'Suitcase Carry',category:'Legs',metrics:['weight','distance']},
+  {id:'mb-catch-rotational',name:'MB Catch + Rotational Throw',category:'T&F',metrics:['weight','reps']},
+  {id:'half-squat-jump-oh',name:'Half Squat Jump (OH Weight)',category:'Legs',metrics:['weight','reps']},
+  {id:'sl-hamstring-rdl',name:'SL Hamstring RDL (h2h)',category:'Legs',metrics:['weight','reps']},
+  {id:'leg-press-sl-ecc',name:'Leg Press SL Ecc',category:'Legs',metrics:['weight','reps']},
+  {id:'copenhagen-plank',name:'Copenhagen Plank',category:'Core',metrics:['time']},
+  {id:'lunges',name:'Lunges',category:'Legs',metrics:['weight','reps']},
   {id:'short-app-popup',name:'Short Approach Pop-up',category:'T&F',metrics:['reps']},
   {id:'full-app-runthrough',name:'Full Approach Run-through',category:'T&F',metrics:['reps']},
   {id:'full-app-popup',name:'Full Approach Pop-up',category:'T&F',metrics:['reps']},
@@ -2664,6 +2677,45 @@ function App(){
           'alt-bounds-jump':'4×.'
         },
         notes:'Drop Jump 3×5 (CNS primer). Standing arm block drill 6×. Short approach pop-upy 5 krokov 4×3 (cue: ARM BLOCK). Full approach run-throughs 16 krokov 2× (Freelap, značky check). Full approach pop-upy 16 krokov 4× (Freelap, video, ARM BLOCK). Skoky z DOSKY: 12-step 3× (nastaviť), 14-step 3× (bridge), 16-step 4× (hlavná práca) — Freelap, video, 5 min pauzy na KAŽDOM. SL bounds + jump 3×/nohu. Alternate bounds + jump 4×. Hlavná téma: ARM BLOCK.'
+      }];
+      if(!r.find(x=>x.id==='pl-gym-4'))r=[...r,{id:'pl-gym-4',date:'2026-05-16',name:'Gym',color:'#3b82f6',
+        exerciseIds:['knee-over-toe-band','ankle-isometric','calf-ecc-slam','slam-board-pogos','tibialis-raise-w','lower-back-ext-rot','suitcase-carry','mb-catch-rotational','half-squat-jump-oh','sl-hamstring-rdl','leg-press-sl-ecc','copenhagen-plank','lunges'],
+        supersets:[
+          ['knee-over-toe-band','ankle-isometric','calf-ecc-slam','slam-board-pogos','tibialis-raise-w'],
+          ['lower-back-ext-rot','suitcase-carry','mb-catch-rotational','half-squat-jump-oh'],
+          ['sl-hamstring-rdl','leg-press-sl-ecc','copenhagen-plank','lunges']
+        ],
+        setConfigs:{
+          'knee-over-toe-band':[{reps:10},{reps:10},{reps:10}],
+          'ankle-isometric':[{time:10},{time:10},{time:10}],
+          'calf-ecc-slam':[{reps:8},{reps:8},{reps:8}],
+          'slam-board-pogos':[{reps:10},{reps:10},{reps:10}],
+          'tibialis-raise-w':[{reps:15},{reps:15},{reps:15}],
+          'lower-back-ext-rot':[{reps:8},{reps:8},{reps:8}],
+          'suitcase-carry':[{distance:20},{distance:20},{distance:20}],
+          'mb-catch-rotational':[{reps:5},{reps:5},{reps:5}],
+          'half-squat-jump-oh':[{reps:6},{reps:6},{reps:6}],
+          'sl-hamstring-rdl':[{reps:6},{reps:6},{reps:6}],
+          'leg-press-sl-ecc':[{reps:6},{reps:6},{reps:6}],
+          'copenhagen-plank':[{time:15},{time:15},{time:15}],
+          'lunges':[{reps:8},{reps:8},{reps:8}]
+        },
+        exNotes:{
+          'knee-over-toe-band':'10/nohu.',
+          'ankle-isometric':'3 pozície × 10s/nohu.',
+          'calf-ecc-slam':'8/nohu, 5s dole (slam board).',
+          'slam-board-pogos':'10×.',
+          'tibialis-raise-w':'S váhou. 15×.',
+          'lower-back-ext-rot':'8/stranu, s rotáciou.',
+          'suitcase-carry':'20m/strana.',
+          'mb-catch-rotational':'5/stranu — chytiť + rotačný hod.',
+          'half-squat-jump-oh':'6×, váha nad hlavou.',
+          'sl-hamstring-rdl':'6/nohu, hand-to-hand.',
+          'leg-press-sl-ecc':'6/nohu, 5s dole (excentrika).',
+          'copenhagen-plank':'15s/stranu.',
+          'lunges':'8/nohu.'
+        },
+        notes:'3 okruhy, každý 3 kolá. ① Ankle Complex: Knee-over-toe w band 10/nohu · Ankle isometric 3×10s/nohu · Calf ecc slam board 8/nohu (5s dole) · Slam board pogos 10× · Tibialis raises w weight 15×. ② Back + Postural Integrity: Lower back ext w rotation 8/stranu · Suitcase carry 20m/strana · MB catch + rotational throw 5/stranu · Half squat jump w weight overhead 6×. ③ Posterior Chain: SL hamstring RDL hand-to-hand 6/nohu · Leg press SL ecc 6/nohu (5s dole) · Copenhagen plank 15s/stranu · Lunges 8/nohu.'
       }];
       if(!r.find(x=>x.id==='pl-gym-3'))r=[...r,{id:'pl-gym-3',date:'2026-05-06',name:'Gym',color:'#3b82f6',
         exerciseIds:['tb-jump','pogos-bands','step-up','nordics','seated-calf-raise','lower-back-ext'],

@@ -2330,10 +2330,90 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-05-16 Gym — 3 circuits (ankle / back / posterior chain)
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_4';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'knee-over-toe-band',name:'Knee-Over-Toe w/ Band',category:'Legs',metrics:['reps']},
+      {id:'ankle-isometric',name:'Ankle Isometric',category:'Legs',metrics:['time']},
+      {id:'calf-ecc-slam',name:'Calf Ecc (Slam Board)',category:'Legs',metrics:['reps']},
+      {id:'slam-board-pogos',name:'Slam Board Pogos',category:'Legs',metrics:['reps']},
+      {id:'tibialis-raise-w',name:'Tibialis Raise (Weighted)',category:'Legs',metrics:['weight','reps']},
+      {id:'lower-back-ext-rot',name:'Lower Back Ext. (w/ Rotation)',category:'Back',metrics:['reps']},
+      {id:'suitcase-carry',name:'Suitcase Carry',category:'Legs',metrics:['weight','distance']},
+      {id:'mb-catch-rotational',name:'MB Catch + Rotational Throw',category:'T&F',metrics:['weight','reps']},
+      {id:'half-squat-jump-oh',name:'Half Squat Jump (OH Weight)',category:'Legs',metrics:['weight','reps']},
+      {id:'sl-hamstring-rdl',name:'SL Hamstring RDL (h2h)',category:'Legs',metrics:['weight','reps']},
+      {id:'leg-press-sl-ecc',name:'Leg Press SL Ecc',category:'Legs',metrics:['weight','reps']},
+      {id:'copenhagen-plank',name:'Copenhagen Plank',category:'Core',metrics:['time']},
+      {id:'lunges',name:'Lunges',category:'Legs',metrics:['weight','reps']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    setPlanned(p=>{if(p.find(x=>x.id==='pl-gym-4'))return p;
+      return[...p,{id:'pl-gym-4',date:'2026-05-16',name:'Gym',color:'#3b82f6',
+        exerciseIds:['knee-over-toe-band','ankle-isometric','calf-ecc-slam','slam-board-pogos','tibialis-raise-w','lower-back-ext-rot','suitcase-carry','mb-catch-rotational','half-squat-jump-oh','sl-hamstring-rdl','leg-press-sl-ecc','copenhagen-plank','lunges'],
+        supersets:[
+          ['knee-over-toe-band','ankle-isometric','calf-ecc-slam','slam-board-pogos','tibialis-raise-w'],
+          ['lower-back-ext-rot','suitcase-carry','mb-catch-rotational','half-squat-jump-oh'],
+          ['sl-hamstring-rdl','leg-press-sl-ecc','copenhagen-plank','lunges']
+        ],
+        setConfigs:{
+          'knee-over-toe-band':[{reps:10},{reps:10},{reps:10}],
+          'ankle-isometric':[{time:10},{time:10},{time:10}],
+          'calf-ecc-slam':[{reps:8},{reps:8},{reps:8}],
+          'slam-board-pogos':[{reps:10},{reps:10},{reps:10}],
+          'tibialis-raise-w':[{reps:15},{reps:15},{reps:15}],
+          'lower-back-ext-rot':[{reps:8},{reps:8},{reps:8}],
+          'suitcase-carry':[{distance:20},{distance:20},{distance:20}],
+          'mb-catch-rotational':[{reps:5},{reps:5},{reps:5}],
+          'half-squat-jump-oh':[{reps:6},{reps:6},{reps:6}],
+          'sl-hamstring-rdl':[{reps:6},{reps:6},{reps:6}],
+          'leg-press-sl-ecc':[{reps:6},{reps:6},{reps:6}],
+          'copenhagen-plank':[{time:15},{time:15},{time:15}],
+          'lunges':[{reps:8},{reps:8},{reps:8}]
+        },
+        exNotes:{
+          'knee-over-toe-band':'10/nohu.',
+          'ankle-isometric':'3 pozície × 10s/nohu.',
+          'calf-ecc-slam':'8/nohu, 5s dole (slam board).',
+          'slam-board-pogos':'10×.',
+          'tibialis-raise-w':'S váhou. 15×.',
+          'lower-back-ext-rot':'8/stranu, s rotáciou.',
+          'suitcase-carry':'20m/strana.',
+          'mb-catch-rotational':'5/stranu — chytiť + rotačný hod.',
+          'half-squat-jump-oh':'6×, váha nad hlavou.',
+          'sl-hamstring-rdl':'6/nohu, hand-to-hand.',
+          'leg-press-sl-ecc':'6/nohu, 5s dole (excentrika).',
+          'copenhagen-plank':'15s/stranu.',
+          'lunges':'8/nohu.'
+        },
+        notes:'3 okruhy, každý 3 kolá. ① Ankle Complex: Knee-over-toe w band 10/nohu · Ankle isometric 3×10s/nohu · Calf ecc slam board 8/nohu (5s dole) · Slam board pogos 10× · Tibialis raises w weight 15×. ② Back + Postural Integrity: Lower back ext w rotation 8/stranu · Suitcase carry 20m/strana · MB catch + rotational throw 5/stranu · Half squat jump w weight overhead 6×. ③ Posterior Chain: SL hamstring RDL hand-to-hand 6/nohu · Leg press SL ecc 6/nohu (5s dole) · Copenhagen plank 15s/stranu · Lunges 8/nohu.'
+      }]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // Repair: if seeded plans lost their exercises to a Supabase pull race, re-add them
   useEffect(()=>{if(!exSynced)return;
     const defs={
       'drop-jump':{id:'drop-jump',name:'Drop Jump',category:'Legs',metrics:['reps']},
+      'knee-over-toe-band':{id:'knee-over-toe-band',name:'Knee-Over-Toe w/ Band',category:'Legs',metrics:['reps']},
+      'ankle-isometric':{id:'ankle-isometric',name:'Ankle Isometric',category:'Legs',metrics:['time']},
+      'calf-ecc-slam':{id:'calf-ecc-slam',name:'Calf Ecc (Slam Board)',category:'Legs',metrics:['reps']},
+      'slam-board-pogos':{id:'slam-board-pogos',name:'Slam Board Pogos',category:'Legs',metrics:['reps']},
+      'tibialis-raise-w':{id:'tibialis-raise-w',name:'Tibialis Raise (Weighted)',category:'Legs',metrics:['weight','reps']},
+      'lower-back-ext-rot':{id:'lower-back-ext-rot',name:'Lower Back Ext. (w/ Rotation)',category:'Back',metrics:['reps']},
+      'suitcase-carry':{id:'suitcase-carry',name:'Suitcase Carry',category:'Legs',metrics:['weight','distance']},
+      'mb-catch-rotational':{id:'mb-catch-rotational',name:'MB Catch + Rotational Throw',category:'T&F',metrics:['weight','reps']},
+      'half-squat-jump-oh':{id:'half-squat-jump-oh',name:'Half Squat Jump (OH Weight)',category:'Legs',metrics:['weight','reps']},
+      'sl-hamstring-rdl':{id:'sl-hamstring-rdl',name:'SL Hamstring RDL (h2h)',category:'Legs',metrics:['weight','reps']},
+      'leg-press-sl-ecc':{id:'leg-press-sl-ecc',name:'Leg Press SL Ecc',category:'Legs',metrics:['weight','reps']},
+      'copenhagen-plank':{id:'copenhagen-plank',name:'Copenhagen Plank',category:'Core',metrics:['time']},
+      'lunges':{id:'lunges',name:'Lunges',category:'Legs',metrics:['weight','reps']},
+      'standing-arm-block':{id:'standing-arm-block',name:'Standing Arm Block Drill',category:'T&F',metrics:['reps']},
       'standing-arm-block':{id:'standing-arm-block',name:'Standing Arm Block Drill',category:'T&F',metrics:['reps']},
       'standing-lj':{id:'standing-lj',name:'Standing Long Jump',category:'T&F',metrics:['tf-dist']},
       'telemark-hold':{id:'telemark-hold',name:'Telemark Drill (Hold)',category:'T&F',metrics:['reps']},
