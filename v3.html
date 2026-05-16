@@ -832,6 +832,41 @@ function RecentRow({wk,onClick}){
 
 // === ACTIVE WORKOUT ===
 // Self-ticking workout timer so the whole screen does not re-render every second
+// Drag-to-reorder list (touch + mouse, animated)
+function ReorderList({ids,exercises,onReorder,onDelete}){
+  const ROW=58;
+  const[drag,setDrag]=useState(null);
+  useEffect(()=>{if(!drag)return;
+    const move=e=>{const t=e.touches?e.touches[0]:e;setDrag(d=>d&&{...d,dy:t.clientY-d.startY});if(e.cancelable)e.preventDefault()};
+    const end=()=>setDrag(d=>{if(d){const to=Math.max(0,Math.min(ids.length-1,d.fromIdx+Math.round(d.dy/ROW)));if(to!==d.fromIdx)onReorder(d.fromIdx,to)}return null});
+    document.addEventListener('touchmove',move,{passive:false});
+    document.addEventListener('touchend',end);
+    document.addEventListener('mousemove',move);
+    document.addEventListener('mouseup',end);
+    return()=>{document.removeEventListener('touchmove',move);document.removeEventListener('touchend',end);document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',end)};
+  },[drag&&drag.id]);
+  const start=(id,i,e)=>{const t=e.touches?e.touches[0]:e;setDrag({id,fromIdx:i,startY:t.clientY,dy:0})};
+  const targetIdx=drag?Math.max(0,Math.min(ids.length-1,drag.fromIdx+Math.round(drag.dy/ROW))):-1;
+  return(<div>
+    {ids.map((id,i)=>{const ex=exercises.find(e=>e.id===baseExId(id));
+      const dragged=drag&&drag.id===id;let ty=0;
+      if(dragged)ty=drag.dy;
+      else if(drag){
+        if(drag.fromIdx<targetIdx&&i>drag.fromIdx&&i<=targetIdx)ty=-ROW;
+        else if(drag.fromIdx>targetIdx&&i<drag.fromIdx&&i>=targetIdx)ty=ROW;
+      }
+      return(<div key={id} style={{display:'flex',alignItems:'center',gap:6,height:ROW,boxSizing:'border-box',padding:'0 4px',
+        transform:`translateY(${ty}px)`,transition:dragged?'none':'transform .18s cubic-bezier(.2,0,0,1)',
+        position:'relative',zIndex:dragged?5:1,background:dragged?'var(--surface)':'transparent',
+        borderRadius:dragged?12:0,boxShadow:dragged?'0 10px 28px rgba(0,0,0,.18)':'none'}}>
+        <button onTouchStart={e=>start(id,i,e)} onMouseDown={e=>start(id,i,e)}
+          style={{padding:'10px 8px',background:'transparent',border:'none',color:'var(--text3)',touchAction:'none',cursor:'grab',display:'flex'}}><Ic n="more" s={18}/></button>
+        <div style={{flex:1,minWidth:0,fontSize:15,fontWeight:700,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex?.name||'?'}</div>
+        <button onClick={()=>onDelete(id)} style={{padding:8,background:'transparent',border:'none',color:'var(--red)',display:'flex'}}><Ic n="x" s={16}/></button>
+      </div>)})}
+  </div>);
+}
+
 function WorkoutTimer({startTime}){
   const[,t]=useState(0);
   useEffect(()=>{const iv=setInterval(()=>t(x=>x+1),1000);return()=>clearInterval(iv)},[]);
@@ -1040,8 +1075,10 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     const nw={...w,exerciseIds:ids,supersets:(w.supersets||[]).map(g=>g.filter(id=>id!==eid)).filter(g=>g.length>1),athletes:{...w.athletes}};
     Object.keys(nw.athletes).forEach(aId=>{const ns={...nw.athletes[aId].sets};delete ns[eid];nw.athletes[aId]={...nw.athletes[aId],sets:ns}});
     return nw});setActionsEid(null)};
-  const moveExercise=(eid,dir)=>setWorkout(w=>{const ids=[...w.exerciseIds];const i=ids.indexOf(eid);const j=i+dir;
-    if(i<0||j<0||j>=ids.length)return w;[ids[i],ids[j]]=[ids[j],ids[i]];return{...w,exerciseIds:ids}});
+  const reorderExercise=(from,to)=>setWorkout(w=>{const ids=[...w.exerciseIds];if(from<0||to<0||from>=ids.length||to>=ids.length)return w;
+    const[m]=ids.splice(from,1);ids.splice(to,0,m);return{...w,exerciseIds:ids}});
+  const moveToEnd=eid=>{setWorkout(w=>{const ids=w.exerciseIds.filter(id=>id!==eid);
+    return{...w,exerciseIds:[...ids,eid],supersets:(w.supersets||[]).map(g=>g.filter(x=>x!==eid)).filter(g=>g.length>1)}});setActionsEid(null)};
   const changeMetrics=newMetrics=>{const t=metricsEid;setWorkout(w=>{const na={...w.athletes};
     Object.keys(na).forEach(aId=>{if(na[aId].sets[t]){
       na[aId]={...na[aId],sets:{...na[aId].sets,[t]:na[aId].sets[t].map(s=>{const nv={};newMetrics.forEach(m=>{nv[m]=s.values[m]??''});return{...s,values:nv}})}}}});
@@ -1134,6 +1171,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       onReplace={()=>{setReplacingEid(actionsEid);setActionsEid(null);setShowPicker(true)}}
       onDelete={()=>{if(window.confirm('Delete '+actionsEx.name+' from workout?'))deleteExercise(actionsEid)}}
       onEditMetrics={()=>{setMetricsEid(actionsEid);setActionsEid(null)}}
+      onMoveToEnd={()=>moveToEnd(actionsEid)}
       onToggleAthlete={toggleAthleteAssignment}/>}
     {metricsEid&&<MetricsEditor current={metricsEff} onChange={changeMetrics} onClose={()=>setMetricsEid(null)}/>}
     {historyEid&&exercises.find(e=>e.id===baseExId(historyEid))&&<ExerciseDetail
@@ -1146,13 +1184,8 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
           <button className="modal-x" onClick={()=>setShowOrganize(false)}><Ic n="x" s={20}/></button>
         </div>
         <div className="modal-b">
-          {workout.exerciseIds.map((eid,i)=>{const oe=exercises.find(e=>e.id===baseExId(eid));
-            return(<div key={eid} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 0',borderBottom:'1px solid var(--border)'}}>
-              <div style={{flex:1,minWidth:0,fontSize:15,fontWeight:700,color:'var(--text)'}}>{oe?.name||'?'}</div>
-              <button onClick={()=>moveExercise(eid,-1)} disabled={i===0} style={{padding:7,background:'var(--surface2)',border:'none',borderRadius:8,color:i===0?'var(--text4)':'var(--text)',display:'flex'}}><span style={{display:'inline-flex',transform:'rotate(180deg)'}}><Ic n="chevD" s={16}/></span></button>
-              <button onClick={()=>moveExercise(eid,1)} disabled={i===workout.exerciseIds.length-1} style={{padding:7,background:'var(--surface2)',border:'none',borderRadius:8,color:i===workout.exerciseIds.length-1?'var(--text4)':'var(--text)',display:'flex'}}><Ic n="chevD" s={16}/></button>
-              <button onClick={()=>deleteExercise(eid)} style={{padding:7,background:'transparent',border:'none',color:'var(--red)',display:'flex'}}><Ic n="x" s={16}/></button>
-            </div>)})}
+          <div style={{fontSize:12,color:'var(--text3)',fontWeight:600,marginBottom:8}}>Drag the handle to reorder.</div>
+          <ReorderList ids={workout.exerciseIds} exercises={exercises} onReorder={reorderExercise} onDelete={deleteExercise}/>
           {!workout.exerciseIds.length&&<div style={{padding:'20px 0',textAlign:'center',color:'var(--text3)',fontSize:14}}>No exercises yet.</div>}
           <button className="btn btn-secondary" style={{marginTop:14,width:'100%'}} onClick={()=>{setShowOrganize(false);setReplacingEid(null);setShowPicker(true)}}>+ Add Exercise</button>
         </div>
@@ -1684,7 +1717,7 @@ function MetricsEditor({current,onChange,onClose}){
   </div>)}
 
 // === EXERCISE ACTIONS DRAWER ===
-function ExerciseActions({exercise,onClose,onReplace,onDelete,onEditMetrics,onEditNote,onToggleAthlete,athletes,assignedAthletes}){
+function ExerciseActions({exercise,onClose,onReplace,onDelete,onEditMetrics,onMoveToEnd,onToggleAthlete,athletes,assignedAthletes}){
   return(<div className="over" onClick={e=>e.target===e.currentTarget&&onClose()}>
     <div className="modal" style={{borderTopLeftRadius:24,borderTopRightRadius:24}}>
       <div className="modal-h">
@@ -1712,6 +1745,10 @@ function ExerciseActions({exercise,onClose,onReplace,onDelete,onEditMetrics,onEd
         <div className="act-text">Replace Exercise</div>
         <Ic n="chevR" s={16}/>
       </button>
+      {onMoveToEnd&&<button className="act-row" onClick={onMoveToEnd}>
+        <div className="act-icon" style={{background:'var(--surface2)',color:'var(--text2)'}}>⤓</div>
+        <div className="act-text">Move to End</div>
+      </button>}
       <button className="act-row" onClick={onDelete}>
         <div className="act-icon" style={{background:'rgba(239,68,68,.1)',color:'var(--red)'}}>🗑</div>
         <div className="act-text danger">Delete from Workout</div>
