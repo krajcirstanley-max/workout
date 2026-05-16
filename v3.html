@@ -280,6 +280,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .aw-nav button:disabled{color:var(--text4)}
 .aw-nav button.timer{flex-direction:row;color:var(--text);font-size:13px}
 .aw-nav button.next{color:var(--text);font-weight:800}
+.aw-nav button.next:disabled{color:var(--text4)}
 
 /* === BUTTONS === */
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 24px;border-radius:14px;font-weight:800;font-size:14px;letter-spacing:-.1px;width:100%;border:none;font-family:var(--display)}
@@ -873,13 +874,19 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
     lastSets=ws[lk].filter(s=>s.completed)}
   let lastSummary='';
   if(lastSets.length){
-    if(hasW&&hasR){const reps=lastSets.map(s=>s.values.reps).filter(v=>v!=null&&v!=='');
+    const n=lastSets.length;
+    if(hasW){
       const wv=lastSets.map(s=>s.values.weight).filter(v=>v!=null&&v!=='');
-      const sameR=reps.length&&reps.every(r=>r===reps[0]);
-      lastSummary=`${lastSets.length}×${sameR?reps[0]:'·'}`+(wv.length?` @ ${wv.join(', ')} kg`:'')}
-    else{const pm=effMetrics[0];const md=METRIC_MAP[pm]||{unit:''};
+      const wsame=wv.length&&wv.every(x=>x===wv[0]);
+      let per='';
+      if(hasR){const r=lastSets.map(s=>s.values.reps).filter(v=>v!=null&&v!=='');if(r.length&&r.every(x=>x===r[0]))per='×'+r[0]}
+      else if(effMetrics.includes('distance')){const d=lastSets.map(s=>s.values.distance).filter(v=>v!=null&&v!=='');if(d.length&&d.every(x=>x===d[0]))per='×'+d[0]+'m'}
+      lastSummary=`${n}${per}`+(wv.length?` @ ${wsame?wv[0]:wv.join(', ')} kg`:'');
+    }else{
+      const pm=effMetrics[0];const md=METRIC_MAP[pm]||{unit:''};
       const vals=lastSets.map(s=>s.values[pm]).filter(v=>v!=null&&v!=='');
-      lastSummary=vals.length?vals.join(', ')+(md.unit?` ${md.unit}`:''):''}
+      lastSummary=vals.length?vals.join(', ')+(md.unit?` ${md.unit}`:''):'';
+    }
   }
   // PR detection vs past workouts
   const allPrior=[];workouts.forEach(w=>{if(w.id===workout.id)return;
@@ -907,8 +914,6 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
       <span style={{fontSize:10,fontWeight:800,color:'var(--primary)',fontFamily:'var(--mono)',letterSpacing:'.6px',flexShrink:0,paddingTop:2}}>COACH</span>
       <span style={{fontSize:14,color:'var(--text)',lineHeight:1.4}}>{coachNote}</span>
     </div>}
-    <textarea value={athNote} onChange={e=>onSetAthleteNote(eid,e.target.value)} placeholder="Add your note..." rows={1}
-      style={{width:'100%',resize:'vertical',minHeight:40,border:'none',background:'var(--surface2)',borderRadius:10,padding:'11px 12px',fontSize:14,color:'var(--text)',fontFamily:'inherit',marginBottom:10,boxSizing:'border-box'}}/>
     <div className="sets-tbl">
       <div className="sets-h" style={{gridTemplateColumns:gridCols}}>
         <span className="l">Set</span>
@@ -933,6 +938,8 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
         <button className="set-ctrl-btn" onClick={()=>onAddSet(eid)}>+</button>
       </div>
     </div>
+    <textarea value={athNote} onChange={e=>onSetAthleteNote(eid,e.target.value)} placeholder="Add your note..." rows={1}
+      style={{width:'100%',resize:'vertical',minHeight:40,border:'none',background:'var(--surface2)',borderRadius:10,padding:'11px 12px',fontSize:14,color:'var(--text)',fontFamily:'inherit',marginTop:10,boxSizing:'border-box'}}/>
   </div>);
 }
 
@@ -958,6 +965,8 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const[restStarts,setRestStarts]=useState({});
   const[showFinish,setShowFinish]=useState(false);
   const[confirmCancel,setConfirmCancel]=useState(false);
+  const[blockIdx,setBlockIdx]=useState(0);
+  const[showOrganize,setShowOrganize]=useState(false);
   const stateRef=useRef();
   stateRef.current={workout};
   // Save snapshot on every change + on backgrounding
@@ -1028,6 +1037,8 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     const nw={...w,exerciseIds:ids,supersets:(w.supersets||[]).map(g=>g.filter(id=>id!==eid)).filter(g=>g.length>1),athletes:{...w.athletes}};
     Object.keys(nw.athletes).forEach(aId=>{const ns={...nw.athletes[aId].sets};delete ns[eid];nw.athletes[aId]={...nw.athletes[aId],sets:ns}});
     return nw});setActionsEid(null)};
+  const moveExercise=(eid,dir)=>setWorkout(w=>{const ids=[...w.exerciseIds];const i=ids.indexOf(eid);const j=i+dir;
+    if(i<0||j<0||j>=ids.length)return w;[ids[i],ids[j]]=[ids[j],ids[i]];return{...w,exerciseIds:ids}});
   const changeMetrics=newMetrics=>{const t=metricsEid;setWorkout(w=>{const na={...w.athletes};
     Object.keys(na).forEach(aId=>{if(na[aId].sets[t]){
       na[aId]={...na[aId],sets:{...na[aId].sets,[t]:na[aId].sets[t].map(s=>{const nv={};newMetrics.forEach(m=>{nv[m]=s.values[m]??''});return{...s,values:nv}})}}}});
@@ -1063,6 +1074,10 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         exerciseIds:workout.exerciseIds.filter(eid=>Object.values(cleanA).some(a=>a.sets[eid]?.length>0)),
         endTime:workout.startTime+cust})}} onCancel={()=>setShowFinish(false)}/>;
 
+  const safeBlk=Math.min(blockIdx,Math.max(0,blocks.length-1));
+  const curBlock=blocks[safeBlk];
+  const isLastBlock=safeBlk>=blocks.length-1;
+
   return(<div className="shell">
     <div className="aw-top">
       <button className="aw-back" onClick={()=>onMinimize&&onMinimize()}><Ic n="chevD" s={24}/></button>
@@ -1073,27 +1088,37 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       {totalReps>0&&<div className="aw-tot"><span className="aw-tot-v">{totalReps}</span><span className="aw-tot-l">Reps</span></div>}
       {totalKg>0&&<div className="aw-tot"><span className="aw-tot-v">{totalKg.toLocaleString()}</span><span className="aw-tot-l">Kg</span></div>}
     </div>}
-    {athletes.length>1&&<div style={{display:'flex',gap:6,padding:'10px 18px 4px',justifyContent:'center'}}>
+    {blocks.length>1&&<div className="aw-dots">
+      {blocks.map((b,i)=>{const done=b.eids.length>0&&b.eids.every(eid=>{const ss=workout.athletes[activeAth]?.sets?.[eid]||[];return ss.length>0&&ss.every(s=>s.completed||s.flop)});
+        return<div key={i} className={'aw-dot'+(i===safeBlk?' on':'')+(done&&i!==safeBlk?' done':'')} onClick={()=>setBlockIdx(i)}/>})}
+    </div>}
+    {athletes.length>1&&<div style={{display:'flex',gap:6,padding:'8px 18px 4px',justifyContent:'center'}}>
       {athletes.filter(a=>workout.athletes[a.id]).map(a=>(<button key={a.id} onClick={()=>setActiveAth(a.id)}
         style={{padding:'7px 14px',borderRadius:20,fontSize:11,fontWeight:800,letterSpacing:'.4px',textTransform:'uppercase',background:activeAth===a.id?(a.color||'var(--text)'):'var(--surface2)',color:activeAth===a.id?'#fff':'var(--text2)',border:'none'}}>{a.name}</button>))}
     </div>}
-    <div className="scroll" style={{paddingBottom:'40px'}}>
+    <div className="scroll" style={{paddingBottom:'96px'}}>
       {!workout.exerciseIds.length&&<div style={{padding:'40px 22px',textAlign:'center'}}>
         <div className="ex-name" style={{fontSize:30,marginBottom:14}}>EMPTY WORKOUT</div>
-        <div style={{fontSize:14,color:'var(--text2)'}}>Add an exercise to start logging.</div>
+        <div style={{fontSize:14,color:'var(--text2)',marginBottom:20}}>Add an exercise to start logging.</div>
+        <button className="btn btn-primary" onClick={()=>{setReplacingEid(null);setShowPicker(true)}}>+ Add Exercise</button>
       </div>}
-      {blocks.map(b=>b.eids.map(eid=><ExerciseCard key={eid} eid={eid} blockLabel={b.letter} isSuperset={b.superset}
+      {curBlock&&curBlock.eids.map(eid=><ExerciseCard key={eid} eid={eid} blockLabel={curBlock.letter} isSuperset={curBlock.superset}
         workout={workout} activeAth={activeAth} exercises={exercises} workouts={workouts}
         onUpdateSet={updateSet} onToggleSet={toggleSet} onToggleWarmup={toggleWarmup} onAddSet={addSet} onDelSet={delSet}
-        onCheckAll={checkAll} onActions={setActionsEid} onSetAthleteNote={setAthleteNote}/>))}
-      <div style={{padding:'8px 14px 0'}}>
-        {workout.exerciseIds.length>0&&<button className="btn btn-primary" style={{width:'100%',padding:'17px',fontSize:17}} onClick={()=>setShowFinish(true)}>End Workout</button>}
-        <button className="btn btn-secondary" style={{width:'100%',marginTop:10}} onClick={()=>{setReplacingEid(null);setShowPicker(true)}}>+ Add Exercise</button>
+        onCheckAll={checkAll} onActions={setActionsEid} onSetAthleteNote={setAthleteNote}/>)}
+      {isLastBlock&&workout.exerciseIds.length>0&&<div style={{padding:'12px 14px 0'}}>
+        <button className="btn btn-primary" style={{width:'100%',padding:'17px',fontSize:17}} onClick={()=>setShowFinish(true)}>End Workout</button>
         <button onClick={()=>setConfirmCancel(true)} style={{display:'block',margin:'14px auto 4px',background:'transparent',border:'none',color:'var(--text3)',fontSize:13,fontWeight:700,padding:8}}>Discard workout</button>
-      </div>
+      </div>}
     </div>
 
     {restStart&&<RestBar startedAt={restStart} target={120} onStop={()=>setRestStart(null)}/>}
+
+    {workout.exerciseIds.length>0&&<div className="aw-nav">
+      <button disabled={safeBlk===0} onClick={()=>setBlockIdx(Math.max(0,safeBlk-1))}><Ic n="chevL" s={16}/> Back</button>
+      <button className="timer" onClick={()=>setShowOrganize(true)}><Ic n="edit" s={15}/> Exercises</button>
+      <button className="next" disabled={isLastBlock} onClick={()=>setBlockIdx(Math.min(blocks.length-1,safeBlk+1))}>Next <Ic n="chevR" s={16}/></button>
+    </div>}
 
     {showPicker&&<ExercisePicker exercises={exercises} exclude={replacingEid==null?workout.exerciseIds:[]}
       onSelect={ex2=>replacingEid!=null?replaceExercise(ex2):addExercise(ex2)}
@@ -1108,6 +1133,25 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       onEditMetrics={()=>{setMetricsEid(actionsEid);setActionsEid(null)}}
       onToggleAthlete={toggleAthleteAssignment}/>}
     {metricsEid&&<MetricsEditor current={metricsEff} onChange={changeMetrics} onClose={()=>setMetricsEid(null)}/>}
+    {showOrganize&&<div className="over" onClick={e=>e.target===e.currentTarget&&setShowOrganize(false)}>
+      <div className="modal" style={{maxHeight:'88vh'}}>
+        <div className="modal-h">
+          <div className="modal-t">Exercises</div>
+          <button className="modal-x" onClick={()=>setShowOrganize(false)}><Ic n="x" s={20}/></button>
+        </div>
+        <div className="modal-b">
+          {workout.exerciseIds.map((eid,i)=>{const oe=exercises.find(e=>e.id===baseExId(eid));
+            return(<div key={eid} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 0',borderBottom:'1px solid var(--border)'}}>
+              <div style={{flex:1,minWidth:0,fontSize:15,fontWeight:700,color:'var(--text)'}}>{oe?.name||'?'}</div>
+              <button onClick={()=>moveExercise(eid,-1)} disabled={i===0} style={{padding:7,background:'var(--surface2)',border:'none',borderRadius:8,color:i===0?'var(--text4)':'var(--text)',display:'flex'}}><span style={{display:'inline-flex',transform:'rotate(180deg)'}}><Ic n="chevD" s={16}/></span></button>
+              <button onClick={()=>moveExercise(eid,1)} disabled={i===workout.exerciseIds.length-1} style={{padding:7,background:'var(--surface2)',border:'none',borderRadius:8,color:i===workout.exerciseIds.length-1?'var(--text4)':'var(--text)',display:'flex'}}><Ic n="chevD" s={16}/></button>
+              <button onClick={()=>deleteExercise(eid)} style={{padding:7,background:'transparent',border:'none',color:'var(--red)',display:'flex'}}><Ic n="x" s={16}/></button>
+            </div>)})}
+          {!workout.exerciseIds.length&&<div style={{padding:'20px 0',textAlign:'center',color:'var(--text3)',fontSize:14}}>No exercises yet.</div>}
+          <button className="btn btn-secondary" style={{marginTop:14,width:'100%'}} onClick={()=>{setShowOrganize(false);setReplacingEid(null);setShowPicker(true)}}>+ Add Exercise</button>
+        </div>
+      </div>
+    </div>}
   </div>)}
 
 function FinishForm({workout,athletes,elapsed,onSave,onCancel}){
