@@ -643,6 +643,23 @@ function DayTypeToggle({type,onSet}){
   </div>)}
 
 // === SPARKLINE ===
+// Line chart of a metric's progression, coloured by whether it is improving
+function TrendChart({values,lowerBetter}){
+  const W=320,H=84,pad=15;
+  if(!values||values.length<2)return(<div style={{height:60,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text4)',fontFamily:'var(--mono)',fontSize:10,fontWeight:800,letterSpacing:'.6px',textTransform:'uppercase'}}>Not enough sessions yet</div>);
+  const min=Math.min(...values),max=Math.max(...values),range=max-min||1;
+  const X=i=>pad+(i/(values.length-1))*(W-2*pad);
+  const Y=v=>H-pad-((v-min)/range)*(H-2*pad);
+  const line=values.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const lst=values[values.length-1],fst=values[0];
+  const flat=lst===fst;const color=flat?'#9ca3af':((lowerBetter?lst<fst:lst>fst)?'#16a34a':'#ef4444');
+  return(<svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',display:'block',margin:'4px 0 12px'}}>
+    <polygon points={`${X(0)},${H} ${line} ${X(values.length-1)},${H}`} fill={color} fillOpacity="0.1"/>
+    <polyline points={line} fill="none" stroke={color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx={X(values.length-1)} cy={Y(lst)} r="4" fill={color}/>
+  </svg>);
+}
+
 function Sparkline({values,w=180,h=40}){
   if(!values||values.length<2)return null;
   const min=Math.min(...values),max=Math.max(...values);const range=max-min||1;
@@ -1368,6 +1385,7 @@ function Confirm({title,message,danger,onConfirm,onCancel}){
 // === STAT SCREEN with PRs ===
 function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSession,onResume,athletes,setActiveAth}){
   const myWk=workouts.filter(w=>w.athletes?.[activeAth]);
+  const[q,setQ]=useState('');
   // Build per-exercise PRs (across all metrics: best per metric)
   const prMap={};
   myWk.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;
@@ -1400,13 +1418,25 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
   flyIds.sort((a,b)=>distOrd(a)-distOrd(b));
   otherIds.sort((a,b)=>(prMap[a].lastDate||0)<(prMap[b].lastDate||0)?1:-1);
 
+  // best value of one metric per session, chronological
+  const seriesFor=(base,metric,lowerBetter)=>{const pts=[];
+    [...myWk].sort((a,b)=>a.startTime-b.startTime).forEach(w=>{const ad=w.athletes[activeAth];if(!ad)return;
+      let best=null;
+      Object.keys(ad.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{
+        ad.sets[k].filter(s=>s.completed&&!s.warmup).forEach(s=>{const v=Number(s.values?.[metric]);if(!v||isNaN(v))return;
+          if(best==null||(lowerBetter?v<best:v>best))best=v})});
+      if(best!=null)pts.push(best)});
+    return pts};
   const renderRow=(eid)=>{const p=prMap[eid];const ex=exercises.find(e=>e.id===eid);
     const mets=Object.entries(p.metrics);if(!mets.length)return null;
+    const pmEntry=mets.find(([m])=>m==='tf-time'||m==='weight')||mets[0];
+    const pm=pmEntry[0],pmInfo=p.metrics[pm];
     return(<button key={eid} className="pr-card" onClick={()=>ex&&onSelectEx&&onSelectEx(ex)}>
       <div className="pr-card-top">
         <span className="pr-card-name">{p.name}</span>
         <Ic n="chevR" s={16}/>
       </div>
+      <TrendChart values={seriesFor(eid,pm,pmInfo.lowerBetter)} lowerBetter={pmInfo.lowerBetter}/>
       <div className="pr-metrics">
         {mets.map(([m,r])=>(<div key={m} className="pr-metric">
           <div className="pr-metric-v">{r.val}<span className="u">{r.unit}</span></div>
@@ -1414,7 +1444,9 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
         </div>))}
       </div>
     </button>)};
-  const section=(title,ids)=>ids.length>0?<><div className="s-title">{title}</div><div className="recent">{ids.map(renderRow)}</div></>:null;
+  const matchQ=eid=>!q.trim()||prMap[eid].name.toLowerCase().includes(q.trim().toLowerCase());
+  const section=(title,ids)=>{const f=ids.filter(matchQ);return f.length>0?<><div className="s-title">{title}</div><div className="recent">{f.map(renderRow)}</div></>:null};
+  const noMatch=Object.keys(prMap).length>0&&!Object.keys(prMap).some(matchQ);
   const d30=myWk.filter(w=>Date.now()-w.startTime<30*864e5).length;
   const d7=myWk.filter(w=>Date.now()-w.startTime<7*864e5).length;
 
@@ -1437,6 +1469,10 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
             <div className="stat-cell-l">{l}</div>
           </div>))}
       </div>
+      {Object.keys(prMap).length>0&&<div style={{padding:'2px 14px 6px'}}>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search exercises..."
+          style={{width:'100%',padding:'13px 16px',border:'none',background:'var(--surface2)',borderRadius:13,fontSize:14,fontWeight:600,color:'var(--text)',fontFamily:'inherit',boxSizing:'border-box'}}/>
+      </div>}
 
       {remoteSession&&<>
         <div className="s-title">In Progress</div>
@@ -1458,6 +1494,7 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
       {section('Everything Else',otherIds)}
 
       {Object.keys(prMap).length===0&&<div className="empty"><div className="empty-text">Log a workout to see your records</div></div>}
+      {noMatch&&<div className="empty"><div className="empty-text">No exercises match your search</div></div>}
     </div>
   </div>)}
 
