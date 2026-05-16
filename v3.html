@@ -918,6 +918,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const eid=flatIds[safeIdx];
   const ex=exercises.find(e=>e.id===baseExId(eid));
   const sets=workout.athletes[activeAth]?.sets?.[eid]||[];
+  const effMetrics=workout.exerciseMetrics?.[eid]||ex?.metrics||[];
   const allSetsDone=sets.length>0&&sets.every(s=>s.completed||s.flop);
   const ss=workout.supersets?.find(s=>s.includes(eid));
 
@@ -933,7 +934,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const toggleWarmup=si=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s,i)=>i===si?{...s,warmup:!s.warmup}:s)}}}}));
   const addSet=()=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const last=ss[ss.length-1];
-    const nv={};ex.metrics.forEach(m=>{nv[m]=last?.values[m]??''});
+    const nv={};effMetrics.forEach(m=>{nv[m]=last?.values[m]??''});
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
       sets:{...w.athletes[activeAth].sets,[eid]:[...ss,{values:nv,completed:false}]}}}}});
   const delSet=()=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];if(ss.length<=1)return w;
@@ -977,7 +978,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
 
   // Stats
   const completed=sets.filter(s=>s.completed&&!s.warmup);
-  const hasW=ex?.metrics.includes('weight');const hasR=ex?.metrics.includes('reps');
+  const hasW=effMetrics.includes('weight');const hasR=effMetrics.includes('reps');
   let totalReps=null,totalKg=null;
   if(hasR)totalReps=completed.reduce((a,s)=>a+(Number(s.values.reps)||0),0);
   if(hasW&&hasR)totalKg=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);
@@ -1013,7 +1014,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   prevPrCount.current=prSetIdxs.size;
 
   // Headers
-  const mds=ex?.metrics.map(m=>METRIC_MAP[m]||{id:m,name:m,unit:''})||[];
+  const mds=effMetrics.map(m=>METRIC_MAP[m]||{id:m,name:m,unit:''});
   const numCols=mds.length;
   const wide=numCols>=4;
   const gridCols=wide?`28px ${mds.map(()=>'minmax(58px,1fr)').join(' ')} 36px`:`28px ${mds.map(()=>'1fr').join(' ')} 36px`;
@@ -1138,7 +1139,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       onEditMetrics={()=>{setShowActions(false);setShowMetrics(true)}}
       onEditNote={()=>{setShowActions(false);setShowNote(true)}}
       onToggleAthlete={toggleAthleteAssignment}/>}
-    {showMetrics&&ex&&<MetricsEditor current={ex.metrics} onChange={changeMetrics} onClose={()=>setShowMetrics(false)}/>}
+    {showMetrics&&ex&&<MetricsEditor current={effMetrics} onChange={changeMetrics} onClose={()=>setShowMetrics(false)}/>}
     {showNote&&<NoteEditor initial={noteFor(eid)} onSave={changeNote} onClose={()=>setShowNote(false)} title={`Notes — ${ex?.name||''}`}/>}
   </div>)}
 
