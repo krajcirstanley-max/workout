@@ -256,6 +256,9 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .set-input::placeholder{color:var(--text4);font-weight:600;font-size:13px}
 .set-check{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:transparent;border:1.5px solid var(--border);color:transparent;justify-self:center;flex-shrink:0;transition:all .15s}
 .set-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.set-check.chk-all{width:30px;height:30px;border-style:dashed}
+.set-check.chk-all.done{border-style:solid}
+.block-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:7px;background:var(--primary);color:#fff;font-family:var(--display);font-size:13px;font-weight:900;font-style:italic}
 .set-check.flop{background:var(--red);border-color:var(--red);color:#fff}
 .set-check:active{transform:scale(.88)}
 .set-row.flop .set-input{opacity:.45;text-decoration:line-through}
@@ -828,18 +831,122 @@ function RecentRow({wk,onClick}){
   </button>)}
 
 // === ACTIVE WORKOUT ===
+// Self-ticking workout timer so the whole screen does not re-render every second
+function WorkoutTimer({startTime}){
+  const[,t]=useState(0);
+  useEffect(()=>{const iv=setInterval(()=>t(x=>x+1),1000);return()=>clearInterval(iv)},[]);
+  return<div className="aw-timer">{fmtT(Math.floor((Date.now()-startTime)/1000))}</div>;
+}
+
+// Self-ticking rest bar
+function RestBar({startedAt,target,onStop}){
+  const[,t]=useState(0);
+  useEffect(()=>{const iv=setInterval(()=>t(x=>x+1),1000);return()=>clearInterval(iv)},[]);
+  const el=Math.floor((Date.now()-startedAt)/1000);
+  return(<div className="rest">
+    <div className="rest-prog" style={{width:Math.min(100,(el/target)*100)+'%'}}/>
+    <div className="rest-c">
+      <div><div className="rest-t">{fmtT(el)}</div><div className="rest-l">Rest</div></div>
+      <div className="rest-a"><button className="rest-btn skip" onClick={onStop}>Done</button></div>
+    </div>
+  </div>);
+}
+
+// One exercise card in the scrolling workout
+function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,workouts,onUpdateSet,onToggleSet,onToggleWarmup,onAddSet,onDelSet,onCheckAll,onActions,onSetAthleteNote}){
+  const ex=exercises.find(e=>e.id===baseExId(eid));
+  const sets=workout.athletes[activeAth]?.sets?.[eid]||[];
+  const effMetrics=workout.exerciseMetrics?.[eid]||ex?.metrics||[];
+  const mds=effMetrics.map(m=>METRIC_MAP[m]||{id:m,name:m,unit:''});
+  const wide=mds.length>=4;
+  const gridCols=wide?`30px ${mds.map(()=>'minmax(52px,1fr)').join(' ')} 38px`:`30px ${mds.map(()=>'1fr').join(' ')} 38px`;
+  const hasW=effMetrics.includes('weight'),hasR=effMetrics.includes('reps');
+  const allDone=sets.length>0&&sets.every(s=>s.completed);
+  const cn=workout.exNotes?.[eid];const coachNote=typeof cn==='string'?cn:(cn?.[activeAth]||'');
+  const athNote=workout.athleteNotes?.[eid]?.[activeAth]||'';
+  // last session
+  const lastWk=[...workouts].reverse().find(w=>{const ws=w.athletes?.[activeAth]?.sets;if(!ws)return false;
+    return Object.keys(ws).some(k=>baseExId(k)===baseExId(eid)&&ws[k].some(s=>s.completed))});
+  let lastSets=[];
+  if(lastWk){const ws=lastWk.athletes[activeAth].sets;
+    const lk=Object.keys(ws).find(k=>baseExId(k)===baseExId(eid)&&ws[k].some(s=>s.completed));
+    lastSets=ws[lk].filter(s=>s.completed)}
+  let lastSummary='';
+  if(lastSets.length){
+    if(hasW&&hasR){const reps=lastSets.map(s=>s.values.reps).filter(v=>v!=null&&v!=='');
+      const wv=lastSets.map(s=>s.values.weight).filter(v=>v!=null&&v!=='');
+      const sameR=reps.length&&reps.every(r=>r===reps[0]);
+      lastSummary=`${lastSets.length}×${sameR?reps[0]:'·'}`+(wv.length?` @ ${wv.join(', ')} kg`:'')}
+    else{const pm=effMetrics[0];const md=METRIC_MAP[pm]||{unit:''};
+      const vals=lastSets.map(s=>s.values[pm]).filter(v=>v!=null&&v!=='');
+      lastSummary=vals.length?vals.join(', ')+(md.unit?` ${md.unit}`:''):''}
+  }
+  // PR detection vs past workouts
+  const allPrior=[];workouts.forEach(w=>{if(w.id===workout.id)return;
+    Object.keys(w.athletes?.[activeAth]?.sets||{}).filter(k=>baseExId(k)===baseExId(eid)).forEach(k=>{
+      w.athletes[activeAth].sets[k].filter(x=>x.completed&&!x.warmup).forEach(x=>allPrior.push(x))})});
+  const priorMaxW=hasW?Math.max(0,...allPrior.map(s=>Number(s.values?.weight)||0)):0;
+  const priorBestT=Math.min(Infinity,...allPrior.map(s=>Number(s.values?.['tf-time'])||Infinity).filter(t=>t>0));
+  const isPR=s=>{const v=s.values||{};const w_=Number(v.weight)||0;const t_=Number(v['tf-time'])||0;
+    if(hasW&&w_>0&&priorMaxW>0&&w_>=priorMaxW)return true;
+    if(t_>0&&priorBestT<Infinity&&t_<=priorBestT)return true;return false};
+  return(<div className="ex-card" style={{paddingBottom:6,borderBottom:'1px solid var(--border)',marginBottom:8}}>
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+      <span className="block-badge">{blockLabel}</span>
+      <span style={{fontFamily:'var(--mono)',fontSize:11,fontWeight:800,color:'var(--text3)',letterSpacing:'.6px',textTransform:'uppercase'}}>{isSuperset?'Superset':(ex?.category||'')}</span>
+    </div>
+    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8}}>
+      <div className="ex-name" style={{flex:1,marginBottom:8}}>{ex?.name||'?'}</div>
+      <button onClick={()=>onActions(eid)} style={{padding:6,color:'var(--text2)',background:'transparent',border:'none',flexShrink:0}}><Ic n="more" s={20}/></button>
+    </div>
+    {lastSummary&&<div className="ex-pr-card" style={{flexDirection:'column',alignItems:'stretch',gap:2,border:'none',background:'var(--surface2)',marginBottom:8}}>
+      <span style={{fontSize:13,fontWeight:700,color:'var(--text3)'}}>Last session</span>
+      <div style={{fontSize:19,fontWeight:800,fontStyle:'italic',color:'var(--text)',letterSpacing:'-.3px'}}>{lastSummary}</div>
+    </div>}
+    {coachNote&&<div style={{display:'flex',gap:8,padding:'10px 12px',background:'var(--primary-dim)',borderRadius:10,marginBottom:8}}>
+      <span style={{fontSize:10,fontWeight:800,color:'var(--primary)',fontFamily:'var(--mono)',letterSpacing:'.6px',flexShrink:0,paddingTop:2}}>COACH</span>
+      <span style={{fontSize:14,color:'var(--text)',lineHeight:1.4}}>{coachNote}</span>
+    </div>}
+    <textarea value={athNote} onChange={e=>onSetAthleteNote(eid,e.target.value)} placeholder="Add your note..." rows={1}
+      style={{width:'100%',resize:'vertical',minHeight:40,border:'none',background:'var(--surface2)',borderRadius:10,padding:'11px 12px',fontSize:14,color:'var(--text)',fontFamily:'inherit',marginBottom:10,boxSizing:'border-box'}}/>
+    <div className="sets-tbl">
+      <div className="sets-h" style={{gridTemplateColumns:gridCols}}>
+        <span className="l">Set</span>
+        {mds.map(m=><span key={m.id}>{m.name||m.unit}</span>)}
+        <button onClick={()=>onCheckAll(eid)} className={'set-check chk-all'+(allDone?' done':'')} title="Mark all done"><Ic n="check" s={15}/></button>
+      </div>
+      {sets.map((s,i)=>{const emptyDone=s.completed&&mds.every(m=>s.values[m.id]===''||s.values[m.id]==null);
+        const pr=s.completed&&!s.warmup&&isPR(s);
+        return(<div key={i} className={'set-row'+(s.warmup?' warmup':'')+(s.flop?' flop':'')} style={{gridTemplateColumns:gridCols}}>
+          <button className={'set-num-btn'+(s.warmup?' warmup':'')} onClick={()=>onToggleWarmup(eid,i)}>{s.warmup?'W':i+1}</button>
+          {mds.map((m,mi)=>(<div key={m.id} style={{position:'relative'}}>
+            <input type="number" inputMode="decimal" className="set-input" step={m.step||0.01}
+              value={s.values[m.id]??''} placeholder={s.flop?'flop':emptyDone?'-':(m.unit||'')}
+              onChange={e=>onUpdateSet(eid,i,m.id,e.target.value===''?'':Number(e.target.value))}/>
+            {pr&&mi===mds.length-1&&<span style={{position:'absolute',right:3,top:'50%',transform:'translateY(-50%)',fontSize:13,pointerEvents:'none'}}>🏆</span>}
+          </div>))}
+          <button className={'set-check'+(s.completed?' done':'')+(s.flop?' flop':'')} onClick={()=>onToggleSet(eid,i)}>{s.completed&&<Ic n="check" s={18}/>}{s.flop&&<Ic n="x" s={16}/>}</button>
+        </div>)})}
+      <div className="set-controls">
+        <button className="set-ctrl-btn" onClick={()=>onDelSet(eid)} disabled={sets.length<=1}>−</button>
+        <span className="set-ctrl-lbl">Set</span>
+        <button className="set-ctrl-btn" onClick={()=>onAddSet(eid)}>+</button>
+      </div>
+    </div>
+  </div>);
+}
+
 function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,workouts,initialPlan,onFinish,onCancel,onMinimize,allTags}){
   const[showPicker,setShowPicker]=useState(false);
   const[showNewEx,setShowNewEx]=useState(false);
-  const[showActions,setShowActions]=useState(false);
-  const[showMetrics,setShowMetrics]=useState(false);
-  const[showNote,setShowNote]=useState(false);
-  const[replacingIdx,setReplacingIdx]=useState(null);
+  const[actionsEid,setActionsEid]=useState(null);
+  const[metricsEid,setMetricsEid]=useState(null);
+  const[replacingEid,setReplacingEid]=useState(null);
   const _sv=(()=>{try{const s=localStorage.getItem('wk2_v3_snap');return s?JSON.parse(s):null}catch{return null}})();
   const[workout,setWorkout]=useState(()=>{
     if(_sv?.workout)return _sv.workout;
     const w={id:'wk-'+uid(),name:initialPlan?.name||'Workout',startTime:Date.now(),endTime:null,
-      color:initialPlan?.color||'#2156f4',tag:null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{}};
+      color:initialPlan?.color||'#2156f4',tag:null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},athleteNotes:{}};
     athletes.forEach(a=>{w.athletes[a.id]={sets:{}}});
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
       const cfgs=initialPlan.setConfigs||{};
@@ -848,188 +955,104 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         athletes.forEach(a=>{w.athletes[a.id].sets[eid]=Array.from({length:cnt},(_,i)=>{
           const c=cfgs[eid]?.[i]||{};const v={};ex.metrics.forEach(m=>{v[m]=c[m]??''});return{values:v,completed:false}})})})}
     return w});
-  const[focusIdx,setFocusIdx]=useState(_sv?.focusIdx||0);
   const[restStarts,setRestStarts]=useState({});
   const[showFinish,setShowFinish]=useState(false);
   const[confirmCancel,setConfirmCancel]=useState(false);
-  const[,tick]=useState(0);
-  const prevPrCount=useRef(0);
-  const[burstKey,setBurstKey]=useState(0);
-  const snapRef=useRef();
   const stateRef=useRef();
-  // Aggressive state save on visibility change + beforeunload (iOS PWA defense)
+  stateRef.current={workout};
+  // Save snapshot on every change + on backgrounding
+  useEffect(()=>{try{localStorage.setItem('wk2_v3_snap',JSON.stringify({workout}))}catch{}},[workout]);
   useEffect(()=>{const save=()=>{try{localStorage.setItem('wk2_v3_snap',JSON.stringify(stateRef.current))}catch{}};
     const onVis=()=>{if(document.visibilityState==='hidden')save()};
     document.addEventListener('visibilitychange',onVis);
-    window.addEventListener('pagehide',save);
-    window.addEventListener('beforeunload',save);
+    window.addEventListener('pagehide',save);window.addEventListener('beforeunload',save);
     return()=>{document.removeEventListener('visibilitychange',onVis);window.removeEventListener('pagehide',save);window.removeEventListener('beforeunload',save)}},[]);
   // Keep screen awake during workout
   useEffect(()=>{let lock=null;let cancelled=false;
     const acquire=async()=>{try{if(navigator.wakeLock){lock=await navigator.wakeLock.request('screen');
-      lock.addEventListener('release',()=>{lock=null});}}catch{}};
+      lock.addEventListener('release',()=>{lock=null})}}catch{}};
     acquire();
     const onVis=()=>{if(document.visibilityState==='visible'&&!lock&&!cancelled)acquire()};
     document.addEventListener('visibilitychange',onVis);
     return()=>{cancelled=true;document.removeEventListener('visibilitychange',onVis);if(lock)lock.release().catch(()=>{})}},[]);
-  // Shared-session push every 15s + on every state change
+  // Shared-session push every 15s
   useEffect(()=>{if(!sb)return;const planId=initialPlan?.id||null;
     const push=()=>{const s=stateRef.current;if(!s)return;
       sb.from('wk_store').upsert({key:'sharedActiveSession',value:{planId,plan:initialPlan||null,snapshot:s,updatedAt:Date.now()},updated_at:new Date().toISOString()}).then(()=>{})};
     push();const iv=setInterval(push,15000);return()=>clearInterval(iv)},[]);
 
-  useEffect(()=>{try{localStorage.setItem('wk2_v3_snap',JSON.stringify({workout,focusIdx}))}catch{}},[workout,focusIdx]);
-  useEffect(()=>{const iv=setInterval(()=>tick(t=>t+1),1000);return()=>clearInterval(iv)},[]);
-  // Keep refs current so async save/push always see latest
-  stateRef.current={workout,focusIdx};
-  snapRef.current={workout,focusIdx};
   const elapsed=Date.now()-workout.startTime;
   const restStart=restStarts[activeAth]||null;
-  const restElapsed=restStart?Math.floor((Date.now()-restStart)/1000):0;
   const setRestStart=v=>setRestStarts(p=>{const n={...p};if(v==null)delete n[activeAth];else n[activeAth]=v;return n});
-  const restTarget=120;
 
-  const flatIds=workout.exerciseIds;
-  // Defined here so empty state can use them
-  const _addExercise=newEx=>{setWorkout(w=>{const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id).length;
-    const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
-    const nw={...w,exerciseIds:[...w.exerciseIds,newEid],athletes:{...w.athletes}};
-    Object.keys(nw.athletes).forEach(aId=>{const v={};newEx.metrics.forEach(m=>{v[m]=''});
-      nw.athletes[aId]={...nw.athletes[aId],sets:{...nw.athletes[aId].sets,[newEid]:[{values:v,completed:false}]}}});
-    setFocusIdx(nw.exerciseIds.length-1);return nw});setShowPicker(false)};
-  if(!flatIds.length){return(<div className="shell">
-    <div className="aw-top">
-      <button className="aw-back" onClick={()=>onMinimize&&onMinimize()}><Ic n="chevD" s={24}/></button>
-      <div className="aw-timer">{fmtT(Math.floor(elapsed/1000))}</div>
-      <button className="aw-finish" onClick={()=>setShowFinish(true)}>Finish</button>
-    </div>
-    <div style={{padding:'40px 22px',textAlign:'center'}}>
-      <div className="ex-name" style={{fontSize:32,marginBottom:14}}>EMPTY WORKOUT</div>
-      <div style={{fontSize:14,color:'var(--text2)',marginBottom:24}}>Add an exercise to start logging.</div>
-      <button className="btn btn-primary" onClick={()=>{setReplacingIdx(null);setShowPicker(true)}}>+ Add Exercise</button>
-    </div>
-    {showPicker&&<ExercisePicker exercises={exercises} exclude={[]}
-      onSelect={ex2=>_addExercise(ex2)} onClose={()=>setShowPicker(false)}
-      onCreateNew={()=>{setShowPicker(false);setShowNewEx(true)}}/>}
-    {showNewEx&&<NewExerciseModal onSave={ex2=>{setExercises&&setExercises(p=>[...p,ex2]);_addExercise(ex2)}} onClose={()=>setShowNewEx(false)}/>}
-    {confirmCancel&&<Confirm title="Discard workout?" message="This deletes the workout and everything logged in it." danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}
-  </div>)}
-
-  const safeIdx=Math.min(focusIdx,flatIds.length-1);
-  const eid=flatIds[safeIdx];
-  const ex=exercises.find(e=>e.id===baseExId(eid));
-  const sets=workout.athletes[activeAth]?.sets?.[eid]||[];
-  const effMetrics=workout.exerciseMetrics?.[eid]||ex?.metrics||[];
-  const allSetsDone=sets.length>0&&sets.every(s=>s.completed||s.flop);
-  const ss=workout.supersets?.find(s=>s.includes(eid));
-
-  const updateSet=(si,mid,v)=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
+  // Handlers - all take the exercise id
+  const updateSet=(eid,si,mid,v)=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s,i)=>i===si?{...s,values:{...s.values,[mid]:v}}:s)}}}}));
-  // tap cycles: none → done → flop → none. done works even with empty values (drills / unmeasured jumps).
-  const toggleSet=si=>setWorkout(w=>{const s=w.athletes[activeAth].sets[eid][si];
+  // tap cycles: none -> done -> flop -> none
+  const toggleSet=(eid,si)=>setWorkout(w=>{const s=w.athletes[activeAth].sets[eid][si];
     const state=s.flop?'flop':s.completed?'done':'none';
     const next=state==='none'?'done':state==='done'?'flop':'none';
     if(state==='none')setRestStart(Date.now());
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
       sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s2,i)=>i===si?{...s2,completed:next==='done',flop:next==='flop'}:s2)}}}}});
-  const toggleWarmup=si=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
+  const toggleWarmup=(eid,si)=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s,i)=>i===si?{...s,warmup:!s.warmup}:s)}}}}));
-  const addSet=()=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const last=ss[ss.length-1];
-    const nv={};effMetrics.forEach(m=>{nv[m]=last?.values[m]??''});
+  const checkAll=eid=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const allDone=ss.every(s=>s.completed);
+    return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
+      sets:{...w.athletes[activeAth].sets,[eid]:ss.map(s=>({...s,completed:!allDone,flop:false}))}}}}});
+  const addSet=eid=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const last=ss[ss.length-1];
+    const ex2=exercises.find(e=>e.id===baseExId(eid));const em=w.exerciseMetrics?.[eid]||ex2?.metrics||[];
+    const nv={};em.forEach(m=>{nv[m]=last?.values[m]??''});
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
       sets:{...w.athletes[activeAth].sets,[eid]:[...ss,{values:nv,completed:false}]}}}}});
-  const delSet=()=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];if(ss.length<=1)return w;
+  const delSet=eid=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];if(ss.length<=1)return w;
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
       sets:{...w.athletes[activeAth].sets,[eid]:ss.slice(0,-1)}}}}});
+  const setAthleteNote=(eid,text)=>setWorkout(w=>({...w,athleteNotes:{...(w.athleteNotes||{}),[eid]:{...((w.athleteNotes||{})[eid]||{}),[activeAth]:text}}}));
   const addExercise=newEx=>{setWorkout(w=>{const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id).length;
     const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
     const nw={...w,exerciseIds:[...w.exerciseIds,newEid],athletes:{...w.athletes}};
     Object.keys(nw.athletes).forEach(aId=>{const v={};newEx.metrics.forEach(m=>{v[m]=''});
       nw.athletes[aId]={...nw.athletes[aId],sets:{...nw.athletes[aId].sets,[newEid]:[{values:v,completed:false}]}}});
-    setFocusIdx(nw.exerciseIds.length-1);return nw});setShowPicker(false)};
-  const replaceExercise=newEx=>{setWorkout(w=>{const oldEid=w.exerciseIds[replacingIdx];if(!oldEid)return w;
+    return nw});setShowPicker(false)};
+  const replaceExercise=newEx=>{setWorkout(w=>{const oldEid=replacingEid;if(!oldEid)return w;
     const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id&&id!==oldEid).length;
     const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
-    const ids=[...w.exerciseIds];ids[replacingIdx]=newEid;
-    const nw={...w,exerciseIds:ids,athletes:{...w.athletes}};
+    const ids=w.exerciseIds.map(id=>id===oldEid?newEid:id);
+    const nw={...w,exerciseIds:ids,supersets:(w.supersets||[]).map(g=>g.map(id=>id===oldEid?newEid:id)),athletes:{...w.athletes}};
     Object.keys(nw.athletes).forEach(aId=>{const v={};newEx.metrics.forEach(m=>{v[m]=''});
-      const newSets={...nw.athletes[aId].sets};delete newSets[oldEid];newSets[newEid]=[{values:v,completed:false}];
-      nw.athletes[aId]={...nw.athletes[aId],sets:newSets}});
-    return nw});setReplacingIdx(null);setShowPicker(false)};
-  const deleteExercise=()=>{setWorkout(w=>{const ids=w.exerciseIds.filter(id=>id!==eid);
-    const nw={...w,exerciseIds:ids,athletes:{...w.athletes}};
+      const ns={...nw.athletes[aId].sets};delete ns[oldEid];ns[newEid]=[{values:v,completed:false}];
+      nw.athletes[aId]={...nw.athletes[aId],sets:ns}});
+    return nw});setReplacingEid(null);setShowPicker(false)};
+  const deleteExercise=eid=>{setWorkout(w=>{const ids=w.exerciseIds.filter(id=>id!==eid);
+    const nw={...w,exerciseIds:ids,supersets:(w.supersets||[]).map(g=>g.filter(id=>id!==eid)).filter(g=>g.length>1),athletes:{...w.athletes}};
     Object.keys(nw.athletes).forEach(aId=>{const ns={...nw.athletes[aId].sets};delete ns[eid];nw.athletes[aId]={...nw.athletes[aId],sets:ns}});
-    return nw});setFocusIdx(Math.max(0,safeIdx-1));setShowActions(false)};
-  const changeMetrics=newMetrics=>{setWorkout(w=>{const na={...w.athletes};
-    Object.keys(na).forEach(aId=>{if(na[aId].sets[eid]){
-      na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:na[aId].sets[eid].map(s=>{const nv={};newMetrics.forEach(m=>{nv[m]=s.values[m]??''});return{...s,values:nv}})}}}});
-    return{...w,athletes:na,exerciseMetrics:{...(w.exerciseMetrics||{}),[eid]:newMetrics}}});
-    setShowMetrics(false)};
-  const changeNote=text=>{setWorkout(w=>{const cur=w.exNotes?.[eid];
-    let next;if(typeof cur==='string'){next={};athletes.forEach(a=>{if(cur)next[a.id]=cur});next[activeAth]=text}
-    else next={...(cur||{}),[activeAth]:text};
-    return{...w,exNotes:{...(w.exNotes||{}),[eid]:next}}});
-    setShowNote(false)};
-  const toggleAthleteAssignment=aId=>{setWorkout(w=>{const cur=w.exerciseAthletes?.[eid]||athletes.map(a=>a.id);
+    return nw});setActionsEid(null)};
+  const changeMetrics=newMetrics=>{const t=metricsEid;setWorkout(w=>{const na={...w.athletes};
+    Object.keys(na).forEach(aId=>{if(na[aId].sets[t]){
+      na[aId]={...na[aId],sets:{...na[aId].sets,[t]:na[aId].sets[t].map(s=>{const nv={};newMetrics.forEach(m=>{nv[m]=s.values[m]??''});return{...s,values:nv}})}}}});
+    return{...w,athletes:na,exerciseMetrics:{...(w.exerciseMetrics||{}),[t]:newMetrics}}});
+    setMetricsEid(null)};
+  const toggleAthleteAssignment=aId=>{const t=actionsEid;setWorkout(w=>{const cur=w.exerciseAthletes?.[t]||athletes.map(a=>a.id);
     let next=cur.includes(aId)?cur.filter(x=>x!==aId):[...cur,aId];
     if(next.length===0)next=athletes.map(a=>a.id);
-    return{...w,exerciseAthletes:{...(w.exerciseAthletes||{}),[eid]:next}}})};
-  const noteFor=(eid_)=>{const v=workout.exNotes?.[eid_];if(!v)return '';if(typeof v==='string')return v;return v[activeAth]||''};
-  // (snapshot push moved up to top hooks)
+    return{...w,exerciseAthletes:{...(w.exerciseAthletes||{}),[t]:next}}})};
 
-  // Stats
-  const completed=sets.filter(s=>s.completed&&!s.warmup);
-  const hasW=effMetrics.includes('weight');const hasR=effMetrics.includes('reps');
-  let totalReps=null,totalKg=null;
-  if(hasR)totalReps=completed.reduce((a,s)=>a+(Number(s.values.reps)||0),0);
-  if(hasW&&hasR)totalKg=completed.reduce((a,s)=>a+(Number(s.values.weight)||0)*(Number(s.values.reps)||1),0);
+  // Build blocks - supersets grouped under one letter
+  const blocks=[];const seen=new Set();let bi=0;
+  workout.exerciseIds.forEach(eid=>{if(seen.has(eid))return;
+    const grp=(workout.supersets||[]).find(g=>g.includes(eid));
+    if(grp){const g=grp.filter(id=>workout.exerciseIds.includes(id));g.forEach(id=>seen.add(id));
+      blocks.push({letter:String.fromCharCode(65+bi++),eids:g,superset:true})}
+    else{seen.add(eid);blocks.push({letter:String.fromCharCode(65+bi++),eids:[eid],superset:false})}});
 
-  // Last session - actual logged values from the most recent workout with this exercise
-  const lastWk=[...workouts].reverse().find(w=>{const ws=w.athletes?.[activeAth]?.sets;if(!ws)return false;
-    return Object.keys(ws).some(k=>baseExId(k)===baseExId(eid)&&ws[k].some(s=>s.completed))});
-  let lastSets=[],lastNote='';
-  if(lastWk){const ws=lastWk.athletes[activeAth].sets;
-    const lk=Object.keys(ws).find(k=>baseExId(k)===baseExId(eid)&&ws[k].some(s=>s.completed));
-    lastSets=ws[lk].filter(s=>s.completed);
-    const _ln=lastWk.exNotes?.[lk];lastNote=typeof _ln==='string'?_ln:(_ln?.[activeAth]||'');}
-  let lastSummary='';
-  if(lastSets.length){
-    if(hasW&&hasR){
-      const reps=lastSets.map(s=>s.values.reps).filter(v=>v!=null&&v!=='');
-      const ws=lastSets.map(s=>s.values.weight).filter(v=>v!=null&&v!=='');
-      const sameR=reps.length&&reps.every(r=>r===reps[0]);
-      lastSummary=`${lastSets.length}×${sameR?reps[0]:'·'}`+(ws.length?` @ ${ws.join(', ')} kg`:'');
-    }else{
-      const pm=effMetrics[0];const md=METRIC_MAP[pm]||{unit:''};
-      const vals=lastSets.map(s=>s.values[pm]).filter(v=>v!=null&&v!=='');
-      // drills logged with no values get no Last card
-      lastSummary=vals.length?vals.join(', ')+(md.unit?` ${md.unit}`:''):'';
-    }
-  }
+  // Whole-workout totals for the active athlete
+  let totalReps=0,totalKg=0;
+  Object.values(workout.athletes[activeAth]?.sets||{}).forEach(ss=>{
+    ss.filter(s=>s.completed&&!s.warmup).forEach(s=>{totalReps+=Number(s.values.reps)||0;totalKg+=(Number(s.values.weight)||0)*(Number(s.values.reps)||1)})});
 
-  // PR highlight - collect priors from PAST workouts only (not current)
-  const allPrior=[];workouts.forEach(w=>{if(w.id===workout.id)return;
-    const baseId=baseExId(eid);
-    Object.keys(w.athletes?.[activeAth]?.sets||{}).filter(k=>baseExId(k)===baseId).forEach(k=>{
-      w.athletes[activeAth].sets[k].filter(x=>x.completed&&!x.warmup).forEach(x=>allPrior.push(x))});
-  });
-  const priorMaxW=hasW?Math.max(0,...allPrior.map(s=>Number(s.values?.weight)||0)):0;
-  const priorBestT=Math.min(Infinity,...allPrior.map(s=>Number(s.values?.['tf-time'])||Infinity).filter(t=>t>0));
-  // Detect PRs in CURRENT sets (>= weight or < time vs prior)
-  const prSetIdxs=new Set();
-  sets.forEach((s,i)=>{if(!s.completed||s.warmup)return;const v=s.values||{};
-    const w_=Number(v.weight)||0;const t_=Number(v['tf-time'])||0;
-    if(hasW&&w_>0&&priorMaxW>0&&w_>=priorMaxW)prSetIdxs.add(i);
-    if(t_>0&&priorBestT<Infinity&&t_<=priorBestT)prSetIdxs.add(i)});
-  // PR burst handled by top-level useEffect; just track count for next render
-  if(prSetIdxs.size>prevPrCount.current){setTimeout(()=>setBurstKey(k=>k+1),0)}
-  prevPrCount.current=prSetIdxs.size;
-
-  // Headers
-  const mds=effMetrics.map(m=>METRIC_MAP[m]||{id:m,name:m,unit:''});
-  const numCols=mds.length;
-  const wide=numCols>=4;
-  const gridCols=wide?`28px ${mds.map(()=>'minmax(58px,1fr)').join(' ')} 36px`:`28px ${mds.map(()=>'1fr').join(' ')} 36px`;
+  const actionsEx=actionsEid?exercises.find(e=>e.id===baseExId(actionsEid)):null;
+  const metricsEff=metricsEid?(workout.exerciseMetrics?.[metricsEid]||exercises.find(e=>e.id===baseExId(metricsEid))?.metrics||[]):[];
 
   if(showFinish)return<FinishFormFull workout={workout} athletes={athletes} exercises={exercises} elapsed={elapsed} allTags={allTags}
     onSave={data=>{const cust=data.customDuration!=null?data.customDuration:elapsed;
@@ -1043,101 +1066,48 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   return(<div className="shell">
     <div className="aw-top">
       <button className="aw-back" onClick={()=>onMinimize&&onMinimize()}><Ic n="chevD" s={24}/></button>
-      <div className="aw-timer">{fmtT(Math.floor(elapsed/1000))}</div>
-      <button className="aw-finish" onClick={()=>setShowFinish(true)}>Finish</button>
+      <WorkoutTimer startTime={workout.startTime}/>
+      <div style={{width:34}}/>
     </div>
-    <div className="aw-dots">
-      {flatIds.map((id,i)=>{const isThis=i===safeIdx;
-        const setsI=workout.athletes[activeAth]?.sets?.[id]||[];
-        const allDone=setsI.length>0&&setsI.every(s=>s.completed||s.flop);
-        return<div key={i} className={'aw-dot'+(isThis?' on':'')+(allDone&&!isThis?' done':'')} onClick={()=>setFocusIdx(i)}/>})}
-    </div>
-    {(totalReps!=null||totalKg!=null)&&<div className="aw-totals">
+    {(totalReps>0||totalKg>0)&&<div className="aw-totals">
       {totalReps>0&&<div className="aw-tot"><span className="aw-tot-v">{totalReps}</span><span className="aw-tot-l">Reps</span></div>}
       {totalKg>0&&<div className="aw-tot"><span className="aw-tot-v">{totalKg.toLocaleString()}</span><span className="aw-tot-l">Kg</span></div>}
     </div>}
-
-    {athletes.length>1&&<div style={{display:'flex',gap:6,padding:'8px 18px 4px',justifyContent:'center'}}>
+    {athletes.length>1&&<div style={{display:'flex',gap:6,padding:'10px 18px 4px',justifyContent:'center'}}>
       {athletes.filter(a=>workout.athletes[a.id]).map(a=>(<button key={a.id} onClick={()=>setActiveAth(a.id)}
-        style={{padding:'6px 12px',borderRadius:20,fontSize:11,fontWeight:800,letterSpacing:'.4px',textTransform:'uppercase',background:activeAth===a.id?(a.color||'var(--text)'):'var(--surface2)',color:activeAth===a.id?'#fff':'var(--text2)',border:'none'}}>{a.name}</button>))}
+        style={{padding:'7px 14px',borderRadius:20,fontSize:11,fontWeight:800,letterSpacing:'.4px',textTransform:'uppercase',background:activeAth===a.id?(a.color||'var(--text)'):'var(--surface2)',color:activeAth===a.id?'#fff':'var(--text2)',border:'none'}}>{a.name}</button>))}
     </div>}
-    <div className="scroll" style={{paddingBottom:'100px'}}>
-      <div className="ex-card" style={{position:'relative'}}>
-        <button onClick={()=>setShowActions(true)} style={{position:'absolute',top:14,right:14,padding:6,color:'var(--text2)',background:'transparent',border:'none'}}><Ic n="more" s={20}/></button>
-        <div className="ex-name" style={{paddingRight:36}}>{ex?.name||'?'}</div>
-
-        {lastSummary&&<div className="ex-pr-card" style={{flexDirection:'column',alignItems:'stretch',gap:3}}>
-          <span style={{fontSize:14,fontWeight:700,color:'var(--text3)'}}>Last session</span>
-          <div style={{fontSize:21,fontWeight:800,fontStyle:'italic',color:'var(--text)',letterSpacing:'-.4px'}}>{lastSummary}</div>
-          {lastNote&&<div style={{marginTop:6,fontSize:14,color:'var(--text2)',lineHeight:1.45}}>{lastNote}</div>}
-        </div>}
-
-        {noteFor(eid)&&<div className="ex-note">{noteFor(eid)}</div>}
-
-        <div className="sets-tbl">
-          <div className="sets-h" style={{gridTemplateColumns:gridCols}}>
-            <span className="l">Sets</span>
-            {mds.map(m=><span key={m.id}>{m.name||m.unit}</span>)}
-            <span></span>
-          </div>
-          {sets.map((s,i)=>{const emptyDone=s.completed&&mds.every(m=>s.values[m.id]===''||s.values[m.id]==null);
-            return(<div key={i} className={'set-row'+(s.warmup?' warmup':'')+(s.flop?' flop':'')} style={{gridTemplateColumns:gridCols}}>
-            <button className={'set-num-btn'+(s.warmup?' warmup':'')} onClick={()=>toggleWarmup(i)}>{s.warmup?'W':i+1}</button>
-            {mds.map((m,mi)=>(<div key={m.id} style={{position:'relative'}}>
-              <input type="number" inputMode="decimal" className="set-input" step={m.step||0.01}
-                value={s.values[m.id]??''} placeholder={s.flop?'flop':emptyDone?'not measured':(m.unit||'')}
-                onChange={e=>updateSet(i,m.id,e.target.value===''?'':Number(e.target.value))}/>
-              {prSetIdxs.has(i)&&mi===mds.length-1&&<span key={i+'-'+mi+'-'+(s.values[m.id]||'')} className="set-pr pulse" title="Personal Record">🏆</span>}
-            </div>))}
-            <button className={'set-check'+(s.completed?' done':'')+(s.flop?' flop':'')} onClick={()=>toggleSet(i)} title={s.flop?'Flop - tap to clear':s.completed?'Done - tap for flop':'Tap to mark done'}>{s.completed&&<Ic n="check" s={18}/>}{s.flop&&<Ic n="x" s={16}/>}</button>
-          </div>)})}
-          <div className="set-controls">
-            <button className="set-ctrl-btn" onClick={delSet} disabled={sets.length<=1}>−</button>
-            <span className="set-ctrl-lbl">Set</span>
-            <button className="set-ctrl-btn" onClick={addSet}>+</button>
-          </div>
-        </div>
-        <button className="btn btn-secondary" style={{marginTop:18}} onClick={()=>{setReplacingIdx(null);setShowPicker(true)}}>+ Add Exercise</button>
-        <button onClick={()=>setConfirmCancel(true)} style={{display:'block',margin:'14px auto 0',background:'transparent',border:'none',color:'var(--text3)',fontSize:13,fontWeight:700,padding:8}}>Discard workout</button>
+    <div className="scroll" style={{paddingBottom:'40px'}}>
+      {!workout.exerciseIds.length&&<div style={{padding:'40px 22px',textAlign:'center'}}>
+        <div className="ex-name" style={{fontSize:30,marginBottom:14}}>EMPTY WORKOUT</div>
+        <div style={{fontSize:14,color:'var(--text2)'}}>Add an exercise to start logging.</div>
+      </div>}
+      {blocks.map(b=>b.eids.map(eid=><ExerciseCard key={eid} eid={eid} blockLabel={b.letter} isSuperset={b.superset}
+        workout={workout} activeAth={activeAth} exercises={exercises} workouts={workouts}
+        onUpdateSet={updateSet} onToggleSet={toggleSet} onToggleWarmup={toggleWarmup} onAddSet={addSet} onDelSet={delSet}
+        onCheckAll={checkAll} onActions={setActionsEid} onSetAthleteNote={setAthleteNote}/>))}
+      <div style={{padding:'8px 14px 0'}}>
+        {workout.exerciseIds.length>0&&<button className="btn btn-primary" style={{width:'100%',padding:'17px',fontSize:17}} onClick={()=>setShowFinish(true)}>End Workout</button>}
+        <button className="btn btn-secondary" style={{width:'100%',marginTop:10}} onClick={()=>{setReplacingEid(null);setShowPicker(true)}}>+ Add Exercise</button>
+        <button onClick={()=>setConfirmCancel(true)} style={{display:'block',margin:'14px auto 4px',background:'transparent',border:'none',color:'var(--text3)',fontSize:13,fontWeight:700,padding:8}}>Discard workout</button>
       </div>
     </div>
 
-    {restStart&&<div className="rest">
-      <div className="rest-prog" style={{width:Math.min(100,(restElapsed/restTarget)*100)+'%'}}/>
-      <div className="rest-c">
-        <div>
-          <div className="rest-t">{fmtT(restElapsed)}</div>
-          <div className="rest-l">Rest</div>
-        </div>
-        <div className="rest-a">
-          <button className="rest-btn" onClick={()=>setRestStart(null)}>Stop</button>
-          <button className="rest-btn skip" onClick={()=>setRestStart(null)}>Skip</button>
-        </div>
-      </div>
-    </div>}
+    {restStart&&<RestBar startedAt={restStart} target={120} onStop={()=>setRestStart(null)}/>}
 
-    <div className="aw-nav">
-      <button disabled={safeIdx===0} onClick={()=>setFocusIdx(Math.max(0,safeIdx-1))}><Ic n="chevL" s={16}/> Back</button>
-      <button className="timer" onClick={()=>setRestStart(Date.now())}><Ic n="clock" s={16}/> Select Timer</button>
-      <button className="next" disabled={safeIdx>=flatIds.length-1} onClick={()=>setFocusIdx(Math.min(flatIds.length-1,safeIdx+1))}>Next <Ic n="chevR" s={16}/></button>
-    </div>
-
-    {confirmCancel&&<Confirm title="Discard workout?" message="This deletes the workout and everything logged in it." danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}
-    {burstKey>0&&<><div key={'burst-'+burstKey} className="pr-burst">🏆</div><div key={'toast-'+burstKey} className="pr-toast">New PR!</div></>}
-    {showPicker&&<ExercisePicker exercises={exercises} exclude={replacingIdx==null?workout.exerciseIds:[]}
-      onSelect={ex2=>replacingIdx!=null?replaceExercise(ex2):addExercise(ex2)}
-      onClose={()=>{setShowPicker(false);setReplacingIdx(null)}}
+    {showPicker&&<ExercisePicker exercises={exercises} exclude={replacingEid==null?workout.exerciseIds:[]}
+      onSelect={ex2=>replacingEid!=null?replaceExercise(ex2):addExercise(ex2)}
+      onClose={()=>{setShowPicker(false);setReplacingEid(null)}}
       onCreateNew={()=>{setShowPicker(false);setShowNewEx(true)}}/>}
-    {showNewEx&&<NewExerciseModal onSave={ex2=>{setExercises&&setExercises(p=>[...p,ex2]);if(replacingIdx!=null)replaceExercise(ex2);else addExercise(ex2)}} onClose={()=>setShowNewEx(false)}/>}
-    {showActions&&ex&&<ExerciseActions exercise={ex} athletes={athletes} assignedAthletes={workout.exerciseAthletes?.[eid]}
-      onClose={()=>setShowActions(false)}
-      onReplace={()=>{setReplacingIdx(safeIdx);setShowActions(false);setShowPicker(true)}}
-      onDelete={()=>{if(confirm('Delete '+ex.name+' from workout?'))deleteExercise()}}
-      onEditMetrics={()=>{setShowActions(false);setShowMetrics(true)}}
-      onEditNote={()=>{setShowActions(false);setShowNote(true)}}
+    {showNewEx&&<NewExerciseModal onSave={ex2=>{setExercises&&setExercises(p=>[...p,ex2]);if(replacingEid!=null)replaceExercise(ex2);else addExercise(ex2)}} onClose={()=>setShowNewEx(false)}/>}
+    {confirmCancel&&<Confirm title="Discard workout?" message="This deletes the workout and everything logged in it." danger onConfirm={onCancel} onCancel={()=>setConfirmCancel(false)}/>}
+    {actionsEid&&actionsEx&&<ExerciseActions exercise={actionsEx} athletes={athletes} assignedAthletes={workout.exerciseAthletes?.[actionsEid]}
+      onClose={()=>setActionsEid(null)}
+      onReplace={()=>{setReplacingEid(actionsEid);setActionsEid(null);setShowPicker(true)}}
+      onDelete={()=>{if(window.confirm('Delete '+actionsEx.name+' from workout?'))deleteExercise(actionsEid)}}
+      onEditMetrics={()=>{setMetricsEid(actionsEid);setActionsEid(null)}}
       onToggleAthlete={toggleAthleteAssignment}/>}
-    {showMetrics&&ex&&<MetricsEditor current={effMetrics} onChange={changeMetrics} onClose={()=>setShowMetrics(false)}/>}
-    {showNote&&<NoteEditor initial={noteFor(eid)} onSave={changeNote} onClose={()=>setShowNote(false)} title={`Notes - ${ex?.name||''}`}/>}
+    {metricsEid&&<MetricsEditor current={metricsEff} onChange={changeMetrics} onClose={()=>setMetricsEid(null)}/>}
   </div>)}
 
 function FinishForm({workout,athletes,elapsed,onSave,onCancel}){
@@ -1674,11 +1644,6 @@ function ExerciseActions({exercise,onClose,onReplace,onDelete,onEditMetrics,onEd
       <button className="act-row" onClick={onEditMetrics}>
         <div className="act-icon" style={{background:'var(--surface2)',color:'var(--primary)'}}>📏</div>
         <div className="act-text">Edit Metrics</div>
-        <Ic n="chevR" s={16}/>
-      </button>
-      <button className="act-row" onClick={onEditNote}>
-        <div className="act-icon" style={{background:'var(--surface2)',color:'var(--text2)'}}>📝</div>
-        <div className="act-text">Edit Notes</div>
         <Ic n="chevR" s={16}/>
       </button>
       {athletes.length>1&&<div className="act-row" style={{flexDirection:'column',alignItems:'stretch'}}>
