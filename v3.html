@@ -1093,7 +1093,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const blocks=[];const seen=new Set();let bi=0;
   workout.exerciseIds.forEach(eid=>{if(seen.has(eid))return;
     const grp=(workout.supersets||[]).find(g=>g.includes(eid));
-    if(grp){const g=grp.filter(id=>workout.exerciseIds.includes(id));g.forEach(id=>seen.add(id));
+    if(grp){const g=workout.exerciseIds.filter(id=>grp.includes(id));g.forEach(id=>seen.add(id));
       blocks.push({letter:String.fromCharCode(65+bi++),eids:g,superset:true})}
     else{seen.add(eid);blocks.push({letter:String.fromCharCode(65+bi++),eids:[eid],superset:false})}});
 
