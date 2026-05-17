@@ -1910,7 +1910,7 @@ const PERF_NORMS={
     {cat:'VERTICAL POWER',name:'DJ 40 GCT',unit:'s',dec:3,lower:true,t:[0.198,0.211,0.230],src:{type:'metric',ex:'drop-jump-40cm',m:'gct',lo:1}},
     {cat:'VERTICAL POWER',name:'DJ 40 RSI',unit:'',dec:2,lower:false,t:[2.98,2.56,2.04],src:{type:'rsi',ex:'drop-jump-40cm'}},
     {cat:'STRENGTH',name:'TB Deadlift',unit:'% BW',dec:0,lower:false,t:[244,244,194],src:{type:'pctbw',ex:'tb-deadlift'}},
-    {cat:'STRENGTH',name:'Hang High Pull',unit:'% BW',dec:0,lower:false,t:[184,179,142],src:{type:'pctbw',ex:'hang-high-pull'}},
+    {cat:'STRENGTH',name:'Hang High Pull',unit:'% BW',dec:0,lower:false,t:[184,179,142],src:{type:'pctbw',ex:'high-pull'}},
   ],
   f:[
     {cat:'SPEED',name:'10m Fly',unit:'s',dec:2,lower:true,t:[1.07,1.09,1.10],src:{type:'fly'}},
@@ -1928,7 +1928,7 @@ const PERF_NORMS={
     {cat:'VERTICAL POWER',name:'DJ 40 GCT',unit:'s',dec:3,lower:true,t:[0.164,0.199,0.234],src:{type:'metric',ex:'drop-jump-40cm',m:'gct',lo:1}},
     {cat:'VERTICAL POWER',name:'DJ 40 RSI',unit:'',dec:2,lower:false,t:[2.93,2.11,1.54],src:{type:'rsi',ex:'drop-jump-40cm'}},
     {cat:'STRENGTH',name:'TB Deadlift',unit:'% BW',dec:0,lower:false,t:[139,133,122],src:{type:'pctbw',ex:'tb-deadlift'}},
-    {cat:'STRENGTH',name:'Hang High Pull',unit:'% BW',dec:0,lower:false,t:[105,95,74],src:{type:'pctbw',ex:'hang-high-pull'}},
+    {cat:'STRENGTH',name:'Hang High Pull',unit:'% BW',dec:0,lower:false,t:[105,95,74],src:{type:'pctbw',ex:'high-pull'}},
   ],
 };
 const PF_BAND=['At 23+ norm','20–22 level','17–20 level','Below 17–20'];
@@ -3416,7 +3416,6 @@ function App(){
     if(!exSynced||!exercises.length)return;
     const adds=[
       {id:'cmj',name:'CMJ',category:'Legs',metrics:['height']},
-      {id:'hang-high-pull',name:'Hang High Pull',category:'Legs',metrics:['weight','reps']},
       {id:'bounds-5-pr',name:'5 Bounds w Pre-Run',category:'T&F',metrics:['tf-dist']},
       {id:'drop-jump-20cm',name:'Drop Jump 20cm',category:'Legs',metrics:['height','gct']},
       {id:'drop-jump-40cm',name:'Drop Jump 40cm',category:'Legs',metrics:['height','gct']},
@@ -3424,6 +3423,17 @@ function App(){
     const have=new Set(exercises.map(e=>e.id));
     const missing=adds.filter(e=>!have.has(e.id));
     if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    localStorage.setItem(KEY,'1')
+  },[exSynced,exercises.length]);
+
+  // Migration: the High Pull already logged every session IS the Hang High Pull
+  useEffect(()=>{const KEY='wk2_v3_pull_rename_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!exercises.length)return;
+    setExercises(p=>{let changed=false;
+      const n=p.filter(e=>{if(e.id==='hang-high-pull'){changed=true;return false}return true})
+        .map(e=>{if(e.id==='high-pull'&&e.name!=='Hang High Pull'){changed=true;return{...e,name:'Hang High Pull'}}return e});
+      return changed?n:p});
     localStorage.setItem(KEY,'1')
   },[exSynced,exercises.length]);
 

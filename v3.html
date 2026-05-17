@@ -4573,7 +4573,7 @@ const PERF_NORMS = {
     t: [184, 179, 142],
     src: {
       type: 'pctbw',
-      ex: 'hang-high-pull'
+      ex: 'high-pull'
     }
   }],
   f: [{
@@ -4760,7 +4760,7 @@ const PERF_NORMS = {
     t: [105, 95, 74],
     src: {
       type: 'pctbw',
-      ex: 'hang-high-pull'
+      ex: 'high-pull'
     }
   }]
 };
@@ -8677,11 +8677,6 @@ function App() {
       category: 'Legs',
       metrics: ['height']
     }, {
-      id: 'hang-high-pull',
-      name: 'Hang High Pull',
-      category: 'Legs',
-      metrics: ['weight', 'reps']
-    }, {
       id: 'bounds-5-pr',
       name: '5 Bounds w Pre-Run',
       category: 'T&F',
@@ -8700,6 +8695,32 @@ function App() {
     const have = new Set(exercises.map(e => e.id));
     const missing = adds.filter(e => !have.has(e.id));
     if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    localStorage.setItem(KEY, '1');
+  }, [exSynced, exercises.length]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_pull_rename_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !exercises.length) return;
+    setExercises(p => {
+      let changed = false;
+      const n = p.filter(e => {
+        if (e.id === 'hang-high-pull') {
+          changed = true;
+          return false;
+        }
+        return true;
+      }).map(e => {
+        if (e.id === 'high-pull' && e.name !== 'Hang High Pull') {
+          changed = true;
+          return {
+            ...e,
+            name: 'Hang High Pull'
+          };
+        }
+        return e;
+      });
+      return changed ? n : p;
+    });
     localStorage.setItem(KEY, '1');
   }, [exSynced, exercises.length]);
   useEffect(() => {
