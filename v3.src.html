@@ -3081,6 +3081,17 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exSynced,exercises.length]);
 
+  // Migration: hurdle jumps get a height (m) metric alongside reps
+  useEffect(()=>{const KEY='wk2_v3_hurdle_height_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!exercises.length)return;
+    setExercises(p=>{let changed=false;
+      const n=p.map(e=>{if(e.id==='hurdle-jumps'&&!(e.metrics||[]).includes('height')){
+        changed=true;return{...e,metrics:[...(e.metrics||[]),'height']}}return e});
+      return changed?n:p});
+    localStorage.setItem(KEY,'1')
+  },[exSynced,exercises.length]);
+
   useEffect(()=>{const c=ath?.color||'#2156f4';
     document.documentElement.style.setProperty('--primary',c);
     const dark=c.replace(/^#/,'');const r=parseInt(dark.slice(0,2),16),g=parseInt(dark.slice(2,4),16),b=parseInt(dark.slice(4,6),16);
