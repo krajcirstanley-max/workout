@@ -469,6 +469,8 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .prd-sld-h{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:800;color:var(--text2);margin-bottom:9px}
 .prd-sld-h b{font-size:16px;font-weight:900;font-style:italic;color:var(--primary)}
 .prd-sld input[type=range]{width:100%;accent-color:var(--primary);margin:0}
+.prd-sld-sub{font-size:11px;font-weight:600;color:var(--text3);margin-top:9px;line-height:1.45}
+.prd-sld-sub b{color:var(--text2);font-weight:800}
 .prd-meta{font-size:11.5px;color:var(--text3);font-weight:600;text-align:center;margin-top:11px;line-height:1.5}
 .prd-meta b{color:var(--text2);font-weight:800}
 .warmup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center}
@@ -1244,6 +1246,7 @@ function suggestApproachMark({eid,athleteId,workouts,conditions,leadIn,nowMs,exc
   return cands;
 }
 const MARK_GROUP_LABEL={'app-12':'12-step','app-14':'14-step','app-16':'16-step','app-18':'18-step','app-short':'short-approach'};
+const MARK_GROUP_STEPS={'app-short':6,'app-12':12,'app-14':14,'app-16':16,'app-18':18};
 // short human description of a session's conditions + lead-in
 function condDesc(c,leadIn,allTags){
   const parts=[c?.venue,c?.temp,c?.wind].filter(Boolean).map(v=>COND_LABEL[v]||v);
@@ -1864,14 +1867,17 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
     if(best<Infinity)flyPer.push(best)});
   const last2=flyPer.slice(-2);
   const maxVel=last2.length?Math.round(1000/Math.min(...last2))/100:null;
-  // efficiency = jump cm / approach velocity, from the most recent jump session logging both
-  let efficiency=null;
-  for(let i=myWk.length-1;i>=0&&efficiency==null;i--){const ad=myWk[i].athletes[activeAth];let bestEff=null;
-    Object.keys(ad.sets||{}).forEach(eid=>{if(!markGroupOf(eid))return;
+  // efficiency = jump cm / approach velocity. Collect every logged jump that has both;
+  // the most reliable number is the one from the longest approach (tie -> most recent).
+  const effCands=[];
+  myWk.forEach(w=>{const ad=w.athletes[activeAth];
+    Object.keys(ad.sets||{}).forEach(eid=>{const g=markGroupOf(eid);if(!g)return;
       (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup||s.flop)return;const v=s.values||{};
         const d=Number(v['tf-dist']),t=Number(v['time-10-1m']);
-        if(d>0&&t>0){const e=(d*100)/(10/t);if(bestEff==null||e>bestEff)bestEff=e}})});
-    if(bestEff!=null)efficiency=Math.round(bestEff*10)/10}
+        if(d>0&&t>0)effCands.push({eff:(d*100)/(10/t),steps:MARK_GROUP_STEPS[g]||0,group:g,date:w.startTime})})})});
+  effCands.sort((a,b)=>b.steps-a.steps||b.date-a.date);
+  const effPick=effCands[0]||null;
+  const efficiency=effPick?Math.round(effPick.eff*10)/10:null;
   // PB: biggest logged long jump (cm), floored at the starting PB
   let pbCm=prof.startPB;
   myWk.forEach(w=>{const ad=w.athletes[activeAth];
@@ -1886,6 +1892,12 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
   const predict=(pct,e)=>Math.round(maxVel*(pct/100)*e);
   const heroPred=ready?predict(appPct,eff):0;
   const delta=heroPred-pbCm;
+  // the 10m split you'd need in the last 10m of the run-up for a given approach %
+  const splitStr=pct=>maxVel?(10/(maxVel*pct/100)).toFixed(2):'—';
+  const effLabel=effPick?(MARK_GROUP_LABEL[effPick.group]||'approach'):'';
+  const effSteps=effPick?effPick.steps:0;
+  const effReliab=effSteps>=16?'competition-accurate':effSteps>=14?'representative':effSteps>0?'rough guide, short run-up':'';
+  const effDateStr=effPick?new Date(effPick.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
   return(<div className="shell">
     <div className="top" style={{paddingBottom:14}}>
       <div className="ath-stack">
@@ -1915,18 +1927,22 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
               <div key={l} className="prd-scn-c">
                 <div className="prd-scn-v">{predict(p,e)}</div>
                 <div className="prd-scn-l">{l}</div>
-                <div className="prd-scn-s">{p}% · {Math.round(e*10)/10}</div>
+                <div className="prd-scn-s">{p}% · {splitStr(p)}s</div>
               </div>))}
           </div>
           <div className="prd-sld">
             <div className="prd-sld-h"><span>Approach</span><b>{appPct}%</b></div>
             <input type="range" min="90" max="100" step="1" value={appPct} onChange={e=>setAppPct(Number(e.target.value))}/>
+            <div className="prd-sld-sub">Needs <b>{splitStr(appPct)} s</b> over the last 10 m of the run-up</div>
           </div>
           <div className="prd-sld">
             <div className="prd-sld-h"><span>Efficiency</span><b>{Math.round(eff*10)/10}</b></div>
             <input type="range" min="60" max="85" step="0.5" value={Math.max(60,Math.min(85,eff))} onChange={e=>setEffOverride(Number(e.target.value))}/>
+            <div className="prd-sld-sub">{effPick
+              ?<>Your best is <b>{efficiency}</b> from a <b>{effLabel} approach</b> ({effDateStr}) — {effReliab}. Longer approaches give a truer number.</>
+              :'No full jump with an approach split logged yet.'}</div>
           </div>
-          <div className="prd-meta">Max velocity <b>{maxVel} m/s</b> · efficiency from your last jump session <b>{efficiency}</b></div>
+          <div className="prd-meta">Max velocity <b>{maxVel} m/s</b> — fastest free 10 m fly from your last 2 speed sessions.</div>
         </div>}
     </div>
   </div>);
