@@ -471,6 +471,12 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .prd-sld input[type=range]{width:100%;accent-color:var(--primary);margin:0}
 .prd-sld-sub{font-size:11px;font-weight:600;color:var(--text3);margin-top:9px;line-height:1.45}
 .prd-sld-sub b{color:var(--text2);font-weight:800}
+.prd-eff-by{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.prd-eff-c{flex:1;min-width:60px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:8px 3px;text-align:center}
+.prd-eff-c.on{border-color:var(--primary);background:var(--primary-dim)}
+.prd-eff-v{font-family:var(--mono);font-size:15px;font-weight:800;color:var(--text)}
+.prd-eff-c.on .prd-eff-v{color:var(--primary)}
+.prd-eff-l{font-size:8.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
 .prd-meta{font-size:11.5px;color:var(--text3);font-weight:600;text-align:center;margin-top:11px;line-height:1.5}
 .prd-meta b{color:var(--text2);font-weight:800}
 .warmup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center}
@@ -4389,8 +4395,18 @@ function PredictionsScreen({
       });
     });
   });
-  effCands.sort((a, b) => b.steps - a.steps || b.date - a.date);
-  const effPick = effCands[0] || null;
+  const effByGroup = {};
+  effCands.forEach(c => {
+    const cur = effByGroup[c.group];
+    if (!cur || c.eff > cur.eff) effByGroup[c.group] = {
+      eff: c.eff,
+      steps: c.steps,
+      group: c.group,
+      date: c.date
+    };
+  });
+  const effRows = Object.values(effByGroup).sort((a, b) => b.steps - a.steps);
+  const effPick = effRows[0] || null;
   const efficiency = effPick ? Math.round(effPick.eff * 10) / 10 : null;
   let pbCm = prof.startPB;
   myWk.forEach(w => {
@@ -4517,9 +4533,18 @@ function PredictionsScreen({
     step: "0.5",
     value: Math.max(60, Math.min(85, eff)),
     onChange: e => setEffOverride(Number(e.target.value))
-  }), React.createElement("div", {
+  }), effPick && React.createElement("div", {
+    className: "prd-eff-by"
+  }, effRows.map((r, i) => React.createElement("div", {
+    key: r.group,
+    className: 'prd-eff-c' + (i === 0 ? ' on' : '')
+  }, React.createElement("div", {
+    className: "prd-eff-v"
+  }, Math.round(r.eff * 10) / 10), React.createElement("div", {
+    className: "prd-eff-l"
+  }, MARK_GROUP_LABEL[r.group])))), React.createElement("div", {
     className: "prd-sld-sub"
-  }, effPick ? React.createElement(React.Fragment, null, "Your best is ", React.createElement("b", null, efficiency), " from a ", React.createElement("b", null, effLabel, " approach"), " (", effDateStr, ") \u2014 ", effReliab, ". Longer approaches give a truer number.") : 'No full jump with an approach split logged yet.')), React.createElement("div", {
+  }, effPick ? React.createElement(React.Fragment, null, "Prediction uses your ", React.createElement("b", null, effLabel), " (", effDateStr, ") \u2014 ", effReliab, ". Longer approaches give a truer number.") : 'No full jump with an approach split logged yet.')), React.createElement("div", {
     className: "prd-meta"
   }, "Max velocity ", React.createElement("b", null, maxVel, " m/s"), " \u2014 fastest free 10 m fly from your last 2 speed sessions."))));
 }
