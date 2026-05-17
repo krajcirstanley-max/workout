@@ -401,6 +401,31 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .fs-final-btn:active{background:var(--primary-dark)}
 .fs-ath-tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:3px 10px;border-radius:8px;margin:0 auto 14px;display:block;width:fit-content}
 
+/* === PRELUDE / CHECK-IN / WARM-UP === */
+.prelude{position:fixed;inset:0;background:var(--surface2);z-index:56;display:flex;flex-direction:column}
+.prelude-top{display:flex;align-items:center;justify-content:space-between;padding:calc(14px + var(--safe-t)) 14px 13px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.prelude-top .lnk{background:transparent;border:none;color:var(--text2);font-size:14px;font-weight:800;padding:6px 10px;min-width:54px;display:flex;align-items:center;justify-content:center}
+.prelude-title{font-size:14px;font-weight:900;font-style:italic;letter-spacing:.8px;text-transform:uppercase;color:var(--text)}
+.prelude-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:12px}
+.prelude-hint{font-size:12px;color:var(--text3);text-align:center;margin-top:12px;font-weight:600}
+.rd-q{margin-bottom:18px}
+.rd-q:last-child{margin-bottom:0}
+.rd-q-l{font-size:14px;font-weight:800;color:var(--text);margin-bottom:9px}
+.rd-scale{display:flex;gap:7px}
+.rd-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 2px;border-radius:12px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer}
+.rd-btn span:first-child{font-size:18px;font-weight:900;font-style:italic;color:var(--text2)}
+.rd-btn span:last-child{font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:.2px;color:var(--text3);text-align:center;line-height:1.15}
+.rd-btn.sel{border-color:var(--primary);background:var(--primary-dim)}
+.rd-btn.sel span{color:var(--primary)!important}
+.prev-note{padding:11px 14px;background:var(--surface2);border-radius:12px;border-left:3px solid var(--primary);margin-top:8px;text-align:left}
+.prev-note-h{font-size:10px;font-weight:800;color:var(--primary);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+.prev-note-b{font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap}
+.warmup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center}
+.warmup-ring{width:172px;height:172px;border-radius:50%;border:3px solid var(--orange);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:28px;background:var(--orange-soft)}
+.warmup-time{font-family:var(--mono);font-size:38px;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;letter-spacing:-1px;line-height:1}
+.warmup-lbl{font-size:9px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;color:var(--orange);margin-top:6px}
+.warmup-blurb{font-size:14px;color:var(--text2);margin-bottom:24px;max-width:290px;line-height:1.5}
+
 /* === PICKER === */
 .picker-search{padding:0 18px 14px}
 .picker-cats{display:flex;gap:6px;padding:0 14px 12px;overflow-x:auto;scrollbar-width:none}
@@ -1050,6 +1075,99 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
   </div>);
 }
 
+// Pre-workout check-in questions
+const RD_QS=[
+  {k:'sleep',l:'How did you sleep?',ls:['Awful','Poor','OK','Good','Great']},
+  {k:'energy',l:'Energy level?',ls:['Drained','Low','Normal','High','Peak']},
+  {k:'soreness',l:'Muscle soreness?',ls:['Wrecked','Sore','Mild','Light','Fresh']},
+];
+// most recent finished workout carrying this training type
+function lastTaggedSession(workouts,tagId){
+  if(!tagId)return null;
+  return workouts.filter(w=>w.tag?.id===tagId&&w.endTime).sort((a,b)=>b.startTime-a.startTime)[0]||null;
+}
+// self-ticking warm-up clock
+function WarmupTimer({startedAt}){
+  const[,t]=useState(0);
+  useEffect(()=>{const iv=setInterval(()=>t(x=>x+1),1000);return()=>clearInterval(iv)},[]);
+  return<div className="warmup-time">{fmtT(Math.floor((Date.now()-startedAt)/1000))}</div>;
+}
+
+// Pre-workout flow: check-in (training type + previous notes + readiness) then warm-up
+function WorkoutPrelude({athletes,workoutAthletes,allTags,initialTag,workouts,onStart,onCancel}){
+  const aths=athletes.filter(a=>workoutAthletes[a.id]);
+  const[phase,setPhase]=useState('checkin');
+  const[tag,setTag]=useState(initialTag||null);
+  const[rdAth,setRdAth]=useState(aths[0]?.id);
+  const[readiness,setReadiness]=useState({});
+  const[warmStart,setWarmStart]=useState(null);
+  const setRd=(k,n)=>setReadiness(p=>({...p,[rdAth]:{...(p[rdAth]||{}),[k]:n}}));
+  const cur=readiness[rdAth]||{};
+  const prev=lastTaggedSession(workouts,tag?.id);
+  const finish=ms=>onStart({tag,readiness,warmupMs:ms||0});
+
+  if(phase==='warmup')return(<div className="prelude">
+    <div className="prelude-top">
+      <button className="lnk" onClick={()=>setPhase('checkin')}><Ic n="chevL" s={18}/></button>
+      <span className="prelude-title">Warm-up</span>
+      <button className="lnk" onClick={()=>finish(warmStart?Date.now()-warmStart:0)}>Skip</button>
+    </div>
+    <div className="warmup-screen">
+      <div className="warmup-ring">
+        {warmStart?<WarmupTimer startedAt={warmStart}/>:<div className="warmup-time">0:00</div>}
+        <div className="warmup-lbl">{warmStart?'Warming up':'Ready'}</div>
+      </div>
+      {!warmStart
+        ?<><div className="warmup-blurb">Time your warm-up on its own, kept separate from the training session.</div>
+          <button className="btn btn-primary" style={{maxWidth:300,background:'var(--orange)'}} onClick={()=>setWarmStart(Date.now())}>Start Warm-up</button></>
+        :<button className="btn btn-primary" style={{maxWidth:300}} onClick={()=>finish(Date.now()-warmStart)}>Warm-up Finished</button>}
+    </div>
+  </div>);
+
+  return(<div className="prelude">
+    <div className="prelude-top">
+      <button className="lnk" onClick={onCancel}><Ic n="x" s={20}/></button>
+      <span className="prelude-title">Check-in</span>
+      <button className="lnk" onClick={()=>setPhase('warmup')}>Skip</button>
+    </div>
+    <div className="prelude-body">
+      <div className="fs-card">
+        <div className="fs-h">Training Type</div>
+        <div className="tag-row" style={{justifyContent:'center'}}>
+          {allTags.map(t=>(<button key={t.id} className={'tag-chip'+(tag?.id===t.id?' on':'')}
+            style={{borderColor:t.color,color:tag?.id===t.id?'#fff':t.color,background:tag?.id===t.id?t.color:'transparent'}}
+            onClick={()=>setTag(tag?.id===t.id?null:t)}>{t.name}</button>))}
+        </div>
+        {tag&&(()=>{
+          if(!prev)return<div className="prelude-hint">No past {tag.name} session yet.</div>;
+          const withNotes=aths.filter(a=>prev.athletes?.[a.id]?.notes);
+          if(!withNotes.length)return<div className="prelude-hint">Last {tag.name} session had no notes.</div>;
+          return withNotes.map(a=>(<div key={a.id} className="prev-note">
+            <div className="prev-note-h">Last {tag.name}{aths.length>1?' · '+a.name:''}</div>
+            <div className="prev-note-b">{prev.athletes[a.id].notes}</div></div>));
+        })()}
+      </div>
+      <div className="fs-card">
+        <div className="fs-h">Readiness</div>
+        {aths.length>1&&<div style={{display:'flex',gap:6,justifyContent:'center',marginBottom:16}}>
+          {aths.map(a=>(<button key={a.id} onClick={()=>setRdAth(a.id)}
+            style={{padding:'6px 14px',borderRadius:20,fontSize:11,fontWeight:800,letterSpacing:'.4px',textTransform:'uppercase',
+              background:rdAth===a.id?(a.color||'var(--text)'):'var(--surface2)',color:rdAth===a.id?'#fff':'var(--text2)',border:'none'}}>{a.name}</button>))}
+        </div>}
+        {RD_QS.map(q=>(<div key={q.k} className="rd-q">
+          <div className="rd-q-l">{q.l}</div>
+          <div className="rd-scale">{[1,2,3,4,5].map(n=>(
+            <button key={n} className={'rd-btn'+(cur[q.k]===n?' sel':'')} onClick={()=>setRd(q.k,n)}>
+              <span>{n}</span><span>{q.ls[n-1]}</span></button>))}</div>
+        </div>))}
+      </div>
+    </div>
+    <div className="fs-final">
+      <button className="fs-final-btn" onClick={()=>setPhase('warmup')}>Continue</button>
+    </div>
+  </div>);
+}
+
 function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,workouts,initialPlan,onFinish,onCancel,onMinimize,allTags}){
   const[showPicker,setShowPicker]=useState(false);
   const[showNewEx,setShowNewEx]=useState(false);
@@ -1059,8 +1177,8 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const _sv=(()=>{try{const s=localStorage.getItem('wk2_v3_snap');return s?JSON.parse(s):null}catch{return null}})();
   const[workout,setWorkout]=useState(()=>{
     if(_sv?.workout)return _sv.workout;
-    const w={id:'wk-'+uid(),name:initialPlan?.name||'Workout',startTime:Date.now(),endTime:null,
-      color:initialPlan?.color||'#2156f4',tag:null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},athleteNotes:{}};
+    const w={id:'wk-'+uid(),name:initialPlan?.name||'Workout',startTime:Date.now(),endTime:null,started:false,warmupMs:0,
+      color:initialPlan?.color||'#2156f4',tag:initialPlan?.tag||null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},athleteNotes:{}};
     athletes.forEach(a=>{w.athletes[a.id]={sets:{}}});
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
       const cfgs=initialPlan.setConfigs||{};
@@ -1072,6 +1190,8 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const[restStarts,setRestStarts]=useState({});
   const[showFinish,setShowFinish]=useState(false);
   const[confirmCancel,setConfirmCancel]=useState(false);
+  // new workouts open with the pre-workout check-in; a resumed/in-progress one skips straight in
+  const[phase,setPhase]=useState(()=>(_sv?.workout&&_sv.workout.started===false)?'prelude':(_sv?.workout?'active':'prelude'));
   const[blockIdx,setBlockIdx]=useState(0);
   const[showOrganize,setShowOrganize]=useState(false);
   const[historyEid,setHistoryEid]=useState(null);
@@ -1208,6 +1328,14 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
 
   const actionsEx=actionsEid?exercises.find(e=>e.id===baseExId(actionsEid)):null;
   const metricsEff=metricsEid?(workout.exerciseMetrics?.[metricsEid]||exercises.find(e=>e.id===baseExId(metricsEid))?.metrics||[]):[];
+
+  if(phase==='prelude')return<WorkoutPrelude athletes={athletes} workoutAthletes={workout.athletes} allTags={allTags}
+    initialTag={workout.tag} workouts={workouts} onCancel={onCancel}
+    onStart={({tag,readiness,warmupMs})=>{
+      setWorkout(w=>{const na={...w.athletes};
+        Object.keys(na).forEach(aId=>{if(readiness[aId])na[aId]={...na[aId],readiness:readiness[aId]}});
+        return{...w,athletes:na,tag:tag||w.tag,warmupMs:warmupMs||0,startTime:Date.now(),started:true}});
+      setPhase('active')}}/>;
 
   if(showFinish)return<FinishFormFull workout={workout} athletes={athletes} exercises={exercises} elapsed={elapsed} allTags={allTags}
     onSave={data=>{const cust=data.customDuration!=null?data.customDuration:elapsed;
@@ -2094,6 +2222,8 @@ function FinishFormFull({workout,athletes,exercises,elapsed,allTags,onSave,onCan
             </div>
           </div>
         </div>
+        {workout.warmupMs>0&&<div style={{textAlign:'center',marginTop:14,fontSize:12,fontWeight:700,color:'var(--text3)'}}>
+          + {fmtT(Math.round(workout.warmupMs/1000))} warm-up, logged separately</div>}
       </div>
 
       {/* Per-athlete notes */}
