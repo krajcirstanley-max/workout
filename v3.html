@@ -421,6 +421,39 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .prev-note{padding:11px 14px;background:var(--surface2);border-radius:12px;border-left:3px solid var(--primary);margin-top:8px;text-align:left}
 .prev-note-h{font-size:10px;font-weight:800;color:var(--primary);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
 .prev-note-b{font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap}
+.cond-lbl{font-size:12px;font-weight:800;color:var(--text2);margin:15px 0 8px}
+.cond-lbl:first-of-type{margin-top:0}
+.cond-seg{display:flex;gap:6px}
+.cond-opt{flex:1;text-align:center;padding:11px 3px;border-radius:11px;background:var(--surface2);border:1.5px solid var(--border);font-size:12px;font-weight:800;color:var(--text3);cursor:pointer}
+.cond-opt.on{border-color:var(--primary);background:var(--primary-dim);color:var(--primary)}
+.wx-status{font-size:11.5px;font-weight:700;color:var(--text3);text-align:center;margin-top:13px}
+/* approach-mark suggestion */
+.amk{background:linear-gradient(158deg,#8b5cf6,#6d28d9);border-radius:16px;padding:14px 15px;color:#fff;margin-bottom:12px;width:100%;text-align:left;display:block;border:none;cursor:pointer}
+.amk-lab{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:1.2px;opacity:.82;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.amk-big{font-size:34px;font-weight:900;font-style:italic;letter-spacing:-1.2px;line-height:1;margin:5px 0 3px}
+.amk-why{font-size:11.5px;font-weight:600;opacity:.93;line-height:1.4}
+.amk-out{font-size:10.5px;font-weight:700;opacity:.82;margin-top:8px;border-top:1px solid rgba(255,255,255,.2);padding-top:8px}
+.amk-use{margin-top:11px;background:#fff;color:#7c3aed;text-align:center;padding:10px;border-radius:10px;font-size:13px;font-weight:900}
+.amk-empty{background:var(--surface2);border-radius:12px;padding:11px 13px;margin-bottom:10px;font-size:11.5px;font-weight:700;color:var(--text3);font-style:italic;line-height:1.45}
+.amk-field{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface2);border-radius:12px;padding:9px 9px 9px 14px;margin-bottom:12px}
+.amk-field-l{font-size:13px;font-weight:800;color:var(--text2)}
+.amk-field-r{display:flex;align-items:center;gap:6px}
+.amk-field-i{width:88px;border:1.5px solid var(--border);border-radius:9px;padding:10px 8px;font-family:var(--mono);font-size:16px;font-weight:800;text-align:center;background:var(--bg);color:var(--text)}
+.amk-field-i:focus{border-color:var(--primary);background:var(--primary-dim)}
+.amk-field-u{font-size:13px;font-weight:700;color:var(--text3)}
+.amkc{background:var(--surface2);border:1.5px solid var(--border);border-radius:13px;padding:12px 13px;margin-bottom:8px;width:100%;text-align:left;display:block;cursor:pointer}
+.amkc.top{border-color:var(--primary);background:var(--primary-dim)}
+.amkc-r1{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.amkc-date{font-size:13px;font-weight:800}
+.amkc-date .ag{color:var(--text3);font-weight:600}
+.amkc-mk{font-family:var(--mono);font-size:17px;font-weight:800;letter-spacing:-.5px}
+.amkc-sc{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--text3);margin-left:7px}
+.amkc.top .amkc-sc{color:var(--primary)}
+.amkc-tags{display:flex;flex-wrap:wrap;gap:5px}
+.amkc-tag{font-size:9.5px;font-weight:800;padding:3px 7px;border-radius:5px;background:var(--surface3);color:var(--text3)}
+.amkc-tag.y{background:#dcfce7;color:#16a34a}
+.amkc-tag.n{background:#fee2e2;color:#ef4444}
+.amkc-tag.m{background:#fef3c7;color:#d97706}
 .warmup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center}
 .warmup-ring{width:172px;height:172px;border-radius:50%;border:3px solid var(--orange);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:28px;background:var(--orange-soft)}
 .warmup-time{font-family:var(--mono);font-size:38px;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;letter-spacing:-1px;line-height:1}
@@ -776,7 +809,36 @@ const METRIC_MAP = {
     name: '20–11m',
     unit: 's',
     step: .01
+  },
+  'approach-mark': {
+    id: 'approach-mark',
+    name: 'Mark',
+    unit: 'm',
+    step: .05
   }
+};
+const MARK_GROUP = {
+  'approach-jump-12': 'app-12',
+  'approach-jump-14': 'app-14',
+  'approach-jump-16': 'app-16',
+  'full-app-runthrough': 'app-16',
+  'full-app-popup': 'app-16',
+  'approach-jump-18': 'app-18',
+  'short-app-popup': 'app-short'
+};
+const markGroupOf = eid => MARK_GROUP[baseExId(eid)] || null;
+const tempBand = c => c == null || isNaN(c) ? null : c < 10 ? 'cold' : c < 19 ? 'mild' : c < 27 ? 'warm' : 'hot';
+const COND_LABEL = {
+  indoor: 'Indoor',
+  outdoor: 'Outdoor',
+  cold: 'Cold',
+  mild: 'Mild',
+  warm: 'Warm',
+  hot: 'Hot',
+  calm: 'Calm',
+  head: 'Headwind',
+  tail: 'Tailwind',
+  cross: 'Crosswind'
 };
 const Ic = ({
   n,
@@ -1816,6 +1878,7 @@ function ExerciseCard({
   activeAth,
   exercises,
   workouts,
+  allTags,
   onUpdateSet,
   onToggleSet,
   onToggleWarmup,
@@ -1825,12 +1888,14 @@ function ExerciseCard({
   onCheckAll,
   onActions,
   onSetAthleteNote,
-  onHistory
+  onHistory,
+  onUseMark
 }) {
+  const [showCands, setShowCands] = useState(false);
   const ex = exercises.find(e => e.id === baseExId(eid));
   const sets = workout.athletes[activeAth]?.sets?.[eid] || [];
   const effMetrics = workout.exerciseMetrics?.[eid] || ex?.metrics || [];
-  const mds = effMetrics.map(m => METRIC_MAP[m] || {
+  const mds = effMetrics.filter(m => m !== 'approach-mark').map(m => METRIC_MAP[m] || {
     id: m,
     name: m,
     unit: ''
@@ -1870,7 +1935,7 @@ function ExerciseCard({
       }
       lastSummary = `${n}${per}` + (wv.length ? ` @ ${wsame ? wv[0] : wv.join(', ')} kg` : '');
     } else {
-      const pm = effMetrics[0];
+      const pm = effMetrics.find(m => m !== 'approach-mark') || effMetrics[0];
       const md = METRIC_MAP[pm] || {
         unit: ''
       };
@@ -1895,6 +1960,22 @@ function ExerciseCard({
     if (t_ > 0 && priorBestT < Infinity && t_ <= priorBestT) return true;
     return false;
   };
+  const mg = markGroupOf(eid);
+  const todayLeadIn = mg ? leadInFor(workout.startTime, workouts, workout.id) : null;
+  const cands = mg ? suggestApproachMark({
+    eid,
+    athleteId: activeAth,
+    workouts,
+    conditions: workout.conditions,
+    leadIn: todayLeadIn,
+    nowMs: workout.startTime,
+    excludeId: workout.id
+  }) : [];
+  const topMark = cands[0] || null;
+  const markWhy = topMark ? (condDesc(topMark.conditions, topMark.leadIn, allTags) || 'Most recent mark') + ' · ' + new Date(topMark.date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  }) : '';
   return React.createElement("div", {
     className: "ex-card",
     style: {
@@ -2018,7 +2099,42 @@ function ExerciseCard({
       color: 'var(--text)',
       lineHeight: 1.4
     }
-  }, coachNote)), React.createElement("div", {
+  }, coachNote)), mg && topMark && React.createElement("div", {
+    className: "amk",
+    onClick: () => setShowCands(true)
+  }, React.createElement("div", {
+    className: "amk-lab"
+  }, React.createElement("span", null, "\u25C6 SUGGESTED MARK"), React.createElement("span", null, cands.length, " past \xB7 see all \u203A")), React.createElement("div", {
+    className: "amk-big"
+  }, topMark.mark.toFixed(2), " m"), React.createElement("div", {
+    className: "amk-why"
+  }, markWhy), topMark.bestJump != null && React.createElement("div", {
+    className: "amk-out"
+  }, "\uD83C\uDFC6 ", topMark.fairCount, " jump", topMark.fairCount === 1 ? '' : 's', " \xB7 best ", topMark.bestJump, " m"), React.createElement("div", {
+    className: "amk-use",
+    onClick: e => {
+      e.stopPropagation();
+      onUseMark && onUseMark(eid, topMark.mark);
+    }
+  }, "Use this mark")), mg && !topMark && React.createElement("div", {
+    className: "amk-empty"
+  }, "First ", MARK_GROUP_LABEL[mg] || 'approach', " session with a logged mark \u2014 set your start mark below and the app will suggest it next time."), mg && React.createElement("div", {
+    className: "amk-field"
+  }, React.createElement("span", {
+    className: "amk-field-l"
+  }, "Approach mark"), React.createElement("div", {
+    className: "amk-field-r"
+  }, React.createElement("input", {
+    type: "number",
+    inputMode: "decimal",
+    step: 0.05,
+    className: "amk-field-i",
+    placeholder: "\u2013",
+    value: sets[0]?.values?.['approach-mark'] ?? '',
+    onChange: e => onUseMark && onUseMark(eid, e.target.value === '' ? '' : Number(e.target.value))
+  }), React.createElement("span", {
+    className: "amk-field-u"
+  }, "m"))), React.createElement("div", {
     className: "sets-tbl"
   }, React.createElement("div", {
     className: "sets-h",
@@ -2126,6 +2242,18 @@ function ExerciseCard({
       marginTop: 10,
       boxSizing: 'border-box'
     }
+  }), showCands && React.createElement(ApproachCandidates, {
+    cands: cands,
+    today: {
+      conditions: workout.conditions,
+      leadIn: todayLeadIn
+    },
+    allTags: allTags,
+    onPick: m => {
+      onUseMark && onUseMark(eid, m);
+      setShowCands(false);
+    },
+    onClose: () => setShowCands(false)
   }));
 }
 const RD_QS = [{
@@ -2144,6 +2272,166 @@ const RD_QS = [{
 function lastTaggedSession(workouts, tagId) {
   if (!tagId) return null;
   return workouts.filter(w => w.tag?.id === tagId && w.endTime).sort((a, b) => b.startTime - a.startTime)[0] || null;
+}
+function leadInFor(dateMs, workouts, ignoreId) {
+  const prev = new Date(dateMs);
+  prev.setDate(prev.getDate() - 1);
+  const k = prev.toDateString();
+  const w = (workouts || []).find(x => x.id !== ignoreId && x.endTime && new Date(x.startTime).toDateString() === k);
+  return w ? w.tag?.id || 'trained' : 'rest';
+}
+function leadInLabel(key, allTags) {
+  if (key === 'rest') return 'Rest day';
+  if (key === 'trained') return 'Training';
+  return (allTags || []).find(t => t.id === key)?.name || 'Training';
+}
+const TEMP_ORDER = ['cold', 'mild', 'warm', 'hot'];
+function suggestApproachMark({
+  eid,
+  athleteId,
+  workouts,
+  conditions,
+  leadIn,
+  nowMs,
+  excludeId
+}) {
+  const group = markGroupOf(eid);
+  if (!group) return [];
+  const cands = [];
+  (workouts || []).forEach(w => {
+    if (!w.endTime || w.id === excludeId) return;
+    const ad = w.athletes?.[athleteId];
+    if (!ad) return;
+    let mark = null;
+    const jumps = [];
+    Object.keys(ad.sets || {}).forEach(k => {
+      if (markGroupOf(k) !== group) return;
+      ad.sets[k].forEach(s => {
+        if (s.warmup) return;
+        const m = Number(s.values?.['approach-mark']);
+        if (m && !isNaN(m)) mark = m;
+        if (s.completed && !s.flop) {
+          const d = Number(s.values?.['tf-dist']);
+          if (d && !isNaN(d)) jumps.push(d);
+        }
+      });
+    });
+    if (mark == null) return;
+    const c = w.conditions || {};
+    const li = leadInFor(w.startTime, workouts, w.id);
+    let score = 0;
+    if (conditions?.venue && c.venue && conditions.venue === c.venue) score += 30;
+    if (conditions?.temp && c.temp) {
+      const di = Math.abs(TEMP_ORDER.indexOf(conditions.temp) - TEMP_ORDER.indexOf(c.temp));
+      if (di === 0) score += 20;else if (di === 1) score += 10;
+    }
+    if (conditions?.wind && c.wind) {
+      if (conditions.wind === c.wind) score += 18;else if (conditions.wind !== 'calm' && c.wind !== 'calm') score += 9;
+    }
+    if (leadIn && li && leadIn === li) score += 20;
+    const days = (nowMs - w.startTime) / 86400000;
+    score += Math.max(0, 12 * (1 - days / 120));
+    cands.push({
+      wkId: w.id,
+      date: w.startTime,
+      mark,
+      score: Math.round(score),
+      conditions: c,
+      leadIn: li,
+      bestJump: jumps.length ? Math.max(...jumps) : null,
+      fairCount: jumps.length
+    });
+  });
+  cands.sort((a, b) => b.score - a.score || b.date - a.date);
+  return cands;
+}
+const MARK_GROUP_LABEL = {
+  'app-12': '12-step',
+  'app-14': '14-step',
+  'app-16': '16-step',
+  'app-18': '18-step',
+  'app-short': 'short-approach'
+};
+function condDesc(c, leadIn, allTags) {
+  const parts = [c?.venue, c?.temp, c?.wind].filter(Boolean).map(v => COND_LABEL[v] || v);
+  if (leadIn) parts.push('after ' + leadInLabel(leadIn, allTags));
+  return parts.join(' · ');
+}
+function condCls(todayVal, candVal, isTemp) {
+  if (!todayVal || !candVal) return '';
+  if (todayVal === candVal) return 'y';
+  if (isTemp) {
+    const di = Math.abs(TEMP_ORDER.indexOf(todayVal) - TEMP_ORDER.indexOf(candVal));
+    if (di === 1) return 'm';
+  }
+  return 'n';
+}
+function ApproachCandidates({
+  cands,
+  today,
+  allTags,
+  onPick,
+  onClose
+}) {
+  return React.createElement("div", {
+    className: "over",
+    onClick: e => e.target === e.currentTarget && onClose()
+  }, React.createElement("div", {
+    className: "modal",
+    style: {
+      maxHeight: '86vh'
+    }
+  }, React.createElement("div", {
+    className: "modal-h"
+  }, React.createElement("div", {
+    className: "modal-t"
+  }, "Pick a mark"), React.createElement("button", {
+    className: "modal-x",
+    onClick: onClose
+  }, React.createElement(Ic, {
+    n: "x",
+    s: 20
+  }))), React.createElement("div", {
+    className: "modal-b"
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: 'var(--text3)',
+      fontWeight: 600,
+      marginBottom: 11,
+      lineHeight: 1.5
+    }
+  }, "Ranked by how well each past session matches today. Tap one to use its mark."), cands.map((c, i) => {
+    const cc = c.conditions || {};
+    return React.createElement("button", {
+      key: c.wkId,
+      className: 'amkc' + (i === 0 ? ' top' : ''),
+      onClick: () => onPick(c.mark)
+    }, React.createElement("div", {
+      className: "amkc-r1"
+    }, React.createElement("div", {
+      className: "amkc-date"
+    }, new Date(c.date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }), React.createElement("span", {
+      className: "ag"
+    }, " \xB7 ", Math.max(0, Math.round((Date.now() - c.date) / 86400000)), "d ago")), React.createElement("div", null, React.createElement("span", {
+      className: "amkc-mk"
+    }, c.mark.toFixed(2), " m"), React.createElement("span", {
+      className: "amkc-sc"
+    }, c.score))), React.createElement("div", {
+      className: "amkc-tags"
+    }, cc.venue && React.createElement("span", {
+      className: 'amkc-tag ' + condCls(today.conditions?.venue, cc.venue)
+    }, COND_LABEL[cc.venue]), cc.temp && React.createElement("span", {
+      className: 'amkc-tag ' + condCls(today.conditions?.temp, cc.temp, true)
+    }, COND_LABEL[cc.temp]), cc.wind && React.createElement("span", {
+      className: 'amkc-tag ' + condCls(today.conditions?.wind, cc.wind)
+    }, COND_LABEL[cc.wind]), React.createElement("span", {
+      className: 'amkc-tag ' + condCls(today.leadIn, c.leadIn)
+    }, "after ", leadInLabel(c.leadIn, allTags))));
+  }))));
 }
 function WarmupTimer({
   startedAt
@@ -2172,6 +2460,59 @@ function WorkoutPrelude({
   const [rdAth, setRdAth] = useState(aths[0]?.id);
   const [readiness, setReadiness] = useState({});
   const [warmStart, setWarmStart] = useState(null);
+  const [conditions, setConditions] = useState({
+    venue: null,
+    temp: null,
+    wind: null
+  });
+  const [wx, setWx] = useState({
+    status: 'loading'
+  });
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setWx({
+        status: 'failed'
+      });
+      return;
+    }
+    let done = false;
+    const fail = () => {
+      if (!done) {
+        done = true;
+        setWx({
+          status: 'failed'
+        });
+      }
+    };
+    const tm = setTimeout(fail, 10000);
+    navigator.geolocation.getCurrentPosition(pos => {
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current=temperature_2m,wind_speed_10m`).then(r => r.json()).then(d => {
+        if (done) return;
+        done = true;
+        clearTimeout(tm);
+        const c = d?.current || {};
+        const tC = c.temperature_2m;
+        setWx({
+          status: 'ok',
+          tempC: tC,
+          windKmh: c.wind_speed_10m
+        });
+        setConditions(p => p.temp ? p : {
+          ...p,
+          temp: tempBand(tC),
+          tempC: tC
+        });
+      }).catch(fail);
+    }, fail, {
+      timeout: 9000,
+      maximumAge: 600000
+    });
+    return () => clearTimeout(tm);
+  }, []);
+  const setCond = (k, v) => setConditions(p => ({
+    ...p,
+    [k]: p[k] === v ? null : v
+  }));
   const setRd = (k, n) => setReadiness(p => ({
     ...p,
     [rdAth]: {
@@ -2184,6 +2525,7 @@ function WorkoutPrelude({
   const finish = ms => onStart({
     tag,
     readiness,
+    conditions,
     warmupMs: ms || 0
   });
   if (phase === 'warmup') return React.createElement("div", {
@@ -2282,6 +2624,36 @@ function WorkoutPrelude({
     className: "fs-card"
   }, React.createElement("div", {
     className: "fs-h"
+  }, "Conditions"), React.createElement("div", {
+    className: "cond-lbl"
+  }, "Venue"), React.createElement("div", {
+    className: "cond-seg"
+  }, [['indoor', 'Indoor'], ['outdoor', 'Outdoor']].map(([v, l]) => React.createElement("button", {
+    key: v,
+    className: 'cond-opt' + (conditions.venue === v ? ' on' : ''),
+    onClick: () => setCond('venue', v)
+  }, l))), React.createElement("div", {
+    className: "cond-lbl"
+  }, "Temperature"), React.createElement("div", {
+    className: "cond-seg"
+  }, [['cold', 'Cold'], ['mild', 'Mild'], ['warm', 'Warm'], ['hot', 'Hot']].map(([v, l]) => React.createElement("button", {
+    key: v,
+    className: 'cond-opt' + (conditions.temp === v ? ' on' : ''),
+    onClick: () => setCond('temp', v)
+  }, l))), React.createElement("div", {
+    className: "cond-lbl"
+  }, "Wind"), React.createElement("div", {
+    className: "cond-seg"
+  }, [['calm', 'Calm'], ['head', 'Head'], ['tail', 'Tail'], ['cross', 'Cross']].map(([v, l]) => React.createElement("button", {
+    key: v,
+    className: 'cond-opt' + (conditions.wind === v ? ' on' : ''),
+    onClick: () => setCond('wind', v)
+  }, l))), React.createElement("div", {
+    className: "wx-status"
+  }, wx.status === 'loading' ? 'Checking the weather…' : wx.status === 'ok' ? `Auto: ${wx.tempC != null ? Math.round(wx.tempC) + '°C' : '—'}${wx.windKmh != null ? ' · wind ' + Math.round(wx.windKmh) + ' km/h' : ''}` : 'Weather unavailable — set it by hand')), React.createElement("div", {
+    className: "fs-card"
+  }, React.createElement("div", {
+    className: "fs-h"
   }, "Readiness"), aths.length > 1 && React.createElement("div", {
     style: {
       display: 'flex',
@@ -2356,6 +2728,7 @@ function ActiveWorkout({
       endTime: null,
       started: false,
       warmupMs: 0,
+      conditions: null,
       color: initialPlan?.color || '#2156f4',
       tag: initialPlan?.tag || null,
       athletes: {},
@@ -2535,6 +2908,7 @@ function ActiveWorkout({
       Object.keys(w.athletes?.[activeAth]?.sets || {}).filter(k => baseExId(k) === base).forEach(k => {
         w.athletes[activeAth].sets[k].filter(s => s.completed && !s.warmup).forEach(s => {
           Object.entries(s.values || {}).forEach(([m, v]) => {
+            if (m === 'approach-mark') return;
             const n = Number(v);
             if (!n || isNaN(n)) return;
             prior[m] = prior[m] == null ? n : lowerBetter(m) ? Math.min(prior[m], n) : Math.max(prior[m], n);
@@ -2544,6 +2918,7 @@ function ActiveWorkout({
     });
     let hit = null;
     Object.entries(vals || {}).forEach(([m, v]) => {
+      if (m === 'approach-mark') return;
       const n = Number(v);
       if (!n || isNaN(n)) return;
       const pb = prior[m];
@@ -2627,6 +3002,29 @@ function ActiveWorkout({
       }
     }
   }));
+  const setMarkAll = (eid, val) => setWorkout(w => {
+    const ss = w.athletes[activeAth]?.sets?.[eid];
+    if (!ss) return w;
+    return {
+      ...w,
+      athletes: {
+        ...w.athletes,
+        [activeAth]: {
+          ...w.athletes[activeAth],
+          sets: {
+            ...w.athletes[activeAth].sets,
+            [eid]: ss.map(s => ({
+              ...s,
+              values: {
+                ...s.values,
+                'approach-mark': val
+              }
+            }))
+          }
+        }
+      }
+    };
+  });
   const checkAll = eid => setWorkout(w => {
     const ss = w.athletes[activeAth].sets[eid];
     const allDone = ss.every(s => s.completed);
@@ -2919,6 +3317,7 @@ function ActiveWorkout({
     onStart: ({
       tag,
       readiness,
+      conditions,
       warmupMs
     }) => {
       setWorkout(w => {
@@ -2935,6 +3334,7 @@ function ActiveWorkout({
           ...w,
           athletes: na,
           tag: tag || w.tag,
+          conditions: conditions || w.conditions,
           warmupMs: warmupMs || 0,
           startTime: Date.now(),
           started: true
@@ -3080,6 +3480,7 @@ function ActiveWorkout({
     activeAth: activeAth,
     exercises: exercises,
     workouts: workouts,
+    allTags: allTags,
     onUpdateSet: updateSet,
     onToggleSet: toggleSet,
     onToggleWarmup: toggleWarmup,
@@ -3089,7 +3490,8 @@ function ActiveWorkout({
     onCheckAll: checkAll,
     onActions: setActionsEid,
     onSetAthleteNote: setAthleteNote,
-    onHistory: setHistoryEid
+    onHistory: setHistoryEid,
+    onUseMark: setMarkAll
   })), isLastBlock && workout.exerciseIds.length > 0 && React.createElement("div", {
     style: {
       padding: '12px 14px 0'
@@ -3418,6 +3820,7 @@ function WorkoutDetailModal({
         ad.sets[eid].forEach((s, si) => {
           if (!s.completed || s.warmup) return;
           Object.entries(s.values || {}).forEach(([mid, val]) => {
+            if (mid === 'approach-mark') return;
             const v = Number(val);
             if (!v || isNaN(v)) return;
             if (!m[base]) m[base] = {};
@@ -3905,6 +4308,7 @@ function StatScreen({
           lastDate: 0
         };
         ex.metrics.forEach(m => {
+          if (m === 'approach-mark') return;
           const val = Number(v[m]);
           if (!val || isNaN(val)) return;
           const md = METRIC_MAP[m] || {
@@ -7283,6 +7687,26 @@ function App() {
     });
     localStorage.setItem(KEY, '1');
   }, [plannedSynced, planned]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_approach_mark_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !exercises.length) return;
+    setExercises(p => {
+      let changed = false;
+      const n = p.map(e => {
+        if (MARK_GROUP[e.id] && !(e.metrics || []).includes('approach-mark')) {
+          changed = true;
+          return {
+            ...e,
+            metrics: ['approach-mark', ...(e.metrics || [])]
+          };
+        }
+        return e;
+      });
+      return changed ? n : p;
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exSynced, exercises.length]);
   useEffect(() => {
     const c = ath?.color || '#2156f4';
     document.documentElement.style.setProperty('--primary', c);
