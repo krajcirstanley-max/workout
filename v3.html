@@ -3377,6 +3377,7 @@ function ActiveWorkout({
           ...ad,
           sets: cs,
           rpe: data.athData[aId]?.rpe || null,
+          tendons: data.athData[aId]?.tendons || null,
           notes: data.athData[aId]?.notes || ''
         };
       });
@@ -5743,6 +5744,7 @@ function FinishFormFull({
     athletes.forEach(a => {
       if (workout.athletes[a.id]) d[a.id] = {
         rpe: 5,
+        tendons: 5,
         notes: '',
         share: true
       };
@@ -5868,7 +5870,46 @@ function FinishFormFull({
       className: "fs-slider-tick"
     }, "0"), React.createElement("span", {
       className: "fs-slider-tick"
-    }, "10"))));
+    }, "10"))), a.name === 'Miška' && (() => {
+      const tn = athData[a.id]?.tendons || 5;
+      return React.createElement("div", {
+        className: "fs-card"
+      }, React.createElement("div", {
+        className: "fs-h"
+      }, "\u0160\u013Eachy"), React.createElement("div", {
+        className: "fs-rpe-label"
+      }, React.createElement("b", null, tn), " / 10"), React.createElement("div", {
+        className: "fs-slider"
+      }, React.createElement("div", {
+        className: "fs-slider-bar"
+      }), React.createElement("input", {
+        type: "range",
+        min: "1",
+        max: "10",
+        step: "1",
+        value: tn,
+        onChange: e => setAthData(p => ({
+          ...p,
+          [a.id]: {
+            ...p[a.id],
+            tendons: Number(e.target.value)
+          }
+        }))
+      }), React.createElement("div", {
+        className: "fs-slider-thumb",
+        style: {
+          left: `${(tn - 1) / 9 * 100}%`,
+          borderColor: a.color,
+          color: a.color
+        }
+      }, tn)), React.createElement("div", {
+        className: "fs-slider-ticks"
+      }, React.createElement("span", {
+        className: "fs-slider-tick"
+      }, "1 \xB7 ok"), React.createElement("span", {
+        className: "fs-slider-tick"
+      }, "10 \xB7 zle")));
+    })());
   }), React.createElement("div", {
     className: "fs-card"
   }, React.createElement("div", {

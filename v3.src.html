@@ -1578,7 +1578,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         Object.entries(ad.sets||{}).forEach(([k,sets])=>{
           const keep=sets.filter(s=>s.completed||s.flop||hasVal(s)).map(s=>(s.completed||s.flop)?s:{...s,completed:true});
           if(keep.length>0)cs[k]=keep});
-        if(Object.keys(cs).length>0)cleanA[aId]={...ad,sets:cs,rpe:data.athData[aId]?.rpe||null,notes:data.athData[aId]?.notes||''}});
+        if(Object.keys(cs).length>0)cleanA[aId]={...ad,sets:cs,rpe:data.athData[aId]?.rpe||null,tendons:data.athData[aId]?.tendons||null,notes:data.athData[aId]?.notes||''}});
       const finalEids=workout.exerciseIds.filter(eid=>Object.values(cleanA).some(a=>a.sets[eid]?.length>0));
       if(!finalEids.length){window.alert('Nothing is logged yet — enter a value or check off at least one set before finishing.');return}
       onFinish({...workout,name:data.name,weather:data.weather,tag:data.tag,athletes:cleanA,
@@ -2411,7 +2411,7 @@ function FinishFormFull({workout,athletes,exercises,elapsed,allTags,onSave,onCan
   const elSec=Math.floor(elapsed/1000);
   const[durH,setDurH]=useState(Math.floor(elSec/3600));
   const[durM,setDurM]=useState(Math.floor((elSec%3600)/60));
-  const[athData,setAthData]=useState(()=>{const d={};athletes.forEach(a=>{if(workout.athletes[a.id])d[a.id]={rpe:5,notes:'',share:true}});return d});
+  const[athData,setAthData]=useState(()=>{const d={};athletes.forEach(a=>{if(workout.athletes[a.id])d[a.id]={rpe:5,tendons:5,notes:'',share:true}});return d});
   const customElapsed=(durH*3600+durM*60)*1000;
   const tags=allTags||DEFAULT_TAGS;
   const RPE_LABEL={1:'Very light',2:'Light',3:'Easy',4:'Somewhat',5:'Moderate',6:'Harder',7:'Very hard',8:'Very hard+',9:'Near max',10:'Max effort'};
@@ -2445,6 +2445,17 @@ function FinishFormFull({workout,athletes,exercises,elapsed,allTags,onSave,onCan
             </div>
             <div className="fs-slider-ticks"><span className="fs-slider-tick">0</span><span className="fs-slider-tick">10</span></div>
           </div>
+          {a.name==='Miška'&&(()=>{const tn=athData[a.id]?.tendons||5;return(
+            <div className="fs-card">
+              <div className="fs-h">Šľachy</div>
+              <div className="fs-rpe-label"><b>{tn}</b> / 10</div>
+              <div className="fs-slider">
+                <div className="fs-slider-bar"/>
+                <input type="range" min="1" max="10" step="1" value={tn} onChange={e=>setAthData(p=>({...p,[a.id]:{...p[a.id],tendons:Number(e.target.value)}}))}/>
+                <div className="fs-slider-thumb" style={{left:`${((tn-1)/9)*100}%`,borderColor:a.color,color:a.color}}>{tn}</div>
+              </div>
+              <div className="fs-slider-ticks"><span className="fs-slider-tick">1 · ok</span><span className="fs-slider-tick">10 · zle</span></div>
+            </div>)})()}
         </React.Fragment>)})}
 
       {/* Duration */}
