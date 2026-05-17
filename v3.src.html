@@ -2740,6 +2740,30 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-05-17 LJ Session (approach work)
+  useEffect(()=>{const KEY='wk2_v3_seed_lj_session_5';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
+    if(!exercises.length)return;
+    setPlanned(p=>{if(p.find(x=>x.id==='pl-lj-session-5'))return p;
+      return[...p,{id:'pl-lj-session-5',date:'2026-05-17',name:'Long Jump Session',color:'#8b5cf6',
+        exerciseIds:['hurdle-jumps','short-app-popup','approach-jump-14','full-app-runthrough','full-app-popup','approach-jump-16','alt-bounds-jump'],
+        supersets:[],
+        setConfigs:{
+          'hurdle-jumps':[{reps:5},{reps:5},{reps:5}],
+          'short-app-popup':[{},{},{},{},{},{}],
+          'approach-jump-14':[{},{},{},{}],
+          'full-app-runthrough':[{},{}],
+          'full-app-popup':[{},{}],
+          'approach-jump-16':[{},{},{},{},{},{},{},{}],
+          'alt-bounds-jump':[{reps:5},{reps:5},{reps:5},{reps:5}]
+        },
+        exNotes:{},
+        notes:''
+      }]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // Repair: if seeded plans lost their exercises to a Supabase pull race, re-add them
   useEffect(()=>{if(!exSynced)return;
     const defs={

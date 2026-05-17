@@ -6976,6 +6976,49 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_lj_session_5';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    setPlanned(p => {
+      if (p.find(x => x.id === 'pl-lj-session-5')) return p;
+      return [...p, {
+        id: 'pl-lj-session-5',
+        date: '2026-05-17',
+        name: 'Long Jump Session',
+        color: '#8b5cf6',
+        exerciseIds: ['hurdle-jumps', 'short-app-popup', 'approach-jump-14', 'full-app-runthrough', 'full-app-popup', 'approach-jump-16', 'alt-bounds-jump'],
+        supersets: [],
+        setConfigs: {
+          'hurdle-jumps': [{
+            reps: 5
+          }, {
+            reps: 5
+          }, {
+            reps: 5
+          }],
+          'short-app-popup': [{}, {}, {}, {}, {}, {}],
+          'approach-jump-14': [{}, {}, {}, {}],
+          'full-app-runthrough': [{}, {}],
+          'full-app-popup': [{}, {}],
+          'approach-jump-16': [{}, {}, {}, {}, {}, {}, {}, {}],
+          'alt-bounds-jump': [{
+            reps: 5
+          }, {
+            reps: 5
+          }, {
+            reps: 5
+          }, {
+            reps: 5
+          }]
+        },
+        exNotes: {},
+        notes: ''
+      }];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     if (!exSynced) return;
     const defs = {
       'drop-jump': {
