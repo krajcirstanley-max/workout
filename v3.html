@@ -477,6 +477,9 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .prd-eff-v{font-family:var(--mono);font-size:15px;font-weight:800;color:var(--text)}
 .prd-eff-c.on .prd-eff-v{color:var(--primary)}
 .prd-eff-l{font-size:8.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+.prd-eff-vel{font-family:var(--mono);font-size:8.5px;font-weight:700;color:var(--text4);margin-top:3px}
+.prd-eff-c.on .prd-eff-vel{color:var(--primary)}
+.prd-eff-c:active{transform:scale(.96)}
 .prd-meta{font-size:11.5px;color:var(--text3);font-weight:600;text-align:center;margin-top:11px;line-height:1.5}
 .prd-meta b{color:var(--text2);font-weight:800}
 .warmup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center}
@@ -4388,6 +4391,7 @@ function PredictionsScreen({
           t = Number(v['time-10-1m']);
         if (d > 0 && t > 0) effCands.push({
           eff: d * 100 / (10 / t),
+          vel: 10 / t,
           steps: MARK_GROUP_STEPS[g] || 0,
           group: g,
           date: w.startTime
@@ -4400,6 +4404,7 @@ function PredictionsScreen({
     const cur = effByGroup[c.group];
     if (!cur || c.eff > cur.eff) effByGroup[c.group] = {
       eff: c.eff,
+      vel: c.vel,
       steps: c.steps,
       group: c.group,
       date: c.date
@@ -4422,8 +4427,11 @@ function PredictionsScreen({
   });
   const [appPct, setAppPct] = useState(95);
   const [effOverride, setEffOverride] = useState(null);
+  const [selEffGroup, setSelEffGroup] = useState(null);
   useEffect(() => {
     setEffOverride(null);
+    setSelEffGroup(null);
+    setAppPct(95);
   }, [activeAth]);
   const eff = effOverride != null ? effOverride : efficiency;
   const ready = maxVel != null && eff != null;
@@ -4431,13 +4439,20 @@ function PredictionsScreen({
   const heroPred = ready ? predict(appPct, eff) : 0;
   const delta = heroPred - pbCm;
   const splitStr = pct => maxVel ? (10 / (maxVel * pct / 100)).toFixed(2) : '—';
-  const effLabel = effPick ? MARK_GROUP_LABEL[effPick.group] || 'approach' : '';
-  const effSteps = effPick ? effPick.steps : 0;
+  const activeEffGroup = selEffGroup || effRows[0] && effRows[0].group;
+  const actEffRow = effRows.find(r => r.group === activeEffGroup) || effPick;
+  const effLabel = actEffRow ? MARK_GROUP_LABEL[actEffRow.group] || 'approach' : '';
+  const effSteps = actEffRow ? actEffRow.steps : 0;
   const effReliab = effSteps >= 16 ? 'competition-accurate' : effSteps >= 14 ? 'representative' : effSteps > 0 ? 'rough guide, short run-up' : '';
-  const effDateStr = effPick ? new Date(effPick.date).toLocaleDateString('en-US', {
+  const effDateStr = actEffRow ? new Date(actEffRow.date).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric'
   }) : '';
+  const pickEff = r => {
+    setSelEffGroup(r.group);
+    setEffOverride(Math.round(r.eff * 10) / 10);
+    if (maxVel) setAppPct(Math.max(75, Math.min(100, Math.round(r.vel / maxVel * 100))));
+  };
   return React.createElement("div", {
     className: "shell"
   }, React.createElement("div", {
@@ -4515,7 +4530,7 @@ function PredictionsScreen({
     className: "prd-sld-h"
   }, React.createElement("span", null, "Approach"), React.createElement("b", null, appPct, "%")), React.createElement("input", {
     type: "range",
-    min: "90",
+    min: "75",
     max: "100",
     step: "1",
     value: appPct,
@@ -4535,14 +4550,17 @@ function PredictionsScreen({
     onChange: e => setEffOverride(Number(e.target.value))
   }), effPick && React.createElement("div", {
     className: "prd-eff-by"
-  }, effRows.map((r, i) => React.createElement("div", {
+  }, effRows.map(r => React.createElement("button", {
     key: r.group,
-    className: 'prd-eff-c' + (i === 0 ? ' on' : '')
+    className: 'prd-eff-c' + (r.group === activeEffGroup ? ' on' : ''),
+    onClick: () => pickEff(r)
   }, React.createElement("div", {
     className: "prd-eff-v"
   }, Math.round(r.eff * 10) / 10), React.createElement("div", {
     className: "prd-eff-l"
-  }, MARK_GROUP_LABEL[r.group])))), React.createElement("div", {
+  }, MARK_GROUP_LABEL[r.group]), React.createElement("div", {
+    className: "prd-eff-vel"
+  }, Math.round(r.vel * 100) / 100, " m/s")))), React.createElement("div", {
     className: "prd-sld-sub"
   }, effPick ? React.createElement(React.Fragment, null, "Prediction uses your ", React.createElement("b", null, effLabel), " (", effDateStr, ") \u2014 ", effReliab, ". Longer approaches give a truer number.") : 'No full jump with an approach split logged yet.')), React.createElement("div", {
     className: "prd-meta"
