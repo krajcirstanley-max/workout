@@ -835,10 +835,10 @@ const COND_LABEL = {
   mild: 'Mild',
   warm: 'Warm',
   hot: 'Hot',
-  calm: 'Calm',
-  head: 'Headwind',
-  tail: 'Tailwind',
-  cross: 'Crosswind'
+  calm: 'Bezvetrie',
+  head: 'Protivietor',
+  tail: 'Vietor v chrbte',
+  cross: 'Bočný vietor'
 };
 const Ic = ({
   n,
@@ -2644,7 +2644,7 @@ function WorkoutPrelude({
     className: "cond-lbl"
   }, "Wind"), React.createElement("div", {
     className: "cond-seg"
-  }, [['calm', 'Calm'], ['head', 'Head'], ['tail', 'Tail'], ['cross', 'Cross']].map(([v, l]) => React.createElement("button", {
+  }, [['calm', 'Bezvetrie'], ['head', 'Protivietor'], ['tail', 'V chrbte'], ['cross', 'Bočný']].map(([v, l]) => React.createElement("button", {
     key: v,
     className: 'cond-opt' + (conditions.wind === v ? ' on' : ''),
     onClick: () => setCond('wind', v)

@@ -636,7 +636,7 @@ const MARK_GROUP={
 const markGroupOf=eid=>MARK_GROUP[baseExId(eid)]||null;
 const tempBand=c=>c==null||isNaN(c)?null:c<10?'cold':c<19?'mild':c<27?'warm':'hot';
 const COND_LABEL={indoor:'Indoor',outdoor:'Outdoor',cold:'Cold',mild:'Mild',warm:'Warm',hot:'Hot',
-  calm:'Calm',head:'Headwind',tail:'Tailwind',cross:'Crosswind'};
+  calm:'Bezvetrie',head:'Protivietor',tail:'Vietor v chrbte',cross:'Bočný vietor'};
 
 // === ICONS ===
 const Ic=({n,s=20})=>{const d={
@@ -1351,7 +1351,7 @@ function WorkoutPrelude({athletes,workoutAthletes,allTags,initialTag,workouts,on
         </div>
         <div className="cond-lbl">Wind</div>
         <div className="cond-seg">
-          {[['calm','Calm'],['head','Head'],['tail','Tail'],['cross','Cross']].map(([v,l])=>(
+          {[['calm','Bezvetrie'],['head','Protivietor'],['tail','V chrbte'],['cross','Bočný']].map(([v,l])=>(
             <button key={v} className={'cond-opt'+(conditions.wind===v?' on':'')} onClick={()=>setCond('wind',v)}>{l}</button>))}
         </div>
         <div className="wx-status">{
