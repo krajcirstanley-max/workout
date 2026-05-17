@@ -492,9 +492,8 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .splt-rowon{background:var(--primary-dim)}
 .splt-here{background:var(--primary);color:#fff;font-weight:900}
 .pf-cat{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:1px;color:var(--text3);margin:14px 4px 7px}
-.pf-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.pf-row::-webkit-scrollbar{display:none}
-.pf-card{flex:0 0 138px;background:var(--surface2);border-radius:14px;padding:13px 14px 12px;border-left:3px solid var(--text4)}
+.pf-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pf-card{background:var(--surface2);border-radius:14px;padding:13px 14px 12px;border-left:3px solid var(--text4)}
 .pf-card.pf-b0{border-left-color:var(--green)}
 .pf-card.pf-b1{border-left-color:var(--yellow2)}
 .pf-card.pf-b2{border-left-color:var(--orange)}
@@ -5091,6 +5090,7 @@ function PredictionsScreen({
       const el = ELITE_EFF[prof.sex] || ELITE_EFF.m;
       const v = efficiency;
       const b = v == null ? null : v >= el ? 0 : v >= el * 0.95 ? 1 : v >= el * 0.88 ? 2 : 3;
+      const gap = v != null ? Math.round((v - el) * 10) / 10 : 0;
       return React.createElement("div", {
         key: cat
       }, React.createElement("div", {
@@ -5107,7 +5107,7 @@ function PredictionsScreen({
         className: "pf-norm"
       }, "elite ", el), v != null ? React.createElement("div", {
         className: "pf-pct"
-      }, PF_BAND[b]) : React.createElement("div", {
+      }, (gap >= 0 ? '+' : '') + gap, " vs elite") : React.createElement("div", {
         className: "pf-pct nd"
       }, "no data yet"))));
     }
@@ -5124,6 +5124,7 @@ function PredictionsScreen({
       const has = v != null && isFinite(v);
       const b = has ? bandOf(v, f.t, f.lower) : null;
       const u = f.unit === '% BW' ? '%' : f.unit ? ' ' + f.unit : '';
+      const gap = has ? f.lower ? f.t[0] - v : v - f.t[0] : 0;
       return React.createElement("div", {
         key: f.name,
         className: 'pf-card' + (b == null ? '' : ' pf-b' + b)
@@ -5133,9 +5134,9 @@ function PredictionsScreen({
         className: "pf-val"
       }, has ? v.toFixed(f.dec) + u : '—'), React.createElement("div", {
         className: "pf-norm"
-      }, "23+ ", f.t[0], u), has ? React.createElement("div", {
+      }, "23+ norm ", f.t[0], u), has ? React.createElement("div", {
         className: "pf-pct"
-      }, PF_BAND[b]) : React.createElement("div", {
+      }, (gap >= 0 ? '+' : '') + gap.toFixed(f.dec) + u, " vs norm") : React.createElement("div", {
         className: "pf-pct nd"
       }, "no data yet"));
     })));
