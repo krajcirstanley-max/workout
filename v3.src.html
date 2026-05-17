@@ -348,6 +348,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .hist-set-n{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--text4);width:13px;flex-shrink:0}
 .hist-headline{font-size:17px;font-weight:900;font-style:italic;color:var(--text);letter-spacing:-.3px;line-height:1.1}
 .hist-lead{font-weight:700;font-style:normal;font-size:13px;color:var(--text3);margin-right:8px;letter-spacing:0}
+.hist-nm{font-size:13px;font-style:italic;font-weight:600;color:var(--text3)}
 .hist-subs{font-size:12px;color:var(--text3);margin-top:3px;display:flex;flex-wrap:wrap;gap:1px 12px}
 .hist-subs b{font-weight:800;color:var(--text2);font-variant-numeric:tabular-nums}
 .stat-summary{display:flex;margin:16px 14px 8px;background:var(--surface2);border-radius:18px;padding:18px 6px}
@@ -983,7 +984,7 @@ function RestBar({startedAt,target,onStop}){
 }
 
 // One exercise card in the scrolling workout
-function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,workouts,onUpdateSet,onToggleSet,onToggleWarmup,onAddSet,onDelSet,onCheckAll,onActions,onSetAthleteNote,onHistory}){
+function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,workouts,onUpdateSet,onToggleSet,onToggleWarmup,onReopenSet,onAddSet,onDelSet,onCheckAll,onActions,onSetAthleteNote,onHistory}){
   const ex=exercises.find(e=>e.id===baseExId(eid));
   const sets=workout.athletes[activeAth]?.sets?.[eid]||[];
   const effMetrics=workout.exerciseMetrics?.[eid]||ex?.metrics||[];
@@ -1056,12 +1057,14 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
         const pr=s.completed&&!s.warmup&&isPR(s);
         return(<div key={i} className={'set-row'+(s.warmup?' warmup':'')+(s.flop?' flop':'')} style={{gridTemplateColumns:gridCols}}>
           <button className={'set-num-btn'+(s.warmup?' warmup':'')} onClick={()=>onToggleWarmup(eid,i)}>{s.warmup?'W':i+1}</button>
-          {mds.map((m,mi)=>(<div key={m.id} style={{position:'relative'}}>
-            <input type="number" inputMode="decimal" className="set-input" step={m.step||0.01}
-              value={s.values[m.id]??''} placeholder={s.flop?'flop':emptyDone?'-':(m.unit||'')}
-              onChange={e=>onUpdateSet(eid,i,m.id,e.target.value===''?'':Number(e.target.value))}/>
-            {pr&&mi===mds.length-1&&<span style={{position:'absolute',right:3,top:'50%',transform:'translateY(-50%)',fontSize:13,pointerEvents:'none'}}>🏆</span>}
-          </div>))}
+          {emptyDone
+            ?<div onClick={()=>onReopenSet(eid,i)} style={{gridColumn:'2 / '+(2+mds.length),minHeight:52,border:'1.5px dashed var(--border)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontStyle:'italic',fontWeight:700,fontSize:13,color:'var(--text3)',cursor:'pointer'}}>Not measured</div>
+            :mds.map((m,mi)=>(<div key={m.id} style={{position:'relative'}}>
+              <input type="number" inputMode="decimal" className="set-input" step={m.step||0.01}
+                value={s.values[m.id]??''} placeholder={s.flop?'flop':(m.unit||'')}
+                onChange={e=>onUpdateSet(eid,i,m.id,e.target.value===''?'':Number(e.target.value))}/>
+              {pr&&mi===mds.length-1&&<span style={{position:'absolute',right:3,top:'50%',transform:'translateY(-50%)',fontSize:13,pointerEvents:'none'}}>🏆</span>}
+            </div>))}
           <button className={'set-check'+(s.completed?' done':'')+(s.flop?' flop':'')} onClick={()=>onToggleSet(eid,i)}>{s.completed&&<Ic n="check" s={18}/>}{s.flop&&<Ic n="x" s={16}/>}</button>
         </div>)})}
       <div className="set-controls">
@@ -1264,6 +1267,9 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s2,i)=>i===si?{...s2,completed:next==='done',flop:next==='flop'}:s2)}}}}})};
   const toggleWarmup=(eid,si)=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
     sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s,i)=>i===si?{...s,warmup:!s.warmup}:s)}}}}));
+  // tapping a "Not measured" set re-opens it for editing
+  const reopenSet=(eid,si)=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
+    sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s,i)=>i===si?{...s,completed:false,flop:false}:s)}}}}));
   const checkAll=eid=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const allDone=ss.every(s=>s.completed);
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
       sets:{...w.athletes[activeAth].sets,[eid]:ss.map(s=>({...s,completed:!allDone,flop:false}))}}}}});
@@ -1376,7 +1382,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       </div>}
       {curBlock&&curBlock.eids.map(eid=><ExerciseCard key={eid} eid={eid} blockLabel={curBlock.letter} isSuperset={curBlock.superset}
         workout={workout} activeAth={activeAth} exercises={exercises} workouts={workouts}
-        onUpdateSet={updateSet} onToggleSet={toggleSet} onToggleWarmup={toggleWarmup} onAddSet={addSet} onDelSet={delSet}
+        onUpdateSet={updateSet} onToggleSet={toggleSet} onToggleWarmup={toggleWarmup} onReopenSet={reopenSet} onAddSet={addSet} onDelSet={delSet}
         onCheckAll={checkAll} onActions={setActionsEid} onSetAthleteNote={setAthleteNote} onHistory={setHistoryEid}/>)}
       {isLastBlock&&workout.exerciseIds.length>0&&<div style={{padding:'12px 14px 0'}}>
         <button className="btn btn-primary" style={{width:'100%',padding:'17px',fontSize:17}} onClick={()=>setShowFinish(true)}>End Workout</button>
@@ -2042,17 +2048,24 @@ function NoteEditor({initial,onSave,onClose,title}){
 function histSet(v){
   const has=k=>v[k]!=null&&v[k]!=='';
   const t2=n=>{const x=Number(n);return Number.isFinite(x)?x.toFixed(2):n;};
-  let lead=null,headline='Done';
-  if(has('tf-time')){headline=t2(v['tf-time'])+'s';if(has('distance'))lead=v['distance']+'m';}
-  else if(has('time')){headline=t2(v['time'])+'s';if(has('distance'))lead=v['distance']+'m';}
-  else if(has('weight'))headline=v['weight']+' kg'+(has('reps')?' × '+v['reps']:'');
-  else if(has('reps'))headline=v['reps']+' reps';
-  else if(has('distance'))headline=v['distance']+' m';
+  let headKey=null;
+  if(has('tf-time'))headKey='tf-time';
+  else if(has('time'))headKey='time';
+  else if(has('tf-dist'))headKey='tf-dist';
+  else if(has('weight'))headKey='weight';
+  else if(has('reps'))headKey='reps';
+  else if(has('distance'))headKey='distance';
+  let lead=null,headline=null;
+  if(headKey==='tf-time'||headKey==='time'){headline=t2(v[headKey])+'s';if(has('distance'))lead=v['distance']+'m';}
+  else if(headKey==='tf-dist')headline=v['tf-dist']+' m';
+  else if(headKey==='weight')headline=v['weight']+' kg'+(has('reps')?' × '+v['reps']:'');
+  else if(headKey==='reps')headline=v['reps']+' reps';
+  else if(headKey==='distance')headline=v['distance']+' m';
   const subs=[];
   Object.keys(v).forEach(k=>{if(!has(k))return;
-    if(k==='tf-time'||k==='time')return;
+    if(k===headKey)return;
+    if(k==='reps'&&headKey==='weight')return;
     if(k==='distance'&&lead)return;
-    if((k==='weight'||k==='reps')&&has('weight'))return;
     const md=METRIC_MAP[k];
     if(!md)return;
     let lab;
@@ -2062,7 +2075,7 @@ function histSet(v){
     else lab=(md.name||k).toLowerCase();
     subs.push({lab,val:md.unit==='s'?t2(v[k])+'s':v[k]+(md.unit||'')});
   });
-  return{lead,headline,subs};
+  return{lead,headline,subs,nm:headline==null};
 }
 
 function ExerciseDetail({exercise,athletes,activeAth,workouts,cm,onClose,onUpdateMetrics}){
@@ -2139,8 +2152,10 @@ function ExerciseDetail({exercise,athletes,activeAth,workouts,cm,onClose,onUpdat
               return(<div key={j} className="hist-set">
                 <span className="hist-set-n">{j+1}</span>
                 <div style={{flex:1,minWidth:0}}>
-                  <div className="hist-headline">{f.lead&&<span className="hist-lead">{f.lead}</span>}{f.headline}</div>
-                  {f.subs.length>0&&<div className="hist-subs">{f.subs.map((x,xi)=>(<span key={xi}>{x.lab} <b>{x.val}</b></span>))}</div>}
+                  {f.nm
+                    ?<div className="hist-nm">Not measured</div>
+                    :<><div className="hist-headline">{f.lead&&<span className="hist-lead">{f.lead}</span>}{f.headline}</div>
+                      {f.subs.length>0&&<div className="hist-subs">{f.subs.map((x,xi)=>(<span key={xi}>{x.lab} <b>{x.val}</b></span>))}</div>}</>}
                 </div>
               </div>)})}
           </div>))}
