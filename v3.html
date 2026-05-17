@@ -491,6 +491,21 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .splt-col{background:var(--primary-dim);color:var(--primary)}
 .splt-rowon{background:var(--primary-dim)}
 .splt-here{background:var(--primary);color:#fff;font-weight:900}
+.pf-cat{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:1px;color:var(--text3);margin:14px 4px 7px}
+.pf-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pf-row::-webkit-scrollbar{display:none}
+.pf-card{flex:0 0 138px;background:var(--surface2);border-radius:14px;padding:13px 14px 12px;border-left:3px solid var(--text4)}
+.pf-card.green{border-left-color:var(--green)}
+.pf-card.yellow{border-left-color:#f59e0b}
+.pf-card.red{border-left-color:var(--red)}
+.pf-name{font-size:11px;font-weight:800;color:var(--text2)}
+.pf-val{font-size:21px;font-weight:900;font-style:italic;letter-spacing:-.6px;margin:5px 0 1px;color:var(--text)}
+.pf-norm{font-size:10px;font-weight:700;color:var(--text3)}
+.pf-pct{font-size:11px;font-weight:900;font-style:italic;margin-top:4px}
+.pf-card.green .pf-pct{color:var(--green)}
+.pf-card.yellow .pf-pct{color:#f59e0b}
+.pf-card.red .pf-pct{color:var(--red)}
+.pf-pct.nd{color:var(--text4);font-style:normal;font-weight:700}
 .prd-meta{font-size:11.5px;color:var(--text3);font-weight:600;text-align:center;margin-top:11px;line-height:1.5}
 .prd-meta b{color:var(--text2);font-weight:800}
 .warmup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center}
@@ -4359,6 +4374,22 @@ const athProfile = a => ATH_PROFILE[a && a.name] || {
   sex: 'm',
   startPB: 600
 };
+const SEX_NORMS = {
+  m: {
+    fly10: 0.97,
+    s40: 4.65,
+    ljpb: 7.90,
+    slj: 3.20,
+    eff: 80.6
+  },
+  f: {
+    fly10: 1.06,
+    s40: 5.05,
+    ljpb: 6.85,
+    slj: 3.01,
+    eff: 75.4
+  }
+};
 function PredictionsScreen({
   athletes,
   activeAth,
@@ -4470,6 +4501,63 @@ function PredictionsScreen({
   const effCols = effBase != null ? [effBase - 2, effBase, effBase + 2, effBase + 4] : [];
   const splitRows = lastSplit != null ? [-4, -3, -2, -1, 0, 1, 2, 3, 4].map(i => Math.round((lastSplit + i * 0.02) * 100) / 100) : [];
   const tableReady = effBase != null && lastSplit != null;
+  const bestMetric = (exId, metric, lower) => {
+    let best = null;
+    myWk.forEach(w => {
+      const ad = w.athletes[activeAth];
+      Object.keys(ad.sets || {}).filter(k => baseExId(k) === exId).forEach(k => {
+        (ad.sets[k] || []).forEach(s => {
+          if (!s.completed || s.warmup || s.flop) return;
+          const v = Number(s.values && s.values[metric]);
+          if (v > 0 && (best == null || (lower ? v < best : v > best))) best = v;
+        });
+      });
+    });
+    return best;
+  };
+  const N = SEX_NORMS[prof.sex] || SEX_NORMS.m;
+  const factors = [{
+    cat: 'SPEED',
+    name: '10m Fly',
+    cur: maxVel ? 10 / maxVel : null,
+    norm: N.fly10,
+    lower: true,
+    unit: 's',
+    dec: 2
+  }, {
+    cat: 'SPEED',
+    name: '0–40m',
+    cur: bestMetric('start-40m', 'tf-time', true),
+    norm: N.s40,
+    lower: true,
+    unit: 's',
+    dec: 2
+  }, {
+    cat: 'JUMP',
+    name: 'Long Jump PB',
+    cur: pbCm / 100,
+    norm: N.ljpb,
+    lower: false,
+    unit: 'm',
+    dec: 2
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'Standing LJ',
+    cur: bestMetric('standing-lj', 'tf-dist', false),
+    norm: N.slj,
+    lower: false,
+    unit: 'm',
+    dec: 2
+  }, {
+    cat: 'APPROACH',
+    name: 'Efficiency',
+    cur: efficiency,
+    norm: N.eff,
+    lower: false,
+    unit: '',
+    dec: 1
+  }];
+  const factorCats = ['SPEED', 'JUMP', 'HORIZONTAL POWER', 'APPROACH'];
   const activeEffGroup = selEffGroup || effRows[0] && effRows[0].group;
   const actEffRow = effRows.find(r => r.group === activeEffGroup) || effPick;
   const effLabel = actEffRow ? MARK_GROUP_LABEL[actEffRow.group] || 'approach' : '';
@@ -4619,7 +4707,37 @@ function PredictionsScreen({
     }, Math.round(10 / sp * e));
   })))), React.createElement("div", {
     className: "prd-meta"
-  }, "Predicted jump (cm) for each last-10 m split \xD7 efficiency. The cross of your last split and current efficiency is where you stand now.")))));
+  }, "Predicted jump (cm) for each last-10 m split \xD7 efficiency. The cross of your last split and current efficiency is where you stand now.")), React.createElement("div", {
+    className: "prd-sec-h"
+  }, "Performance Factors"), factorCats.map(cat => {
+    const cf = factors.filter(f => f.cat === cat);
+    if (!cf.length) return null;
+    return React.createElement("div", {
+      key: cat
+    }, React.createElement("div", {
+      className: "pf-cat"
+    }, cat), React.createElement("div", {
+      className: "pf-row"
+    }, cf.map(f => {
+      const has = f.cur != null && isFinite(f.cur);
+      const pct = has ? Math.round((f.lower ? f.norm / f.cur : f.cur / f.norm) * 100) : null;
+      const cls = !has ? '' : pct >= 100 ? 'green' : pct >= 90 ? 'yellow' : 'red';
+      return React.createElement("div", {
+        key: f.name,
+        className: 'pf-card ' + cls
+      }, React.createElement("div", {
+        className: "pf-name"
+      }, f.name), React.createElement("div", {
+        className: "pf-val"
+      }, has ? f.cur.toFixed(f.dec) + (f.unit ? ' ' + f.unit : '') : '—'), React.createElement("div", {
+        className: "pf-norm"
+      }, "norm ", f.norm, f.unit ? ' ' + f.unit : ''), has ? React.createElement("div", {
+        className: "pf-pct"
+      }, pct, "% of norm") : React.createElement("div", {
+        className: "pf-pct nd"
+      }, "no data yet"));
+    })));
+  }))));
 }
 function StatScreen({
   workouts,
