@@ -341,6 +341,15 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .velo-hero svg polyline{stroke:#f5a623!important}
 .velo-hero svg circle{fill:#f5a623!important}
 .velo-hero svg polygon{fill:#f5a623!important}
+.hist-card{background:var(--surface2);border-radius:14px;padding:13px 15px;margin:0 14px 8px}
+.hist-date{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--text3);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px}
+.hist-set{display:flex;gap:11px;padding:7px 0;align-items:baseline}
+.hist-set+.hist-set{border-top:1px solid var(--border)}
+.hist-set-n{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--text4);width:13px;flex-shrink:0}
+.hist-headline{font-size:17px;font-weight:900;font-style:italic;color:var(--text);letter-spacing:-.3px;line-height:1.1}
+.hist-lead{font-weight:700;font-style:normal;font-size:13px;color:var(--text3);margin-right:8px;letter-spacing:0}
+.hist-subs{font-size:12px;color:var(--text3);margin-top:3px;display:flex;flex-wrap:wrap;gap:1px 12px}
+.hist-subs b{font-weight:800;color:var(--text2);font-variant-numeric:tabular-nums}
 .stat-summary{display:flex;margin:16px 14px 8px;background:var(--surface2);border-radius:18px;padding:18px 6px}
 .stat-cell{flex:1;text-align:center}
 .stat-cell-v{font-size:27px;font-weight:900;font-style:italic;color:var(--text);letter-spacing:-.9px;line-height:1;font-variant-numeric:tabular-nums}
@@ -883,16 +892,30 @@ function RecentRow({wk,onClick}){
 function ReorderList({ids,exercises,onReorder,onDelete}){
   const ROW=58;
   const[drag,setDrag]=useState(null);
-  useEffect(()=>{if(!drag)return;
-    const move=e=>{const t=e.touches?e.touches[0]:e;setDrag(d=>d&&{...d,dy:t.clientY-d.startY});if(e.cancelable)e.preventDefault()};
+  const st=useRef({});
+  useEffect(()=>{if(!drag)return;const s=st.current;
+    // displacement in list space = finger move + how far the modal scrolled
+    const recompute=()=>{const scTop=s.sc?s.sc.scrollTop:0;
+      setDrag(d=>d&&{...d,dy:(s.y-s.startY)+(scTop-s.startScroll)})};
+    const move=e=>{const t=e.touches?e.touches[0]:e;s.y=t.clientY;recompute();if(e.cancelable)e.preventDefault()};
     const end=()=>setDrag(d=>{if(d){const to=Math.max(0,Math.min(ids.length-1,d.fromIdx+Math.round(d.dy/ROW)));if(to!==d.fromIdx)onReorder(d.fromIdx,to)}return null});
+    // auto-scroll the modal when the finger is near an edge, so any distance is reachable
+    let af;const tick=()=>{const sc=s.sc;
+      if(sc){const r=sc.getBoundingClientRect();
+        if(s.y<r.top+66&&sc.scrollTop>0){sc.scrollTop-=11;recompute()}
+        else if(s.y>r.bottom-66&&sc.scrollTop<sc.scrollHeight-sc.clientHeight){sc.scrollTop+=11;recompute()}}
+      af=requestAnimationFrame(tick)};
+    af=requestAnimationFrame(tick);
     document.addEventListener('touchmove',move,{passive:false});
     document.addEventListener('touchend',end);
     document.addEventListener('mousemove',move);
     document.addEventListener('mouseup',end);
-    return()=>{document.removeEventListener('touchmove',move);document.removeEventListener('touchend',end);document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',end)};
+    return()=>{cancelAnimationFrame(af);document.removeEventListener('touchmove',move);document.removeEventListener('touchend',end);document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',end)};
   },[drag&&drag.id]);
-  const start=(id,i,e)=>{const t=e.touches?e.touches[0]:e;setDrag({id,fromIdx:i,startY:t.clientY,dy:0})};
+  const start=(id,i,e)=>{const t=e.touches?e.touches[0]:e;
+    let el=e.currentTarget;while(el){const oy=getComputedStyle(el).overflowY;if((oy==='auto'||oy==='scroll')&&el.scrollHeight>el.clientHeight+4)break;el=el.parentElement}
+    st.current={y:t.clientY,startY:t.clientY,sc:el||null,startScroll:el?el.scrollTop:0};
+    setDrag({id,fromIdx:i,dy:0})};
   const targetIdx=drag?Math.max(0,Math.min(ids.length-1,drag.fromIdx+Math.round(drag.dy/ROW))):-1;
   return(<div>
     {ids.map((id,i)=>{const ex=exercises.find(e=>e.id===baseExId(id));
@@ -1081,9 +1104,19 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const restStart=restStarts[activeAth]||null;
   const setRestStart=v=>setRestStarts(p=>{const n={...p};if(v==null)delete n[activeAth];else n[activeAth]=v;return n});
 
-  // Handlers - all take the exercise id
-  const updateSet=(eid,si,mid,v)=>setWorkout(w=>({...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
-    sets:{...w.athletes[activeAth].sets,[eid]:w.athletes[activeAth].sets[eid].map((s,i)=>i===si?{...s,values:{...s.values,[mid]:v}}:s)}}}}));
+  // Handlers - all take the exercise id.
+  // reps/distance are shared programming - they mirror to every athlete (unless the set is already done).
+  const updateSet=(eid,si,mid,v)=>setWorkout(w=>{
+    const aSet=w.athletes[activeAth]?.sets?.[eid]?.[si];
+    const mirror=(mid==='reps'||mid==='distance')&&aSet&&!aSet.completed;
+    const na={...w.athletes};
+    Object.keys(na).forEach(aId=>{
+      if(aId!==activeAth&&!mirror)return;
+      const ss=na[aId].sets?.[eid];if(!ss||!ss[si])return;
+      if(aId!==activeAth&&ss[si].completed)return;
+      na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:ss.map((s,i)=>i===si?{...s,values:{...s.values,[mid]:v}}:s)}};
+    });
+    return{...w,athletes:na}});
   // is this metric one where lower is better (times)?
   const lowerBetter=m=>m==='tf-time'||m.startsWith('split-')||m.startsWith('fly-')||m.startsWith('seg-')||m.startsWith('time-')||(METRIC_MAP[m]||{}).unit==='s';
   // check whether a just-completed set beats every past session for any metric
@@ -1114,14 +1147,18 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const checkAll=eid=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const allDone=ss.every(s=>s.completed);
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
       sets:{...w.athletes[activeAth].sets,[eid]:ss.map(s=>({...s,completed:!allDone,flop:false}))}}}}});
-  const addSet=eid=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const last=ss[ss.length-1];
-    const ex2=exercises.find(e=>e.id===baseExId(eid));const em=w.exerciseMetrics?.[eid]||ex2?.metrics||[];
-    const nv={};em.forEach(m=>{nv[m]=last?.values[m]??''});
-    return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
-      sets:{...w.athletes[activeAth].sets,[eid]:[...ss,{values:nv,completed:false}]}}}}});
-  const delSet=eid=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];if(ss.length<=1)return w;
-    return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
-      sets:{...w.athletes[activeAth].sets,[eid]:ss.slice(0,-1)}}}}});
+  // set count is shared structure - add/remove for every athlete
+  const addSet=eid=>setWorkout(w=>{const ex2=exercises.find(e=>e.id===baseExId(eid));const em=w.exerciseMetrics?.[eid]||ex2?.metrics||[];
+    const na={...w.athletes};
+    Object.keys(na).forEach(aId=>{const ss=na[aId].sets?.[eid];if(!ss)return;
+      const last=ss[ss.length-1];const nv={};em.forEach(m=>{nv[m]=last?.values[m]??''});
+      na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:[...ss,{values:nv,completed:false}]}}});
+    return{...w,athletes:na}});
+  const delSet=eid=>setWorkout(w=>{if((w.athletes[activeAth].sets[eid]||[]).length<=1)return w;
+    const na={...w.athletes};
+    Object.keys(na).forEach(aId=>{const ss=na[aId].sets?.[eid];if(!ss||ss.length<=1)return;
+      na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:ss.slice(0,-1)}}});
+    return{...w,athletes:na}});
   const setAthleteNote=(eid,text)=>setWorkout(w=>({...w,athleteNotes:{...(w.athleteNotes||{}),[eid]:{...((w.athleteNotes||{})[eid]||{}),[activeAth]:text}}}));
   const addExercise=newEx=>{setWorkout(w=>{const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id).length;
     const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
@@ -1873,6 +1910,33 @@ function NoteEditor({initial,onSave,onClose,title}){
   </div>)}
 
 // === EXERCISE DETAIL ===
+// Format one logged set into a bold headline + clean sub-metrics for the history view
+function histSet(v){
+  const has=k=>v[k]!=null&&v[k]!=='';
+  const t2=n=>{const x=Number(n);return Number.isFinite(x)?x.toFixed(2):n;};
+  let lead=null,headline='Done';
+  if(has('tf-time')){headline=t2(v['tf-time'])+'s';if(has('distance'))lead=v['distance']+'m';}
+  else if(has('time')){headline=t2(v['time'])+'s';if(has('distance'))lead=v['distance']+'m';}
+  else if(has('weight'))headline=v['weight']+' kg'+(has('reps')?' × '+v['reps']:'');
+  else if(has('reps'))headline=v['reps']+' reps';
+  else if(has('distance'))headline=v['distance']+' m';
+  const subs=[];
+  Object.keys(v).forEach(k=>{if(!has(k))return;
+    if(k==='tf-time'||k==='time')return;
+    if(k==='distance'&&lead)return;
+    if((k==='weight'||k==='reps')&&has('weight'))return;
+    const md=METRIC_MAP[k];
+    if(!md)return;
+    let lab;
+    if(k.startsWith('split-'))lab=k.replace('split-','');
+    else if(k.startsWith('fly-'))lab='fly';
+    else if(k.startsWith('seg-'))lab=k.replace('seg-','');
+    else lab=(md.name||k).toLowerCase();
+    subs.push({lab,val:md.unit==='s'?t2(v[k])+'s':v[k]+(md.unit||'')});
+  });
+  return{lead,headline,subs};
+}
+
 function ExerciseDetail({exercise,athletes,activeAth,workouts,cm,onClose,onUpdateMetrics}){
   const[selAth,setSelAth]=useState(activeAth);const[tab,setTab]=useState('history');
   const[showEdit,setShowEdit]=useState(false);
@@ -1939,23 +2003,17 @@ function ExerciseDetail({exercise,athletes,activeAth,workouts,cm,onClose,onUpdat
             <div className="pr-date">{new Date(e1rmDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'})}</div>
           </div>}
         </div>}
-        <div style={{padding:'0 18px',fontFamily:'var(--mono)',fontSize:11,fontWeight:800,color:'var(--text3)',letterSpacing:'1px',textTransform:'uppercase',marginTop:8,marginBottom:8}}>{history.length} Sessions</div>
+        <div style={{padding:'0 18px',fontFamily:'var(--mono)',fontSize:11,fontWeight:800,color:'var(--text3)',letterSpacing:'1px',textTransform:'uppercase',marginTop:8,marginBottom:8}}>{history.length} Session{history.length===1?'':'s'}</div>
         {history.length===0?<div className="empty"><div className="empty-text">No sessions yet</div></div>
-          :history.map((h,i)=>(<div key={i} style={{padding:'14px 18px',borderTop:'1px solid var(--border)'}}>
-            <div style={{fontSize:13,fontWeight:800,color:'var(--primary)',marginBottom:6}}>{new Date(h.wk.startTime).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</div>
-            {h.sets.map((s,j)=>{const v=s.values;
-              const hasDist=v.distance!=null&&v.distance!=='';const hasTfT=v['tf-time']!=null&&v['tf-time']!=='';
-              const hasW2=v.weight!=null&&v.weight!=='';const hasR2=v.reps!=null&&v.reps!=='';
-              const splits=Object.keys(v).filter(k=>(k.startsWith('split-')||k.startsWith('fly-'))&&v[k]!==''&&v[k]!=null);
-              let line='';
-              if(hasDist&&hasTfT){line=`${v.distance}m → ${v['tf-time']}s`;
-                if(splits.length)line+=' ('+splits.map(k=>{const lab=k.startsWith('split-')?k.replace('split-',''):k.replace(/^fly-(\d+m)-(\d+)$/,'$1fly$2').replace(/^fly-(\d+m)$/,'$1fly');return lab+': '+v[k]}).join(' ')+')'}
-              else if(hasW2){line=`${v.weight}lb${hasR2?' × '+v.reps:''}`}
-              else if(hasTfT){line=`${v['tf-time']}s`}
-              else line=Object.entries(v).filter(([_,vv])=>vv!==''&&vv!=null).map(([k,vv])=>`${vv}${METRIC_MAP[k]?.unit||''}`).join(' · ');
-              return(<div key={j} style={{display:'flex',gap:10,fontSize:13,color:'var(--text2)',padding:'2px 0',fontFamily:'var(--mono)'}}>
-                <span style={{color:'var(--text3)',width:18,fontWeight:800}}>{j+1}</span>
-                <span style={{color:'var(--text)',fontWeight:700}}>{line}</span>
+          :history.map((h,i)=>(<div key={i} className="hist-card">
+            <div className="hist-date">{new Date(h.wk.startTime).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
+            {h.sets.map((s,j)=>{const f=histSet(s.values);
+              return(<div key={j} className="hist-set">
+                <span className="hist-set-n">{j+1}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="hist-headline">{f.lead&&<span className="hist-lead">{f.lead}</span>}{f.headline}</div>
+                  {f.subs.length>0&&<div className="hist-subs">{f.subs.map((x,xi)=>(<span key={xi}>{x.lab} <b>{x.val}</b></span>))}</div>}
+                </div>
               </div>)})}
           </div>))}
       </div>:<div style={{padding:'18px 14px'}}>
