@@ -495,16 +495,18 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .pf-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .pf-row::-webkit-scrollbar{display:none}
 .pf-card{flex:0 0 138px;background:var(--surface2);border-radius:14px;padding:13px 14px 12px;border-left:3px solid var(--text4)}
-.pf-card.green{border-left-color:var(--green)}
-.pf-card.yellow{border-left-color:#f59e0b}
-.pf-card.red{border-left-color:var(--red)}
+.pf-card.pf-b0{border-left-color:var(--green)}
+.pf-card.pf-b1{border-left-color:var(--yellow2)}
+.pf-card.pf-b2{border-left-color:var(--orange)}
+.pf-card.pf-b3{border-left-color:var(--red)}
 .pf-name{font-size:11px;font-weight:800;color:var(--text2)}
 .pf-val{font-size:21px;font-weight:900;font-style:italic;letter-spacing:-.6px;margin:5px 0 1px;color:var(--text)}
 .pf-norm{font-size:10px;font-weight:700;color:var(--text3)}
-.pf-pct{font-size:11px;font-weight:900;font-style:italic;margin-top:4px}
-.pf-card.green .pf-pct{color:var(--green)}
-.pf-card.yellow .pf-pct{color:#f59e0b}
-.pf-card.red .pf-pct{color:var(--red)}
+.pf-pct{font-size:10.5px;font-weight:900;font-style:italic;margin-top:4px}
+.pf-card.pf-b0 .pf-pct{color:var(--green)}
+.pf-card.pf-b1 .pf-pct{color:#ca8a04}
+.pf-card.pf-b2 .pf-pct{color:var(--orange)}
+.pf-card.pf-b3 .pf-pct{color:var(--red)}
 .pf-pct.nd{color:var(--text4);font-style:normal;font-weight:700}
 .prd-meta{font-size:11.5px;color:var(--text3);font-weight:600;text-align:center;margin-top:11px;line-height:1.5}
 .prd-meta b{color:var(--text2);font-weight:800}
@@ -880,6 +882,12 @@ const METRIC_MAP = {
     name: 'Mark',
     unit: 'm',
     step: .05
+  },
+  gct: {
+    id: 'gct',
+    name: 'GCT',
+    unit: 's',
+    step: .001
   }
 };
 const MARK_GROUP = {
@@ -4363,33 +4371,397 @@ function Confirm({
 const ATH_PROFILE = {
   'Stanley': {
     sex: 'm',
-    startPB: 685
+    startPB: 685,
+    weight: 65.3
   },
   'Miška': {
     sex: 'f',
-    startPB: 607
+    startPB: 607,
+    weight: 58.6
   }
 };
 const athProfile = a => ATH_PROFILE[a && a.name] || {
   sex: 'm',
-  startPB: 600
+  startPB: 600,
+  weight: 70
 };
-const SEX_NORMS = {
-  m: {
-    fly10: 0.97,
-    s40: 4.65,
-    ljpb: 7.90,
-    slj: 3.20,
-    eff: 80.6
-  },
-  f: {
-    fly10: 1.06,
-    s40: 5.05,
-    ljpb: 6.85,
-    slj: 3.01,
-    eff: 75.4
-  }
+const ELITE_EFF = {
+  m: 80.6,
+  f: 75.4
 };
+const PERF_NORMS = {
+  m: [{
+    cat: 'SPEED',
+    name: '10m Fly',
+    unit: 's',
+    dec: 2,
+    lower: true,
+    t: [0.98, 0.99, 1.05],
+    src: {
+      type: 'fly'
+    }
+  }, {
+    cat: 'SPEED',
+    name: '0–20m',
+    unit: 's',
+    dec: 2,
+    lower: true,
+    t: [2.35, 2.39, 2.43],
+    src: {
+      type: 'metric',
+      ex: 'start-20m',
+      m: 'tf-time'
+    }
+  }, {
+    cat: 'JUMP',
+    name: 'Long Jump',
+    unit: 'cm',
+    dec: 0,
+    lower: false,
+    t: [790, 775, 725],
+    src: {
+      type: 'pb'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'Standing LJ',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [3.20, 3.13, 3.02],
+    src: {
+      type: 'metric',
+      ex: 'standing-lj',
+      m: 'tf-dist'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'Alt Bounds',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [17.13, 16.70, 16.06],
+    src: {
+      type: 'metric',
+      ex: 'alt-bounds-jump',
+      m: 'tf-dist'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'SL Bounds',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [16.99, 16.56, 15.90],
+    src: {
+      type: 'slbounds'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: '5 Bounds',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [25.00, 24.50, 22.50],
+    src: {
+      type: 'metric',
+      ex: 'bounds-5-pr',
+      m: 'tf-dist'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'CMJ',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [0.60, 0.57, 0.53],
+    src: {
+      type: 'metric',
+      ex: 'cmj',
+      m: 'height'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 20 Height',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [0.55, 0.52, 0.46],
+    src: {
+      type: 'metric',
+      ex: 'drop-jump-20cm',
+      m: 'height'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 20 GCT',
+    unit: 's',
+    dec: 3,
+    lower: true,
+    t: [0.200, 0.211, 0.229],
+    src: {
+      type: 'metric',
+      ex: 'drop-jump-20cm',
+      m: 'gct',
+      lo: 1
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 20 RSI',
+    unit: '',
+    dec: 2,
+    lower: false,
+    t: [2.75, 2.46, 2.01],
+    src: {
+      type: 'rsi',
+      ex: 'drop-jump-20cm'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 40 Height',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [0.59, 0.54, 0.47],
+    src: {
+      type: 'metric',
+      ex: 'drop-jump-40cm',
+      m: 'height'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 40 GCT',
+    unit: 's',
+    dec: 3,
+    lower: true,
+    t: [0.198, 0.211, 0.230],
+    src: {
+      type: 'metric',
+      ex: 'drop-jump-40cm',
+      m: 'gct',
+      lo: 1
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 40 RSI',
+    unit: '',
+    dec: 2,
+    lower: false,
+    t: [2.98, 2.56, 2.04],
+    src: {
+      type: 'rsi',
+      ex: 'drop-jump-40cm'
+    }
+  }, {
+    cat: 'STRENGTH',
+    name: 'TB Deadlift',
+    unit: '% BW',
+    dec: 0,
+    lower: false,
+    t: [244, 244, 194],
+    src: {
+      type: 'pctbw',
+      ex: 'tb-deadlift'
+    }
+  }, {
+    cat: 'STRENGTH',
+    name: 'Hang High Pull',
+    unit: '% BW',
+    dec: 0,
+    lower: false,
+    t: [184, 179, 142],
+    src: {
+      type: 'pctbw',
+      ex: 'hang-high-pull'
+    }
+  }],
+  f: [{
+    cat: 'SPEED',
+    name: '10m Fly',
+    unit: 's',
+    dec: 2,
+    lower: true,
+    t: [1.07, 1.09, 1.10],
+    src: {
+      type: 'fly'
+    }
+  }, {
+    cat: 'SPEED',
+    name: '0–20m',
+    unit: 's',
+    dec: 2,
+    lower: true,
+    t: [2.50, 2.62, 2.75],
+    src: {
+      type: 'metric',
+      ex: 'start-20m',
+      m: 'tf-time'
+    }
+  }, {
+    cat: 'JUMP',
+    name: 'Long Jump',
+    unit: 'cm',
+    dec: 0,
+    lower: false,
+    t: [670, 650, 630],
+    src: {
+      type: 'pb'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'Standing LJ',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [3.01, 2.71, 2.43],
+    src: {
+      type: 'metric',
+      ex: 'standing-lj',
+      m: 'tf-dist'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'Alt Bounds',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [14.33, 13.70, 13.02],
+    src: {
+      type: 'metric',
+      ex: 'alt-bounds-jump',
+      m: 'tf-dist'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'SL Bounds',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [14.38, 13.56, 12.74],
+    src: {
+      type: 'slbounds'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: '5 Bounds',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [21.50, 20.85, 20.00],
+    src: {
+      type: 'metric',
+      ex: 'bounds-5-pr',
+      m: 'tf-dist'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'CMJ',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [0.48, 0.43, 0.38],
+    src: {
+      type: 'metric',
+      ex: 'cmj',
+      m: 'height'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 20 Height',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [0.46, 0.41, 0.35],
+    src: {
+      type: 'metric',
+      ex: 'drop-jump-20cm',
+      m: 'height'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 20 GCT',
+    unit: 's',
+    dec: 3,
+    lower: true,
+    t: [0.172, 0.206, 0.239],
+    src: {
+      type: 'metric',
+      ex: 'drop-jump-20cm',
+      m: 'gct',
+      lo: 1
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 20 RSI',
+    unit: '',
+    dec: 2,
+    lower: false,
+    t: [2.67, 1.99, 1.46],
+    src: {
+      type: 'rsi',
+      ex: 'drop-jump-20cm'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 40 Height',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [0.48, 0.42, 0.36],
+    src: {
+      type: 'metric',
+      ex: 'drop-jump-40cm',
+      m: 'height'
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 40 GCT',
+    unit: 's',
+    dec: 3,
+    lower: true,
+    t: [0.164, 0.199, 0.234],
+    src: {
+      type: 'metric',
+      ex: 'drop-jump-40cm',
+      m: 'gct',
+      lo: 1
+    }
+  }, {
+    cat: 'VERTICAL POWER',
+    name: 'DJ 40 RSI',
+    unit: '',
+    dec: 2,
+    lower: false,
+    t: [2.93, 2.11, 1.54],
+    src: {
+      type: 'rsi',
+      ex: 'drop-jump-40cm'
+    }
+  }, {
+    cat: 'STRENGTH',
+    name: 'TB Deadlift',
+    unit: '% BW',
+    dec: 0,
+    lower: false,
+    t: [139, 133, 122],
+    src: {
+      type: 'pctbw',
+      ex: 'tb-deadlift'
+    }
+  }, {
+    cat: 'STRENGTH',
+    name: 'Hang High Pull',
+    unit: '% BW',
+    dec: 0,
+    lower: false,
+    t: [105, 95, 74],
+    src: {
+      type: 'pctbw',
+      ex: 'hang-high-pull'
+    }
+  }]
+};
+const PF_BAND = ['At 23+ norm', '20–22 level', '17–20 level', 'Below 17–20'];
 function PredictionsScreen({
   athletes,
   activeAth,
@@ -4501,63 +4873,68 @@ function PredictionsScreen({
   const effCols = effBase != null ? [effBase - 2, effBase, effBase + 2, effBase + 4] : [];
   const splitRows = lastSplit != null ? [-4, -3, -2, -1, 0, 1, 2, 3, 4].map(i => Math.round((lastSplit + i * 0.02) * 100) / 100) : [];
   const tableReady = effBase != null && lastSplit != null;
-  const bestMetric = (exId, metric, lower) => {
-    let best = null;
+  const setsOf = exId => {
+    const out = [];
     myWk.forEach(w => {
       const ad = w.athletes[activeAth];
       Object.keys(ad.sets || {}).filter(k => baseExId(k) === exId).forEach(k => {
         (ad.sets[k] || []).forEach(s => {
-          if (!s.completed || s.warmup || s.flop) return;
-          const v = Number(s.values && s.values[metric]);
-          if (v > 0 && (best == null || (lower ? v < best : v > best))) best = v;
+          if (s.completed && !s.warmup && !s.flop) out.push(s.values || {});
         });
       });
     });
-    return best;
+    return out;
   };
-  const N = SEX_NORMS[prof.sex] || SEX_NORMS.m;
-  const factors = [{
-    cat: 'SPEED',
-    name: '10m Fly',
-    cur: maxVel ? 10 / maxVel : null,
-    norm: N.fly10,
-    lower: true,
-    unit: 's',
-    dec: 2
-  }, {
-    cat: 'SPEED',
-    name: '0–40m',
-    cur: bestMetric('start-40m', 'tf-time', true),
-    norm: N.s40,
-    lower: true,
-    unit: 's',
-    dec: 2
-  }, {
-    cat: 'JUMP',
-    name: 'Long Jump PB',
-    cur: pbCm / 100,
-    norm: N.ljpb,
-    lower: false,
-    unit: 'm',
-    dec: 2
-  }, {
-    cat: 'HORIZONTAL POWER',
-    name: 'Standing LJ',
-    cur: bestMetric('standing-lj', 'tf-dist', false),
-    norm: N.slj,
-    lower: false,
-    unit: 'm',
-    dec: 2
-  }, {
-    cat: 'APPROACH',
-    name: 'Efficiency',
-    cur: efficiency,
-    norm: N.eff,
-    lower: false,
-    unit: '',
-    dec: 1
-  }];
-  const factorCats = ['SPEED', 'JUMP', 'HORIZONTAL POWER', 'APPROACH'];
+  const factorValue = src => {
+    if (src.type === 'fly') return maxVel ? Math.round(1000 / maxVel) / 100 : null;
+    if (src.type === 'pb') return pbCm;
+    if (src.type === 'metric') {
+      let b = null;
+      setsOf(src.ex).forEach(v => {
+        const x = Number(v[src.m]);
+        if (x > 0 && (b == null || (src.lo ? x < b : x > b))) b = x;
+      });
+      return b;
+    }
+    if (src.type === 'slbounds') {
+      let b = null;
+      ['sl-bounds-pr-l', 'sl-bounds-pr-r'].forEach(ex => setsOf(ex).forEach(v => {
+        const x = Number(v['tf-dist']);
+        if (x > 0 && (b == null || x > b)) b = x;
+      }));
+      return b;
+    }
+    if (src.type === 'rsi') {
+      let b = null;
+      setsOf(src.ex).forEach(v => {
+        const h = Number(v.height),
+          g = Number(v.gct);
+        if (h > 0 && g > 0) {
+          const r = h / g;
+          if (b == null || r > b) b = r;
+        }
+      });
+      return b != null ? Math.round(b * 100) / 100 : null;
+    }
+    if (src.type === 'pctbw') {
+      let b = null;
+      setsOf(src.ex).forEach(v => {
+        const x = Number(v.weight);
+        if (x > 0 && (b == null || x > b)) b = x;
+      });
+      return b != null && prof.weight ? Math.round(b / prof.weight * 100) : null;
+    }
+    return null;
+  };
+  const bandOf = (v, t, lower) => {
+    if (v == null) return null;
+    for (let i = 0; i < 3; i++) {
+      if (lower ? v <= t[i] : v >= t[i]) return i;
+    }
+    return 3;
+  };
+  const perfNorms = PERF_NORMS[prof.sex] || PERF_NORMS.m;
+  const factorCats = ['SPEED', 'JUMP', 'HORIZONTAL POWER', 'VERTICAL POWER', 'STRENGTH', 'APPROACH'];
   const activeEffGroup = selEffGroup || effRows[0] && effRows[0].group;
   const actEffRow = effRows.find(r => r.group === activeEffGroup) || effPick;
   const effLabel = actEffRow ? MARK_GROUP_LABEL[actEffRow.group] || 'approach' : '';
@@ -4710,7 +5087,31 @@ function PredictionsScreen({
   }, "Predicted jump (cm) for each last-10 m split \xD7 efficiency. The cross of your last split and current efficiency is where you stand now.")), React.createElement("div", {
     className: "prd-sec-h"
   }, "Performance Factors"), factorCats.map(cat => {
-    const cf = factors.filter(f => f.cat === cat);
+    if (cat === 'APPROACH') {
+      const el = ELITE_EFF[prof.sex] || ELITE_EFF.m;
+      const v = efficiency;
+      const b = v == null ? null : v >= el ? 0 : v >= el * 0.95 ? 1 : v >= el * 0.88 ? 2 : 3;
+      return React.createElement("div", {
+        key: cat
+      }, React.createElement("div", {
+        className: "pf-cat"
+      }, "APPROACH"), React.createElement("div", {
+        className: "pf-row"
+      }, React.createElement("div", {
+        className: 'pf-card' + (b == null ? '' : ' pf-b' + b)
+      }, React.createElement("div", {
+        className: "pf-name"
+      }, "Efficiency"), React.createElement("div", {
+        className: "pf-val"
+      }, v != null ? v : '—'), React.createElement("div", {
+        className: "pf-norm"
+      }, "elite ", el), v != null ? React.createElement("div", {
+        className: "pf-pct"
+      }, PF_BAND[b]) : React.createElement("div", {
+        className: "pf-pct nd"
+      }, "no data yet"))));
+    }
+    const cf = perfNorms.filter(f => f.cat === cat);
     if (!cf.length) return null;
     return React.createElement("div", {
       key: cat
@@ -4719,21 +5120,22 @@ function PredictionsScreen({
     }, cat), React.createElement("div", {
       className: "pf-row"
     }, cf.map(f => {
-      const has = f.cur != null && isFinite(f.cur);
-      const pct = has ? Math.round((f.lower ? f.norm / f.cur : f.cur / f.norm) * 100) : null;
-      const cls = !has ? '' : pct >= 100 ? 'green' : pct >= 90 ? 'yellow' : 'red';
+      const v = factorValue(f.src);
+      const has = v != null && isFinite(v);
+      const b = has ? bandOf(v, f.t, f.lower) : null;
+      const u = f.unit === '% BW' ? '%' : f.unit ? ' ' + f.unit : '';
       return React.createElement("div", {
         key: f.name,
-        className: 'pf-card ' + cls
+        className: 'pf-card' + (b == null ? '' : ' pf-b' + b)
       }, React.createElement("div", {
         className: "pf-name"
       }, f.name), React.createElement("div", {
         className: "pf-val"
-      }, has ? f.cur.toFixed(f.dec) + (f.unit ? ' ' + f.unit : '') : '—'), React.createElement("div", {
+      }, has ? v.toFixed(f.dec) + u : '—'), React.createElement("div", {
         className: "pf-norm"
-      }, "norm ", f.norm, f.unit ? ' ' + f.unit : ''), has ? React.createElement("div", {
+      }, "23+ ", f.t[0], u), has ? React.createElement("div", {
         className: "pf-pct"
-      }, pct, "% of norm") : React.createElement("div", {
+      }, PF_BAND[b]) : React.createElement("div", {
         className: "pf-pct nd"
       }, "no data yet"));
     })));
@@ -8229,6 +8631,41 @@ function App() {
       });
       return changed ? n : p;
     });
+    localStorage.setItem(KEY, '1');
+  }, [exSynced, exercises.length]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_perf_ex_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !exercises.length) return;
+    const adds = [{
+      id: 'cmj',
+      name: 'CMJ',
+      category: 'Legs',
+      metrics: ['height']
+    }, {
+      id: 'hang-high-pull',
+      name: 'Hang High Pull',
+      category: 'Legs',
+      metrics: ['weight', 'reps']
+    }, {
+      id: 'bounds-5-pr',
+      name: '5 Bounds w Pre-Run',
+      category: 'T&F',
+      metrics: ['tf-dist']
+    }, {
+      id: 'drop-jump-20cm',
+      name: 'Drop Jump 20cm',
+      category: 'Legs',
+      metrics: ['height', 'gct']
+    }, {
+      id: 'drop-jump-40cm',
+      name: 'Drop Jump 40cm',
+      category: 'Legs',
+      metrics: ['height', 'gct']
+    }];
+    const have = new Set(exercises.map(e => e.id));
+    const missing = adds.filter(e => !have.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
     localStorage.setItem(KEY, '1');
   }, [exSynced, exercises.length]);
   useEffect(() => {
