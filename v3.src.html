@@ -480,6 +480,17 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .prd-eff-vel{font-family:var(--mono);font-size:8.5px;font-weight:700;color:var(--text4);margin-top:3px}
 .prd-eff-c.on .prd-eff-vel{color:var(--primary)}
 .prd-eff-c:active{transform:scale(.96)}
+.prd-sec-h{font-size:13px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:.4px;color:var(--text);margin:20px 4px 10px}
+.splt{border:1.5px solid var(--border);border-radius:14px;overflow:hidden}
+.splt-row{display:grid;grid-template-columns:60px repeat(4,1fr)}
+.splt-row+.splt-row{border-top:1px solid var(--border)}
+.splt-c,.splt-hc,.splt-rhc{padding:9px 2px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);border-left:1px solid var(--border)}
+.splt-row>:first-child{border-left:none}
+.splt-hc{background:var(--surface2);font-weight:800;font-size:10px;color:var(--text2)}
+.splt-rhc{background:var(--surface2);font-weight:800;font-size:11px;color:var(--text2)}
+.splt-col{background:var(--primary-dim);color:var(--primary)}
+.splt-rowon{background:var(--primary-dim)}
+.splt-here{background:var(--primary);color:#fff;font-weight:900}
 .prd-meta{font-size:11.5px;color:var(--text3);font-weight:600;text-align:center;margin-top:11px;line-height:1.5}
 .prd-meta b{color:var(--text2);font-weight:800}
 .warmup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center}
@@ -1896,6 +1907,13 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
     Object.keys(ad.sets||{}).forEach(eid=>{if(!markGroupOf(eid))return;
       (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup||s.flop)return;
         const d=Number(s.values&&s.values['tf-dist']);if(d>0&&Math.round(d*100)>pbCm)pbCm=Math.round(d*100)})})});
+  // most recent logged last-10m approach split (for the split table)
+  let lastSplit=null,lastSplitT=-1;
+  myWk.forEach(w=>{const ad=w.athletes[activeAth];
+    Object.keys(ad.sets||{}).forEach(eid=>{if(!markGroupOf(eid))return;
+      (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup||s.flop)return;
+        const t=Number(s.values&&s.values['time-10-1m']);
+        if(t>0&&w.startTime>=lastSplitT){lastSplitT=w.startTime;lastSplit=t}})})});
   const[appPct,setAppPct]=useState(95);
   const[effOverride,setEffOverride]=useState(null);
   const[selEffGroup,setSelEffGroup]=useState(null);
@@ -1907,6 +1925,11 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
   const delta=heroPred-pbCm;
   // the 10m split you'd need in the last 10m of the run-up for a given approach %
   const splitStr=pct=>maxVel?(10/(maxVel*pct/100)).toFixed(2):'—';
+  // split table: efficiency columns (cur-2 / cur / cur+2 / cur+4), split rows around the last split
+  const effBase=efficiency!=null?Math.round(efficiency):null;
+  const effCols=effBase!=null?[effBase-2,effBase,effBase+2,effBase+4]:[];
+  const splitRows=lastSplit!=null?[-4,-3,-2,-1,0,1,2,3,4].map(i=>Math.round((lastSplit+i*0.02)*100)/100):[];
+  const tableReady=effBase!=null&&lastSplit!=null;
   // which efficiency card is active (defaults to the longest approach)
   const activeEffGroup=selEffGroup||(effRows[0]&&effRows[0].group);
   const actEffRow=effRows.find(r=>r.group===activeEffGroup)||effPick;
@@ -1969,6 +1992,21 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
               :'No full jump with an approach split logged yet.'}</div>
           </div>
           <div className="prd-meta">Max velocity <b>{maxVel} m/s</b> — fastest free 10 m fly from your last 2 speed sessions.</div>
+          {tableReady&&<>
+            <div className="prd-sec-h">Split Table</div>
+            <div className="splt">
+              <div className="splt-row">
+                <div className="splt-hc">10m · eff</div>
+                {effCols.map(e=><div key={e} className={'splt-hc'+(e===effBase?' splt-col':'')}>{e}</div>)}
+              </div>
+              {splitRows.map((sp,ri)=>(<div key={ri} className="splt-row">
+                <div className={'splt-rhc'+(ri===4?' splt-rowon':'')}>{sp.toFixed(2)}</div>
+                {effCols.map(e=>{const here=ri===4&&e===effBase;
+                  return<div key={e} className={'splt-c'+(e===effBase?' splt-col':'')+(ri===4?' splt-rowon':'')+(here?' splt-here':'')}>{Math.round((10/sp)*e)}</div>})}
+              </div>))}
+            </div>
+            <div className="prd-meta">Predicted jump (cm) for each last-10 m split × efficiency. The cross of your last split and current efficiency is where you stand now.</div>
+          </>}
         </div>}
     </div>
   </div>);
