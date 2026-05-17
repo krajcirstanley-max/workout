@@ -454,6 +454,23 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .amkc-tag.y{background:#dcfce7;color:#16a34a}
 .amkc-tag.n{background:#fee2e2;color:#ef4444}
 .amkc-tag.m{background:#fef3c7;color:#d97706}
+/* predictions tab */
+.prd-hero{background:linear-gradient(155deg,#0f172a,#1e293b);border-radius:20px;padding:22px 20px 20px;color:#fff;text-align:center;margin-bottom:12px}
+.prd-hero-l{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:1.7px;text-transform:uppercase;color:#94a3b8}
+.prd-hero-big{font-size:60px;font-weight:900;font-style:italic;letter-spacing:-2.5px;line-height:1;margin:7px 0 5px}
+.prd-hero-big span{font-size:21px;font-weight:800;margin-left:6px;color:#94a3b8;letter-spacing:0;font-style:normal}
+.prd-hero-pb{font-size:13px;font-weight:700;color:#cbd5e1}
+.prd-scn{display:flex;gap:8px;margin-bottom:14px}
+.prd-scn-c{flex:1;background:var(--surface2);border-radius:14px;padding:13px 5px;text-align:center}
+.prd-scn-v{font-size:21px;font-weight:900;font-style:italic;letter-spacing:-.8px;color:var(--text)}
+.prd-scn-l{font-size:11px;font-weight:800;color:var(--text2);margin-top:3px}
+.prd-scn-s{font-family:var(--mono);font-size:8.5px;font-weight:700;color:var(--text3);margin-top:2px}
+.prd-sld{background:var(--surface2);border-radius:14px;padding:13px 16px;margin-bottom:9px}
+.prd-sld-h{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:800;color:var(--text2);margin-bottom:9px}
+.prd-sld-h b{font-size:16px;font-weight:900;font-style:italic;color:var(--primary)}
+.prd-sld input[type=range]{width:100%;accent-color:var(--primary);margin:0}
+.prd-meta{font-size:11.5px;color:var(--text3);font-weight:600;text-align:center;margin-top:11px;line-height:1.5}
+.prd-meta b{color:var(--text2);font-weight:800}
 .warmup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center}
 .warmup-ring{width:172px;height:172px;border-radius:50%;border:3px solid var(--orange);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:28px;background:var(--orange-soft)}
 .warmup-time{font-family:var(--mono);font-size:38px;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;letter-spacing:-1px;line-height:1}
@@ -1830,7 +1847,92 @@ function Confirm({title,message,danger,onConfirm,onCancel}){
   </div>)}
 
 // === STAT SCREEN with PRs ===
-function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSession,onResume,athletes,setActiveAth}){
+// per-athlete profile: sex + starting long-jump PB (cm)
+const ATH_PROFILE={'Stanley':{sex:'m',startPB:685},'Miška':{sex:'f',startPB:607}};
+const athProfile=a=>ATH_PROFILE[a&&a.name]||{sex:'m',startPB:600};
+
+function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthlete}){
+  const prof=athProfile(athletes.find(a=>a.id===activeAth));
+  const myWk=workouts.filter(w=>w.athletes&&w.athletes[activeAth]&&w.endTime).sort((a,b)=>a.startTime-b.startTime);
+  const FLY=['fly-10m-1','fly-10m-2','fly-10m-3'];
+  // best free 10m fly (s) from the last 2 sessions that logged a fly time
+  const flyPer=[];
+  myWk.forEach(w=>{const ad=w.athletes[activeAth];let best=Infinity;
+    Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);if(base.includes('overspeed')||base.includes('resisted'))return;
+      (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup)return;const v=s.values||{};
+        FLY.forEach(m=>{const t=Number(v[m]);if(t>0&&t<best)best=t})})});
+    if(best<Infinity)flyPer.push(best)});
+  const last2=flyPer.slice(-2);
+  const maxVel=last2.length?Math.round(1000/Math.min(...last2))/100:null;
+  // efficiency = jump cm / approach velocity, from the most recent jump session logging both
+  let efficiency=null;
+  for(let i=myWk.length-1;i>=0&&efficiency==null;i--){const ad=myWk[i].athletes[activeAth];let bestEff=null;
+    Object.keys(ad.sets||{}).forEach(eid=>{if(!markGroupOf(eid))return;
+      (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup||s.flop)return;const v=s.values||{};
+        const d=Number(v['tf-dist']),t=Number(v['time-10-1m']);
+        if(d>0&&t>0){const e=(d*100)/(10/t);if(bestEff==null||e>bestEff)bestEff=e}})});
+    if(bestEff!=null)efficiency=Math.round(bestEff*10)/10}
+  // PB: biggest logged long jump (cm), floored at the starting PB
+  let pbCm=prof.startPB;
+  myWk.forEach(w=>{const ad=w.athletes[activeAth];
+    Object.keys(ad.sets||{}).forEach(eid=>{if(!markGroupOf(eid))return;
+      (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup||s.flop)return;
+        const d=Number(s.values&&s.values['tf-dist']);if(d>0&&Math.round(d*100)>pbCm)pbCm=Math.round(d*100)})})});
+  const[appPct,setAppPct]=useState(95);
+  const[effOverride,setEffOverride]=useState(null);
+  useEffect(()=>{setEffOverride(null)},[activeAth]);
+  const eff=effOverride!=null?effOverride:efficiency;
+  const ready=maxVel!=null&&eff!=null;
+  const predict=(pct,e)=>Math.round(maxVel*(pct/100)*e);
+  const heroPred=ready?predict(appPct,eff):0;
+  const delta=heroPred-pbCm;
+  return(<div className="shell">
+    <div className="top" style={{paddingBottom:14}}>
+      <div className="ath-stack">
+        {(athletes||[]).map(a=>(<button key={a.id} className={'ath-circle'+(a.id===activeAth?' on':'')}
+          style={{'--ac':a.color||'#2156f4'}}
+          onClick={()=>{a.id===activeAth?(onEditAthlete&&onEditAthlete(a)):(setActiveAth&&setActiveAth(a.id))}}>
+          {a.photo?<img src={a.photo} alt=""/>:<span>{initials(a.name||'')}</span>}
+        </button>))}
+      </div>
+      <div className="top-month">PREDICTIONS</div>
+      <div className="top-spacer"/>
+    </div>
+    <div className="scroll">
+      {!ready
+        ?<div style={{padding:'52px 30px',textAlign:'center'}}>
+          <div className="ex-name" style={{fontSize:25,marginBottom:12}}>NOT ENOUGH DATA</div>
+          <div style={{fontSize:14,color:'var(--text2)',lineHeight:1.55}}>Log a speed session with a 10m fly time and a jump session with a distance + approach split — your prediction unlocks here.</div>
+        </div>
+        :<div style={{padding:'10px 14px 24px'}}>
+          <div className="prd-hero">
+            <div className="prd-hero-l">Predicted Jump</div>
+            <div className="prd-hero-big">{heroPred}<span>cm</span></div>
+            <div className="prd-hero-pb">PB {pbCm} cm · <b style={{color:delta>=0?'#4ade80':'#f87171'}}>{delta>=0?'+':''}{delta} cm</b></div>
+          </div>
+          <div className="prd-scn">
+            {[['Conservative',93,eff],['Realistic',95,eff],['Optimistic',97,eff+2]].map(([l,p,e])=>(
+              <div key={l} className="prd-scn-c">
+                <div className="prd-scn-v">{predict(p,e)}</div>
+                <div className="prd-scn-l">{l}</div>
+                <div className="prd-scn-s">{p}% · {Math.round(e*10)/10}</div>
+              </div>))}
+          </div>
+          <div className="prd-sld">
+            <div className="prd-sld-h"><span>Approach</span><b>{appPct}%</b></div>
+            <input type="range" min="90" max="100" step="1" value={appPct} onChange={e=>setAppPct(Number(e.target.value))}/>
+          </div>
+          <div className="prd-sld">
+            <div className="prd-sld-h"><span>Efficiency</span><b>{Math.round(eff*10)/10}</b></div>
+            <input type="range" min="60" max="85" step="0.5" value={Math.max(60,Math.min(85,eff))} onChange={e=>setEffOverride(Number(e.target.value))}/>
+          </div>
+          <div className="prd-meta">Max velocity <b>{maxVel} m/s</b> · efficiency from your last jump session <b>{efficiency}</b></div>
+        </div>}
+    </div>
+  </div>);
+}
+
+function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSession,onResume,athletes,setActiveAth,onEditAthlete}){
   const myWk=workouts.filter(w=>w.athletes?.[activeAth]);
   const[q,setQ]=useState('');
   // Build per-exercise PRs (across all metrics: best per metric)
@@ -1912,7 +2014,8 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
     <div className="top" style={{paddingBottom:14}}>
       <div className="ath-stack">
         {(athletes||[]).map(a=>(<button key={a.id} className={'ath-circle'+(a.id===activeAth?' on':'')}
-          style={{'--ac':a.color||'#2156f4'}} onClick={()=>setActiveAth&&setActiveAth(a.id)}>
+          style={{'--ac':a.color||'#2156f4'}}
+          onClick={()=>{a.id===activeAth?(onEditAthlete&&onEditAthlete(a)):(setActiveAth&&setActiveAth(a.id))}}>
           {a.photo?<img src={a.photo} alt=""/>:<span>{initials(a.name||'')}</span>}
         </button>))}
       </div>
@@ -3131,8 +3234,8 @@ function App(){
       onEditPlan={p=>setPlanEdit({plan:p})}
       dayTypes={dayTypes} onSetDayType={setDayType}/>}
     {tab==='lib'&&<LibraryScreen exercises={exercises} onSelect={setViewEx} onCreate={ex2=>setExercises(p=>[...p,ex2])}/>}
-    {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote} athletes={athletes} setActiveAth={setActiveAth}/>}
-    {tab==='me'&&<ProfileScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete} workouts={workouts}/>}
+    {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote} athletes={athletes} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete}/>}
+    {tab==='pred'&&<PredictionsScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} workouts={workouts} onEditAthlete={setEditAthlete}/>}
 
     {viewing&&<WorkoutDetailModal wk={viewing} athletes={athletes} exercises={exercises} workouts={workouts}
       onClose={()=>setViewing(null)}
@@ -3169,7 +3272,7 @@ function App(){
         {id:'train',ic:'cal',l:'Training'},
         {id:'lib',ic:'book',l:'Library'},
         {id:'stats',ic:'bar',l:'Insights'},
-        {id:'me',ic:'user',l:'Me',ath:true},
+        {id:'pred',ic:'trophy',l:'Predict'},
       ].map(t=>(<button key={t.id} className={'tab'+(tab===t.id?' on':'')} onClick={()=>setTab(t.id)}>
         {t.ath?<div className="tab-ath" style={{background:ath?.color||'var(--surface3)',color:'#fff'}}>{ath?.photo?<img src={ath.photo}/>:initials(ath?.name||'')}</div>
           :<Ic n={t.ic} s={22}/>}
