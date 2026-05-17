@@ -588,6 +588,7 @@ const st = {
   },
   set(k, v) {
     localStorage.setItem('wk2_' + k, JSON.stringify(v));
+    localStorage.setItem('wk2_' + k + '_ts', String(Date.now()));
     if (sb) sb.from('wk_store').upsert({
       key: k,
       value: v,
@@ -598,8 +599,11 @@ const st = {
     if (!sb) return null;
     const {
       data
-    } = await sb.from('wk_store').select('value').eq('key', k).maybeSingle();
-    return data?.value ?? null;
+    } = await sb.from('wk_store').select('value,updated_at').eq('key', k).maybeSingle();
+    return data ? {
+      value: data.value,
+      updatedAt: data.updated_at
+    } : null;
   }
 };
 function useStore(k, f) {
@@ -611,12 +615,19 @@ function useStore(k, f) {
     setV(n);
   }, [k]);
   useEffect(() => {
-    st.pull(k).then(r => {
-      if (r !== null) {
-        const l = st.get(k, f);
+    st.pull(k).then(res => {
+      if (res && res.value != null) {
+        const r = res.value,
+          l = st.get(k, f);
         if (JSON.stringify(r) !== JSON.stringify(l)) {
-          localStorage.setItem('wk2_' + k, JSON.stringify(r));
-          setV(r);
+          const lt = Number(localStorage.getItem('wk2_' + k + '_ts') || 0);
+          const rt = res.updatedAt ? Date.parse(res.updatedAt) : 0;
+          if (lt && lt > rt) {
+            st.set(k, l);
+          } else {
+            localStorage.setItem('wk2_' + k, JSON.stringify(r));
+            setV(r);
+          }
         }
       }
       setSynced(true);
@@ -3351,12 +3362,16 @@ function ActiveWorkout({
     allTags: allTags,
     onSave: data => {
       const cust = data.customDuration != null ? data.customDuration : elapsed;
+      const hasVal = s => s.values && Object.entries(s.values).some(([m, v]) => m !== 'approach-mark' && v !== '' && v != null);
       const cleanA = {};
       Object.entries(workout.athletes).forEach(([aId, ad]) => {
         const cs = {};
         Object.entries(ad.sets || {}).forEach(([k, sets]) => {
-          const done = sets.filter(s => s.completed);
-          if (done.length > 0) cs[k] = done;
+          const keep = sets.filter(s => s.completed || s.flop || hasVal(s)).map(s => s.completed || s.flop ? s : {
+            ...s,
+            completed: true
+          });
+          if (keep.length > 0) cs[k] = keep;
         });
         if (Object.keys(cs).length > 0) cleanA[aId] = {
           ...ad,
@@ -3365,13 +3380,18 @@ function ActiveWorkout({
           notes: data.athData[aId]?.notes || ''
         };
       });
+      const finalEids = workout.exerciseIds.filter(eid => Object.values(cleanA).some(a => a.sets[eid]?.length > 0));
+      if (!finalEids.length) {
+        window.alert('Nothing is logged yet — enter a value or check off at least one set before finishing.');
+        return;
+      }
       onFinish({
         ...workout,
         name: data.name,
         weather: data.weather,
         tag: data.tag,
         athletes: cleanA,
-        exerciseIds: workout.exerciseIds.filter(eid => Object.values(cleanA).some(a => a.sets[eid]?.length > 0)),
+        exerciseIds: finalEids,
         endTime: workout.startTime + cust
       });
     },

@@ -576,13 +576,26 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const sb=window.supabase?.createClient(SB_URL,SB_KEY);
 const st={
   get(k,f){try{const v=localStorage.getItem('wk2_'+k);return v?JSON.parse(v):f}catch{return f}},
-  set(k,v){localStorage.setItem('wk2_'+k,JSON.stringify(v));
+  set(k,v){localStorage.setItem('wk2_'+k,JSON.stringify(v));localStorage.setItem('wk2_'+k+'_ts',String(Date.now()));
     if(sb)sb.from('wk_store').upsert({key:k,value:v,updated_at:new Date().toISOString()}).then(()=>{})},
-  async pull(k){if(!sb)return null;const{data}=await sb.from('wk_store').select('value').eq('key',k).maybeSingle();return data?.value??null}
+  async pull(k){if(!sb)return null;const{data}=await sb.from('wk_store').select('value,updated_at').eq('key',k).maybeSingle();return data?{value:data.value,updatedAt:data.updated_at}:null}
 };
 function useStore(k,f){const[v,setV]=useState(()=>st.get(k,f));const[synced,setSynced]=useState(false);
   const up=useCallback(fn=>{const n=typeof fn==='function'?fn(st.get(k,f)):fn;st.set(k,n);setV(n)},[k]);
-  useEffect(()=>{st.pull(k).then(r=>{if(r!==null){const l=st.get(k,f);if(JSON.stringify(r)!==JSON.stringify(l)){localStorage.setItem('wk2_'+k,JSON.stringify(r));setV(r)}}setSynced(true)}).catch(()=>setSynced(true))},[]);
+  // Pull from the cloud, but never clobber local data that is newer than the cloud copy
+  // (a finished workout saved locally must survive a relaunch before its upload lands).
+  useEffect(()=>{st.pull(k).then(res=>{
+    if(res&&res.value!=null){
+      const r=res.value,l=st.get(k,f);
+      if(JSON.stringify(r)!==JSON.stringify(l)){
+        const lt=Number(localStorage.getItem('wk2_'+k+'_ts')||0);
+        const rt=res.updatedAt?Date.parse(res.updatedAt):0;
+        if(lt&&lt>rt){st.set(k,l)}                                  // local is newer & unsynced -> re-push, keep local
+        else{localStorage.setItem('wk2_'+k,JSON.stringify(r));setV(r)} // cloud is newer -> accept it
+      }
+    }
+    setSynced(true)
+  }).catch(()=>setSynced(true))},[]);
   return[v,up,synced]}
 
 // === HELPERS ===
@@ -1558,12 +1571,18 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
 
   if(showFinish)return<FinishFormFull workout={workout} athletes={athletes} exercises={exercises} elapsed={elapsed} allTags={allTags}
     onSave={data=>{const cust=data.customDuration!=null?data.customDuration:elapsed;
+      // a set is logged if checked, a flop, OR has a value entered - so filling numbers without
+      // tapping the check still saves (the approach mark alone does not count as a logged set)
+      const hasVal=s=>s.values&&Object.entries(s.values).some(([m,v])=>m!=='approach-mark'&&v!==''&&v!=null);
       const cleanA={};Object.entries(workout.athletes).forEach(([aId,ad])=>{const cs={};
-        Object.entries(ad.sets||{}).forEach(([k,sets])=>{const done=sets.filter(s=>s.completed);if(done.length>0)cs[k]=done});
+        Object.entries(ad.sets||{}).forEach(([k,sets])=>{
+          const keep=sets.filter(s=>s.completed||s.flop||hasVal(s)).map(s=>(s.completed||s.flop)?s:{...s,completed:true});
+          if(keep.length>0)cs[k]=keep});
         if(Object.keys(cs).length>0)cleanA[aId]={...ad,sets:cs,rpe:data.athData[aId]?.rpe||null,notes:data.athData[aId]?.notes||''}});
+      const finalEids=workout.exerciseIds.filter(eid=>Object.values(cleanA).some(a=>a.sets[eid]?.length>0));
+      if(!finalEids.length){window.alert('Nothing is logged yet — enter a value or check off at least one set before finishing.');return}
       onFinish({...workout,name:data.name,weather:data.weather,tag:data.tag,athletes:cleanA,
-        exerciseIds:workout.exerciseIds.filter(eid=>Object.values(cleanA).some(a=>a.sets[eid]?.length>0)),
-        endTime:workout.startTime+cust})}} onCancel={()=>setShowFinish(false)}/>;
+        exerciseIds:finalEids,endTime:workout.startTime+cust})}} onCancel={()=>setShowFinish(false)}/>;
 
   const safeBlk=Math.min(blockIdx,Math.max(0,blocks.length-1));
   const curBlock=blocks[safeBlk];
