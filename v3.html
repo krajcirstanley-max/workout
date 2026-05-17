@@ -4439,7 +4439,7 @@ const PERF_NORMS = {
     unit: 'm',
     dec: 2,
     lower: false,
-    t: [17.13, 16.70, 16.06],
+    t: [25.00, 24.50, 22.50],
     src: {
       type: 'metric',
       ex: 'alt-bounds-jump',
@@ -4447,24 +4447,26 @@ const PERF_NORMS = {
     }
   }, {
     cat: 'HORIZONTAL POWER',
-    name: 'SL Bounds',
-    unit: 'm',
-    dec: 2,
-    lower: false,
-    t: [16.99, 16.56, 15.90],
-    src: {
-      type: 'slbounds'
-    }
-  }, {
-    cat: 'HORIZONTAL POWER',
-    name: '5 Bounds',
+    name: 'SL Bounds · L',
     unit: 'm',
     dec: 2,
     lower: false,
     t: [25.00, 24.50, 22.50],
     src: {
       type: 'metric',
-      ex: 'bounds-5-pr',
+      ex: 'sl-bounds-pr-l',
+      m: 'tf-dist'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'SL Bounds · R',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [25.00, 24.50, 22.50],
+    src: {
+      type: 'metric',
+      ex: 'sl-bounds-pr-r',
       m: 'tf-dist'
     }
   }, {
@@ -4624,7 +4626,7 @@ const PERF_NORMS = {
     unit: 'm',
     dec: 2,
     lower: false,
-    t: [14.33, 13.70, 13.02],
+    t: [21.50, 20.85, 20.00],
     src: {
       type: 'metric',
       ex: 'alt-bounds-jump',
@@ -4632,24 +4634,26 @@ const PERF_NORMS = {
     }
   }, {
     cat: 'HORIZONTAL POWER',
-    name: 'SL Bounds',
-    unit: 'm',
-    dec: 2,
-    lower: false,
-    t: [14.38, 13.56, 12.74],
-    src: {
-      type: 'slbounds'
-    }
-  }, {
-    cat: 'HORIZONTAL POWER',
-    name: '5 Bounds',
+    name: 'SL Bounds · L',
     unit: 'm',
     dec: 2,
     lower: false,
     t: [21.50, 20.85, 20.00],
     src: {
       type: 'metric',
-      ex: 'bounds-5-pr',
+      ex: 'sl-bounds-pr-l',
+      m: 'tf-dist'
+    }
+  }, {
+    cat: 'HORIZONTAL POWER',
+    name: 'SL Bounds · R',
+    unit: 'm',
+    dec: 2,
+    lower: false,
+    t: [21.50, 20.85, 20.00],
+    src: {
+      type: 'metric',
+      ex: 'sl-bounds-pr-r',
       m: 'tf-dist'
     }
   }, {
@@ -4934,6 +4938,27 @@ function PredictionsScreen({
   };
   const perfNorms = PERF_NORMS[prof.sex] || PERF_NORMS.m;
   const factorCats = ['SPEED', 'JUMP', 'HORIZONTAL POWER', 'VERTICAL POWER', 'STRENGTH', 'APPROACH'];
+  const renderFactorCard = f => {
+    const v = factorValue(f.src);
+    const has = v != null && isFinite(v);
+    const b = has ? bandOf(v, f.t, f.lower) : null;
+    const u = f.unit === '% BW' ? '%' : f.unit ? ' ' + f.unit : '';
+    const gap = has ? f.lower ? f.t[0] - v : v - f.t[0] : 0;
+    return React.createElement("div", {
+      key: f.name,
+      className: 'pf-card' + (b == null ? '' : ' pf-b' + b)
+    }, React.createElement("div", {
+      className: "pf-name"
+    }, f.name), React.createElement("div", {
+      className: "pf-val"
+    }, has ? v.toFixed(f.dec) + u : '—'), React.createElement("div", {
+      className: "pf-norm"
+    }, "23+ norm ", f.t[0], u), has ? React.createElement("div", {
+      className: "pf-pct"
+    }, (gap >= 0 ? '+' : '') + gap.toFixed(f.dec) + u, " vs norm") : React.createElement("div", {
+      className: "pf-pct nd"
+    }, "no data yet"));
+  };
   const activeEffGroup = selEffGroup || effRows[0] && effRows[0].group;
   const actEffRow = effRows.find(r => r.group === activeEffGroup) || effPick;
   const effLabel = actEffRow ? MARK_GROUP_LABEL[actEffRow.group] || 'approach' : '';
@@ -5113,33 +5138,41 @@ function PredictionsScreen({
     }
     const cf = perfNorms.filter(f => f.cat === cat);
     if (!cf.length) return null;
+    let extra = null;
+    if (cat === 'HORIZONTAL POWER') {
+      const lv = factorValue({
+        type: 'metric',
+        ex: 'sl-bounds-pr-l',
+        m: 'tf-dist'
+      });
+      const rv = factorValue({
+        type: 'metric',
+        ex: 'sl-bounds-pr-r',
+        m: 'tf-dist'
+      });
+      const asym = lv != null && rv != null && Math.max(lv, rv) > 0 ? Math.abs(lv - rv) / Math.max(lv, rv) * 100 : null;
+      const ab = asym == null ? null : asym < 5 ? 0 : asym < 10 ? 1 : 3;
+      extra = React.createElement("div", {
+        className: 'pf-card' + (ab == null ? '' : ' pf-b' + ab)
+      }, React.createElement("div", {
+        className: "pf-name"
+      }, "L/R Asymmetry"), React.createElement("div", {
+        className: "pf-val"
+      }, asym != null ? asym.toFixed(1) + '%' : '—'), React.createElement("div", {
+        className: "pf-norm"
+      }, lv != null && rv != null ? 'L ' + lv.toFixed(2) + ' · R ' + rv.toFixed(2) : 'needs L & R'), asym != null ? React.createElement("div", {
+        className: "pf-pct"
+      }, asym < 5 ? 'balanced' : asym < 10 ? 'slight gap' : 'imbalance') : React.createElement("div", {
+        className: "pf-pct nd"
+      }, "no data yet"));
+    }
     return React.createElement("div", {
       key: cat
     }, React.createElement("div", {
       className: "pf-cat"
     }, cat), React.createElement("div", {
       className: "pf-row"
-    }, cf.map(f => {
-      const v = factorValue(f.src);
-      const has = v != null && isFinite(v);
-      const b = has ? bandOf(v, f.t, f.lower) : null;
-      const u = f.unit === '% BW' ? '%' : f.unit ? ' ' + f.unit : '';
-      const gap = has ? f.lower ? f.t[0] - v : v - f.t[0] : 0;
-      return React.createElement("div", {
-        key: f.name,
-        className: 'pf-card' + (b == null ? '' : ' pf-b' + b)
-      }, React.createElement("div", {
-        className: "pf-name"
-      }, f.name), React.createElement("div", {
-        className: "pf-val"
-      }, has ? v.toFixed(f.dec) + u : '—'), React.createElement("div", {
-        className: "pf-norm"
-      }, "23+ norm ", f.t[0], u), has ? React.createElement("div", {
-        className: "pf-pct"
-      }, (gap >= 0 ? '+' : '') + gap.toFixed(f.dec) + u, " vs norm") : React.createElement("div", {
-        className: "pf-pct nd"
-      }, "no data yet"));
-    })));
+    }, cf.map(renderFactorCard), extra));
   }))));
 }
 function StatScreen({

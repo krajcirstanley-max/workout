@@ -1899,9 +1899,9 @@ const PERF_NORMS={
     {cat:'SPEED',name:'0–20m',unit:'s',dec:2,lower:true,t:[2.35,2.39,2.43],src:{type:'metric',ex:'start-20m',m:'tf-time'}},
     {cat:'JUMP',name:'Long Jump',unit:'cm',dec:0,lower:false,t:[790,775,725],src:{type:'pb'}},
     {cat:'HORIZONTAL POWER',name:'Standing LJ',unit:'m',dec:2,lower:false,t:[3.20,3.13,3.02],src:{type:'metric',ex:'standing-lj',m:'tf-dist'}},
-    {cat:'HORIZONTAL POWER',name:'Alt Bounds',unit:'m',dec:2,lower:false,t:[17.13,16.70,16.06],src:{type:'metric',ex:'alt-bounds-jump',m:'tf-dist'}},
-    {cat:'HORIZONTAL POWER',name:'SL Bounds',unit:'m',dec:2,lower:false,t:[16.99,16.56,15.90],src:{type:'slbounds'}},
-    {cat:'HORIZONTAL POWER',name:'5 Bounds',unit:'m',dec:2,lower:false,t:[25.00,24.50,22.50],src:{type:'metric',ex:'bounds-5-pr',m:'tf-dist'}},
+    {cat:'HORIZONTAL POWER',name:'Alt Bounds',unit:'m',dec:2,lower:false,t:[25.00,24.50,22.50],src:{type:'metric',ex:'alt-bounds-jump',m:'tf-dist'}},
+    {cat:'HORIZONTAL POWER',name:'SL Bounds · L',unit:'m',dec:2,lower:false,t:[25.00,24.50,22.50],src:{type:'metric',ex:'sl-bounds-pr-l',m:'tf-dist'}},
+    {cat:'HORIZONTAL POWER',name:'SL Bounds · R',unit:'m',dec:2,lower:false,t:[25.00,24.50,22.50],src:{type:'metric',ex:'sl-bounds-pr-r',m:'tf-dist'}},
     {cat:'VERTICAL POWER',name:'CMJ',unit:'m',dec:2,lower:false,t:[0.60,0.57,0.53],src:{type:'metric',ex:'cmj',m:'height'}},
     {cat:'VERTICAL POWER',name:'DJ 20 Height',unit:'m',dec:2,lower:false,t:[0.55,0.52,0.46],src:{type:'metric',ex:'drop-jump-20cm',m:'height'}},
     {cat:'VERTICAL POWER',name:'DJ 20 GCT',unit:'s',dec:3,lower:true,t:[0.200,0.211,0.229],src:{type:'metric',ex:'drop-jump-20cm',m:'gct',lo:1}},
@@ -1917,9 +1917,9 @@ const PERF_NORMS={
     {cat:'SPEED',name:'0–20m',unit:'s',dec:2,lower:true,t:[2.50,2.62,2.75],src:{type:'metric',ex:'start-20m',m:'tf-time'}},
     {cat:'JUMP',name:'Long Jump',unit:'cm',dec:0,lower:false,t:[670,650,630],src:{type:'pb'}},
     {cat:'HORIZONTAL POWER',name:'Standing LJ',unit:'m',dec:2,lower:false,t:[3.01,2.71,2.43],src:{type:'metric',ex:'standing-lj',m:'tf-dist'}},
-    {cat:'HORIZONTAL POWER',name:'Alt Bounds',unit:'m',dec:2,lower:false,t:[14.33,13.70,13.02],src:{type:'metric',ex:'alt-bounds-jump',m:'tf-dist'}},
-    {cat:'HORIZONTAL POWER',name:'SL Bounds',unit:'m',dec:2,lower:false,t:[14.38,13.56,12.74],src:{type:'slbounds'}},
-    {cat:'HORIZONTAL POWER',name:'5 Bounds',unit:'m',dec:2,lower:false,t:[21.50,20.85,20.00],src:{type:'metric',ex:'bounds-5-pr',m:'tf-dist'}},
+    {cat:'HORIZONTAL POWER',name:'Alt Bounds',unit:'m',dec:2,lower:false,t:[21.50,20.85,20.00],src:{type:'metric',ex:'alt-bounds-jump',m:'tf-dist'}},
+    {cat:'HORIZONTAL POWER',name:'SL Bounds · L',unit:'m',dec:2,lower:false,t:[21.50,20.85,20.00],src:{type:'metric',ex:'sl-bounds-pr-l',m:'tf-dist'}},
+    {cat:'HORIZONTAL POWER',name:'SL Bounds · R',unit:'m',dec:2,lower:false,t:[21.50,20.85,20.00],src:{type:'metric',ex:'sl-bounds-pr-r',m:'tf-dist'}},
     {cat:'VERTICAL POWER',name:'CMJ',unit:'m',dec:2,lower:false,t:[0.48,0.43,0.38],src:{type:'metric',ex:'cmj',m:'height'}},
     {cat:'VERTICAL POWER',name:'DJ 20 Height',unit:'m',dec:2,lower:false,t:[0.46,0.41,0.35],src:{type:'metric',ex:'drop-jump-20cm',m:'height'}},
     {cat:'VERTICAL POWER',name:'DJ 20 GCT',unit:'s',dec:3,lower:true,t:[0.172,0.206,0.239],src:{type:'metric',ex:'drop-jump-20cm',m:'gct',lo:1}},
@@ -2009,6 +2009,17 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
     for(let i=0;i<3;i++){if(lower?v<=t[i]:v>=t[i])return i}return 3};
   const perfNorms=PERF_NORMS[prof.sex]||PERF_NORMS.m;
   const factorCats=['SPEED','JUMP','HORIZONTAL POWER','VERTICAL POWER','STRENGTH','APPROACH'];
+  const renderFactorCard=f=>{
+    const v=factorValue(f.src);const has=v!=null&&isFinite(v);
+    const b=has?bandOf(v,f.t,f.lower):null;
+    const u=f.unit==='% BW'?'%':(f.unit?' '+f.unit:'');
+    const gap=has?(f.lower?f.t[0]-v:v-f.t[0]):0;
+    return(<div key={f.name} className={'pf-card'+(b==null?'':' pf-b'+b)}>
+      <div className="pf-name">{f.name}</div>
+      <div className="pf-val">{has?v.toFixed(f.dec)+u:'—'}</div>
+      <div className="pf-norm">23+ norm {f.t[0]}{u}</div>
+      {has?<div className="pf-pct">{(gap>=0?'+':'')+gap.toFixed(f.dec)+u} vs norm</div>:<div className="pf-pct nd">no data yet</div>}
+    </div>);};
   // which efficiency card is active (defaults to the longest approach)
   const activeEffGroup=selEffGroup||(effRows[0]&&effRows[0].group);
   const actEffRow=effRows.find(r=>r.group===activeEffGroup)||effPick;
@@ -2103,19 +2114,22 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
                 </div>
               </div>);}
             const cf=perfNorms.filter(f=>f.cat===cat);if(!cf.length)return null;
+            let extra=null;
+            if(cat==='HORIZONTAL POWER'){
+              const lv=factorValue({type:'metric',ex:'sl-bounds-pr-l',m:'tf-dist'});
+              const rv=factorValue({type:'metric',ex:'sl-bounds-pr-r',m:'tf-dist'});
+              const asym=(lv!=null&&rv!=null&&Math.max(lv,rv)>0)?Math.abs(lv-rv)/Math.max(lv,rv)*100:null;
+              const ab=asym==null?null:asym<5?0:asym<10?1:3;
+              extra=(<div className={'pf-card'+(ab==null?'':' pf-b'+ab)}>
+                <div className="pf-name">L/R Asymmetry</div>
+                <div className="pf-val">{asym!=null?asym.toFixed(1)+'%':'—'}</div>
+                <div className="pf-norm">{lv!=null&&rv!=null?'L '+lv.toFixed(2)+' · R '+rv.toFixed(2):'needs L & R'}</div>
+                {asym!=null?<div className="pf-pct">{asym<5?'balanced':asym<10?'slight gap':'imbalance'}</div>:<div className="pf-pct nd">no data yet</div>}
+              </div>);
+            }
             return(<div key={cat}>
               <div className="pf-cat">{cat}</div>
-              <div className="pf-row">{cf.map(f=>{
-                const v=factorValue(f.src);const has=v!=null&&isFinite(v);
-                const b=has?bandOf(v,f.t,f.lower):null;
-                const u=f.unit==='% BW'?'%':(f.unit?' '+f.unit:'');
-                const gap=has?(f.lower?f.t[0]-v:v-f.t[0]):0;
-                return(<div key={f.name} className={'pf-card'+(b==null?'':' pf-b'+b)}>
-                  <div className="pf-name">{f.name}</div>
-                  <div className="pf-val">{has?v.toFixed(f.dec)+u:'—'}</div>
-                  <div className="pf-norm">23+ norm {f.t[0]}{u}</div>
-                  {has?<div className="pf-pct">{(gap>=0?'+':'')+gap.toFixed(f.dec)+u} vs norm</div>:<div className="pf-pct nd">no data yet</div>}
-                </div>)})}</div>
+              <div className="pf-row">{cf.map(renderFactorCard)}{extra}</div>
             </div>)})}
         </div>}
     </div>
