@@ -3329,6 +3329,46 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-05-18 Gym
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_5';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'bosu-afsm',name:'Bosu AFSM',category:'Legs',metrics:['time']},
+      {id:'landmine-back-lunge',name:'Landmine Back Lunge',category:'Legs',metrics:['weight','reps']},
+      {id:'hip-thrust-staggered',name:'Hip Thrust (Staggered)',category:'Legs',metrics:['weight','reps']},
+      {id:'hip-flexor',name:'Hip Flexor',category:'Legs',metrics:['reps']},
+      {id:'seated-low-row',name:'Seated Low Row',category:'Back',metrics:['weight','reps']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    setPlanned(p=>{if(p.find(x=>x.id==='pl-gym-5'))return p;
+      return[...p,{id:'pl-gym-5',date:'2026-05-18',name:'Gym',color:'#3b82f6',
+        exerciseIds:['high-pull','bosu-afsm','landmine-back-lunge','hip-thrust-staggered','nordics','seated-calf-raise','hip-flexor','sprint-arms','seated-low-row'],
+        supersets:[
+          ['high-pull','bosu-afsm'],
+          ['hip-thrust-staggered','nordics','seated-calf-raise'],
+          ['hip-flexor','sprint-arms','seated-low-row']
+        ],
+        setConfigs:{
+          'high-pull':[{reps:3},{reps:3},{reps:3}],
+          'bosu-afsm':[{time:6},{time:6},{time:6}],
+          'landmine-back-lunge':[{reps:4},{reps:4},{reps:4}],
+          'hip-thrust-staggered':[{reps:6},{reps:6}],
+          'nordics':[{reps:4},{reps:4}],
+          'seated-calf-raise':[{reps:8},{reps:8}],
+          'hip-flexor':[{reps:5},{reps:5}],
+          'sprint-arms':[{time:6},{time:6}],
+          'seated-low-row':[{reps:8},{reps:8}]
+        },
+        exNotes:{},
+        notes:''
+      }]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // Repair: if seeded plans lost their exercises to a Supabase pull race, re-add them
   useEffect(()=>{if(!exSynced)return;
     const defs={
