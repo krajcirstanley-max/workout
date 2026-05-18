@@ -5453,7 +5453,154 @@ function StatScreen({
   }))), React.createElement(Ic, {
     n: "chevR",
     s: 16
-  })))), section('Sprint PBs', sprintIds), section('Fly PBs', flyIds), section('Resisted Sprint PBs', resistedIds), section('Everything Else', otherIds), Object.keys(prMap).length === 0 && React.createElement("div", {
+  })))), (() => {
+    const prof = athProfile(athletes.find(a => a.id === activeAth));
+    const sw = [...myWk].sort((a, b) => a.startTime - b.startTime);
+    const FLY = ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'];
+    const flyPer = [];
+    sw.forEach(w => {
+      const ad = w.athletes[activeAth];
+      let b = Infinity;
+      Object.keys(ad.sets || {}).forEach(eid => {
+        const bx = baseExId(eid);
+        if (bx.includes('overspeed') || bx.includes('resisted')) return;
+        (ad.sets[eid] || []).forEach(s => {
+          if (!s.completed || s.warmup) return;
+          FLY.forEach(m => {
+            const t = Number(s.values && s.values[m]);
+            if (t > 0 && t < b) b = t;
+          });
+        });
+      });
+      if (b < Infinity) flyPer.push(b);
+    });
+    const maxVel = flyPer.length ? Math.round(1000 / Math.min(...flyPer.slice(-2))) / 100 : null;
+    const effSeries = [];
+    sw.forEach(w => {
+      const ad = w.athletes[activeAth];
+      let be = null;
+      Object.keys(ad.sets || {}).forEach(eid => {
+        if (!markGroupOf(eid)) return;
+        (ad.sets[eid] || []).forEach(s => {
+          if (!s.completed || s.warmup || s.flop) return;
+          const d = Number(s.values && s.values['tf-dist']),
+            t = Number(s.values && s.values['time-10-1m']);
+          if (d > 0 && t > 0) {
+            const e = d * 100 / (10 / t);
+            if (be == null || e > be) be = e;
+          }
+        });
+      });
+      if (be != null) effSeries.push(Math.round(be * 10) / 10);
+    });
+    const efficiency = effSeries.length ? effSeries[effSeries.length - 1] : null;
+    let pb = prof.startPB;
+    myWk.forEach(w => {
+      const ad = w.athletes[activeAth];
+      Object.keys(ad.sets || {}).forEach(eid => {
+        if (!markGroupOf(eid)) return;
+        (ad.sets[eid] || []).forEach(s => {
+          if (s.completed && !s.warmup && !s.flop) {
+            const d = Number(s.values && s.values['tf-dist']);
+            if (d > 0 && Math.round(d * 100) > pb) pb = Math.round(d * 100);
+          }
+        });
+      });
+    });
+    const pred = maxVel && efficiency ? Math.round(maxVel * 0.95 * efficiency) : null;
+    const tend = [];
+    sw.forEach(w => {
+      const ad = w.athletes[activeAth];
+      const t = Number(ad && ad.tendons);
+      if (t > 0) tend.push(t);
+    });
+    const isMiska = (athletes.find(a => a.id === activeAth) || {}).name === 'Miška';
+    return React.createElement(React.Fragment, null, pred != null && React.createElement(React.Fragment, null, React.createElement("div", {
+      className: "s-title"
+    }, "Jump Prediction"), React.createElement("div", {
+      className: "velo-hero",
+      style: {
+        background: 'linear-gradient(160deg,#8b5cf6,#6d28d9)'
+      }
+    }, React.createElement("div", {
+      className: "velo-head"
+    }, React.createElement("span", {
+      className: "velo-label"
+    }, "Predicted Jump"), React.createElement("span", {
+      className: "velo-best"
+    }, "PB ", pb, " cm")), React.createElement("div", {
+      className: "velo-big"
+    }, pred, React.createElement("span", {
+      className: "velo-unit"
+    }, "cm")), React.createElement("div", {
+      className: "velo-delta",
+      style: {
+        color: 'rgba(255,255,255,.7)'
+      }
+    }, pred - pb >= 0 ? '+' : '', pred - pb, " cm vs PB \xB7 full breakdown on the Predict tab"))), effSeries.length >= 1 && React.createElement(React.Fragment, null, React.createElement("div", {
+      className: "s-title"
+    }, "Efficiency Trend"), React.createElement("div", {
+      style: {
+        margin: '0 14px'
+      }
+    }, React.createElement("div", {
+      style: {
+        fontSize: 24,
+        fontWeight: 900,
+        fontStyle: 'italic',
+        color: 'var(--text)'
+      }
+    }, efficiency, React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: 'var(--text3)',
+        fontWeight: 700,
+        marginLeft: 5,
+        fontStyle: 'normal'
+      }
+    }, "cm per m/s")), effSeries.length >= 2 ? React.createElement(TrendChart, {
+      values: effSeries,
+      lowerBetter: false
+    }) : React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: 'var(--text3)',
+        fontWeight: 600,
+        padding: '8px 0'
+      }
+    }, "Log another jump session for the trend."))), isMiska && tend.length >= 1 && React.createElement(React.Fragment, null, React.createElement("div", {
+      className: "s-title"
+    }, "Tendon Pain Trend"), React.createElement("div", {
+      style: {
+        margin: '0 14px 6px'
+      }
+    }, React.createElement("div", {
+      style: {
+        fontSize: 24,
+        fontWeight: 900,
+        fontStyle: 'italic',
+        color: 'var(--text)'
+      }
+    }, tend[tend.length - 1], React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: 'var(--text3)',
+        fontWeight: 700,
+        marginLeft: 5,
+        fontStyle: 'normal'
+      }
+    }, "/ 10")), tend.length >= 2 ? React.createElement(TrendChart, {
+      values: tend,
+      lowerBetter: true
+    }) : React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: 'var(--text3)',
+        fontWeight: 600,
+        padding: '8px 0'
+      }
+    }, "Logs from the \u0160\u013Eachy slider each session."))));
+  })(), section('Sprint PBs', sprintIds), section('Fly PBs', flyIds), section('Resisted Sprint PBs', resistedIds), section('Everything Else', otherIds), Object.keys(prMap).length === 0 && React.createElement("div", {
     className: "empty"
   }, React.createElement("div", {
     className: "empty-text"
