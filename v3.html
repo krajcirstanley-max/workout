@@ -5392,39 +5392,7 @@ function StatScreen({
         color: 'rgba(255,255,255,.5)'
       }
     }, "Log another speed session to see the trend"));
-  })(), React.createElement("div", {
-    className: "stat-summary"
-  }, [[myWk.length, 'Sessions'], [d30, '30 Days'], [d7, 'This Week']].map(([v, l], i) => React.createElement("div", {
-    key: l,
-    className: "stat-cell",
-    style: i ? {
-      borderLeft: '1px solid var(--border)'
-    } : {}
-  }, React.createElement("div", {
-    className: "stat-cell-v"
-  }, v), React.createElement("div", {
-    className: "stat-cell-l"
-  }, l)))), Object.keys(prMap).length > 0 && React.createElement("div", {
-    style: {
-      padding: '2px 14px 6px'
-    }
-  }, React.createElement("input", {
-    value: q,
-    onChange: e => setQ(e.target.value),
-    placeholder: "Search exercises...",
-    style: {
-      width: '100%',
-      padding: '13px 16px',
-      border: 'none',
-      background: 'var(--surface2)',
-      borderRadius: 13,
-      fontSize: 14,
-      fontWeight: 600,
-      color: 'var(--text)',
-      fontFamily: 'inherit',
-      boxSizing: 'border-box'
-    }
-  })), remoteSession && React.createElement(React.Fragment, null, React.createElement("div", {
+  })(), remoteSession && React.createElement(React.Fragment, null, React.createElement("div", {
     className: "s-title"
   }, "In Progress"), React.createElement("div", {
     className: "recent"
@@ -5800,7 +5768,44 @@ function StatScreen({
         }
       }, spike ? '⚠ This week is ' + Math.round((last / avg - 1) * 100) + '% over your 4-week average — volume spike, injury risk.' : 'High-intensity metres per week (sprints, approaches, bounds).'));
     })());
-  })(), section('Sprint PBs', sprintIds), section('Fly PBs', flyIds), section('Resisted Sprint PBs', resistedIds), section('Everything Else', otherIds), Object.keys(prMap).length === 0 && React.createElement("div", {
+  })(), React.createElement("div", {
+    className: "s-title"
+  }, "Personal Records"), React.createElement("div", {
+    className: "stat-summary",
+    style: {
+      marginTop: 4
+    }
+  }, [[myWk.length, 'Sessions'], [d30, '30 Days'], [d7, 'This Week']].map(([v, l], i) => React.createElement("div", {
+    key: l,
+    className: "stat-cell",
+    style: i ? {
+      borderLeft: '1px solid var(--border)'
+    } : {}
+  }, React.createElement("div", {
+    className: "stat-cell-v"
+  }, v), React.createElement("div", {
+    className: "stat-cell-l"
+  }, l)))), Object.keys(prMap).length > 0 && React.createElement("div", {
+    style: {
+      padding: '2px 14px 8px'
+    }
+  }, React.createElement("input", {
+    value: q,
+    onChange: e => setQ(e.target.value),
+    placeholder: "Search exercises...",
+    style: {
+      width: '100%',
+      padding: '13px 16px',
+      border: 'none',
+      background: 'var(--surface2)',
+      borderRadius: 13,
+      fontSize: 14,
+      fontWeight: 600,
+      color: 'var(--text)',
+      fontFamily: 'inherit',
+      boxSizing: 'border-box'
+    }
+  })), section('Sprint PBs', sprintIds), section('Fly PBs', flyIds), section('Resisted Sprint PBs', resistedIds), section('Everything Else', otherIds), Object.keys(prMap).length === 0 && React.createElement("div", {
     className: "empty"
   }, React.createElement("div", {
     className: "empty-text"
