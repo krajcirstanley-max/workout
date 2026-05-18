@@ -5599,7 +5599,207 @@ function StatScreen({
         fontWeight: 600,
         padding: '8px 0'
       }
-    }, "Logs from the \u0160\u013Eachy slider each session."))));
+    }, "Logs from the \u0160\u013Eachy slider each session."))), (() => {
+      let sess = null;
+      for (let i = sw.length - 1; i >= 0 && !sess; i--) {
+        const ad = sw[i].athletes[activeAth];
+        const sp = [];
+        Object.keys(ad.sets || {}).forEach(eid => {
+          const bx = baseExId(eid);
+          if (bx.includes('overspeed') || bx.includes('resisted')) return;
+          (ad.sets[eid] || []).forEach(s => {
+            if (!s.completed || s.warmup) return;
+            FLY.forEach(m => {
+              const t = Number(s.values && s.values[m]);
+              if (t > 0) sp.push(t);
+            });
+          });
+        });
+        if (sp.length >= 2) sess = sp;
+      }
+      if (!sess) return null;
+      const best = Math.min(...sess);
+      const thr = best * 1.04;
+      const overN = sess.filter(t => t > thr).length;
+      return React.createElement(React.Fragment, null, React.createElement("div", {
+        className: "s-title"
+      }, "Session Velocity Decay"), React.createElement("div", {
+        style: {
+          margin: '0 14px',
+          display: 'flex',
+          gap: 4,
+          alignItems: 'flex-end',
+          height: 92
+        }
+      }, sess.map((t, i) => React.createElement("div", {
+        key: i,
+        style: {
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3
+        }
+      }, React.createElement("div", {
+        style: {
+          width: '100%',
+          height: Math.max(16, 90 - (t - best) / best * 900),
+          borderRadius: 5,
+          background: t > thr ? 'var(--red)' : t === best ? 'var(--green)' : 'var(--surface3)'
+        }
+      }), React.createElement("span", {
+        style: {
+          fontFamily: 'var(--mono)',
+          fontSize: 8,
+          fontWeight: 700,
+          color: 'var(--text3)'
+        }
+      }, t.toFixed(2))))), React.createElement("div", {
+        className: "prd-meta",
+        style: {
+          margin: '6px 14px 0'
+        }
+      }, overN > 0 ? overN + ' rep' + (overN > 1 ? 's' : '') + ' fell more than 4% below your best 10m — fatigue, you should have stopped.' : 'No rep dropped past the 4% fatigue line — clean session.'));
+    })(), (() => {
+      let ob = null;
+      sw.forEach(w => {
+        const ad = w.athletes[activeAth];
+        Object.keys(ad.sets || {}).filter(k => baseExId(k) === 'overspeed-40m').forEach(k => {
+          (ad.sets[k] || []).forEach(s => {
+            if (!s.completed || s.warmup) return;
+            const v = s.values || {};
+            const segs = [Number(v['split-10m']), Number(v['split-20m']) - Number(v['split-10m']), Number(v['split-30m']) - Number(v['split-20m']), Number(v['split-40m']) - Number(v['split-30m'])].filter(x => x > 0.05);
+            if (segs.length) {
+              const mn = Math.min(...segs);
+              if (ob == null || mn < ob) ob = mn;
+            }
+          });
+        });
+      });
+      if (ob == null || maxVel == null) return null;
+      const ov = Math.round(1000 / ob) / 100;
+      const gap = Math.round((ov - maxVel) / maxVel * 1000) / 10;
+      return React.createElement(React.Fragment, null, React.createElement("div", {
+        className: "s-title"
+      }, "Overspeed Gap"), React.createElement("div", {
+        style: {
+          margin: '0 14px',
+          display: 'flex',
+          gap: 10
+        }
+      }, [['Overspeed', ov, 'var(--orange)'], ['Free', maxVel, 'var(--primary)']].map(([l, v, c]) => React.createElement("div", {
+        key: l,
+        style: {
+          flex: 1,
+          background: 'var(--surface2)',
+          borderRadius: 13,
+          padding: '13px 6px',
+          textAlign: 'center'
+        }
+      }, React.createElement("div", {
+        style: {
+          fontSize: 22,
+          fontWeight: 900,
+          fontStyle: 'italic',
+          color: c
+        }
+      }, v, React.createElement("span", {
+        style: {
+          fontSize: 11,
+          color: 'var(--text3)',
+          fontStyle: 'normal'
+        }
+      }, " m/s")), React.createElement("div", {
+        style: {
+          fontSize: 11,
+          fontWeight: 800,
+          color: 'var(--text2)',
+          marginTop: 2
+        }
+      }, l)))), React.createElement("div", {
+        className: "prd-meta",
+        style: {
+          margin: '6px 14px 0'
+        }
+      }, gap, "% faster assisted \u2014 a shrinking gap means your free speed is catching up."));
+    })(), (() => {
+      const distOf = (eid, v) => {
+        if (markGroupOf(eid)) {
+          const d = Number(v['tf-dist']);
+          return d > 0 ? d : 0;
+        }
+        const mm = baseExId(eid).match(/(\d+)m/);
+        if (mm) return Number(mm[1]);
+        const d = Number(v.distance) || Number(v['tf-dist']);
+        return d > 0 ? d : 0;
+      };
+      const hi = eid => {
+        const bx = baseExId(eid);
+        return /sprint|start-|accel|overspeed|fly|wicket|bound/.test(bx) || !!markGroupOf(eid);
+      };
+      const wkm = {};
+      sw.forEach(w => {
+        const ad = w.athletes[activeAth];
+        const d = new Date(w.startTime);
+        const mon = new Date(d);
+        mon.setDate(d.getDate() - (d.getDay() + 6) % 7);
+        const key = dateKey(mon.getTime());
+        Object.keys(ad.sets || {}).forEach(eid => {
+          if (!hi(eid)) return;
+          (ad.sets[eid] || []).forEach(s => {
+            if (!s.completed || s.warmup || s.flop) return;
+            wkm[key] = (wkm[key] || 0) + distOf(eid, s.values || {});
+          });
+        });
+      });
+      const keys = Object.keys(wkm).sort();
+      if (!keys.length) return null;
+      const vals = keys.map(k => Math.round(wkm[k]));
+      const last = vals[vals.length - 1];
+      const prev = vals.slice(-5, -1);
+      const avg = prev.length ? prev.reduce((a, b) => a + b, 0) / prev.length : 0;
+      const spike = avg > 0 && last > avg * 1.3;
+      const mx = Math.max(...vals, 1);
+      return React.createElement(React.Fragment, null, React.createElement("div", {
+        className: "s-title"
+      }, "Week Load"), React.createElement("div", {
+        style: {
+          margin: '0 14px',
+          display: 'flex',
+          gap: 5,
+          alignItems: 'flex-end',
+          height: 84
+        }
+      }, vals.slice(-8).map((v, i, a) => React.createElement("div", {
+        key: i,
+        style: {
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3
+        }
+      }, React.createElement("div", {
+        style: {
+          width: '100%',
+          height: Math.max(8, v / mx * 70),
+          borderRadius: 5,
+          background: i === a.length - 1 && spike ? 'var(--red)' : 'var(--primary)'
+        }
+      }), React.createElement("span", {
+        style: {
+          fontFamily: 'var(--mono)',
+          fontSize: 8,
+          fontWeight: 700,
+          color: 'var(--text3)'
+        }
+      }, v)))), React.createElement("div", {
+        className: "prd-meta",
+        style: {
+          margin: '6px 14px 0'
+        }
+      }, spike ? '⚠ This week is ' + Math.round((last / avg - 1) * 100) + '% over your 4-week average — volume spike, injury risk.' : 'High-intensity metres per week (sprints, approaches, bounds).'));
+    })());
   })(), section('Sprint PBs', sprintIds), section('Fly PBs', flyIds), section('Resisted Sprint PBs', resistedIds), section('Everything Else', otherIds), Object.keys(prMap).length === 0 && React.createElement("div", {
     className: "empty"
   }, React.createElement("div", {
