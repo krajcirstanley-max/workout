@@ -595,6 +595,9 @@ textarea.form-input{min-height:80px;font-size:14px;resize:vertical;font-family:v
 .cal-cell.today{background:var(--text);color:#fff;font-weight:900}
 .cal-cell .pdot{position:absolute;bottom:6px;width:5px;height:5px;border-radius:50%;background:var(--green)}
 .cal-cell.today .pdot{background:#fff}
+.cal-wk{display:flex;align-items:center;width:100%;background:transparent;border:none;padding:6px 2px 3px;cursor:pointer}
+.cal-wk-tag{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;background:var(--primary-dim);color:var(--primary);padding:3px 9px;border-radius:6px}
+.cal-wk-add{font-size:9px;font-weight:700;color:var(--text4);letter-spacing:.4px}
 .cal-cell.dhigh,.month-cell.dhigh,.date-cell.dhigh{box-shadow:inset 0 0 0 2px var(--red)}
 .cal-cell.dlow,.month-cell.dlow,.date-cell.dlow{box-shadow:inset 0 0 0 2px var(--green)}
 
@@ -2326,9 +2329,11 @@ function ProfileScreen({athletes,activeAth,setActiveAth,onEditAthlete,workouts})
   </div>)}
 
 // === CALENDAR ===
-function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAddPlan,onEditPlan,dayTypes,onSetDayType}){
+function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAddPlan,onEditPlan,dayTypes,onSetDayType,weekLabels,onSetWeekLabel}){
   const[sel,setSel]=useState(new Date());
   const[m,setM]=useState(()=>{const d=new Date();d.setDate(1);return d});
+  const[labelWeek,setLabelWeek]=useState(null);
+  const[custom,setCustom]=useState('');
   const monthName=m.toLocaleDateString('en-US',{month:'long',year:'numeric'});
   const first=new Date(m);first.setDate(1);
   const startDow=(first.getDay()+6)%7;
@@ -2337,6 +2342,7 @@ function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAd
   for(let i=0;i<startDow;i++)cells.push({dim:true,d:new Date(m.getFullYear(),m.getMonth(),-startDow+i+1)});
   for(let i=1;i<=dim;i++)cells.push({d:new Date(m.getFullYear(),m.getMonth(),i)});
   while(cells.length%7)cells.push({dim:true,d:new Date(m.getFullYear(),m.getMonth()+1,cells.length-dim-startDow+1)});
+  const weeks=[];for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
   const todayK=dateKey(Date.now());
   const selK=dateKey(sel.getTime());
   const dayWk=workouts.filter(w=>w.athletes?.[activeAth]&&dateKey(w.startTime)===selK);
@@ -2356,18 +2362,26 @@ function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAd
       </div>
       <div style={{padding:'0 22px'}}>
         <div className="cal-grid">{['M','T','W','T','F','S','S'].map((x,i)=><div key={i} className="cal-day-h">{x}</div>)}</div>
-        <div className="cal-grid" style={{marginBottom:18}}>
-          {cells.map((c,i)=>{const k=dateKey(c.d.getTime());
-            const dWk=workouts.find(w=>w.athletes?.[activeAth]&&dateKey(w.startTime)===k);
-            const dPl=(planned||[]).find(p=>p.date===k);
-            const dt=dayTypes?.[k];
-            const isSel=k===selK;
-            const dotColor=dWk?(dWk.color||'var(--green)'):dPl?(dPl.color||'var(--primary)'):null;
-            return(<button key={i} className={'cal-cell'+(c.dim?' dim':'')+(dWk?' has':'')+(k===todayK?' today':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':'')}
-              onClick={()=>setSel(new Date(c.d))}
-              style={isSel&&k!==todayK?{background:'var(--surface3)'}:{}}>
-              {c.d.getDate()}{dotColor&&<span className="pdot" style={{background:dotColor}}/>}
-            </button>)})}
+        <div style={{marginBottom:18}}>
+          {weeks.map((wk,wi)=>{const wKey=dateKey(wk[0].d.getTime());const lbl=(weekLabels||{})[wKey];
+            return(<div key={wi} style={{marginBottom:2}}>
+              <button className={'cal-wk'+(lbl?' on':'')} onClick={()=>{setCustom(lbl||'');setLabelWeek(wKey)}}>
+                {lbl?<span className="cal-wk-tag">{lbl}</span>:<span className="cal-wk-add">+ week label</span>}
+              </button>
+              <div className="cal-grid">
+                {wk.map(c=>{const k=dateKey(c.d.getTime());
+                  const dWk=workouts.find(w=>w.athletes?.[activeAth]&&dateKey(w.startTime)===k);
+                  const dPl=(planned||[]).find(p=>p.date===k);
+                  const dt=dayTypes?.[k];
+                  const isSel=k===selK;
+                  const dotColor=dWk?(dWk.color||'var(--green)'):dPl?(dPl.color||'var(--primary)'):null;
+                  return(<button key={k} className={'cal-cell'+(c.dim?' dim':'')+(dWk?' has':'')+(k===todayK?' today':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':'')}
+                    onClick={()=>setSel(new Date(c.d))}
+                    style={isSel&&k!==todayK?{background:'var(--surface3)'}:{}}>
+                    {c.d.getDate()}{dotColor&&<span className="pdot" style={{background:dotColor}}/>}
+                  </button>)})}
+              </div>
+            </div>)})}
         </div>
       </div>
       <div className="s-title">{sel.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase()}</div>
@@ -2392,6 +2406,24 @@ function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAd
       </div>}
       {dayWk.map(wk=><WorkoutLogCard key={wk.id} wk={wk} exercises={[]} onClick={()=>onView(wk)}/>)}
     </div>
+    {labelWeek&&<div className="over" onClick={e=>e.target===e.currentTarget&&setLabelWeek(null)}>
+      <div className="modal">
+        <div className="modal-h">
+          <div className="modal-t">Week Label</div>
+          <button className="modal-x" onClick={()=>setLabelWeek(null)}><Ic n="x" s={20}/></button>
+        </div>
+        <div className="modal-b">
+          <div style={{fontSize:12,color:'var(--text3)',fontWeight:600,marginBottom:10}}>Label the week of {new Date(labelWeek).toLocaleDateString('en-US',{month:'short',day:'numeric'})}.</div>
+          <div className="tag-row">
+            {['Deload','T1','T2','T3'].map(p=><button key={p} className="picker-chip" onClick={()=>{onSetWeekLabel(labelWeek,p);setLabelWeek(null)}}>{p}</button>)}
+          </div>
+          <input className="form-input" style={{marginTop:12}} placeholder="Custom label…" value={custom}
+            onChange={e=>setCustom(e.target.value)}/>
+          <button className="btn btn-primary" style={{marginTop:10}} onClick={()=>{onSetWeekLabel(labelWeek,custom.trim());setLabelWeek(null)}}>Save</button>
+          {(weekLabels||{})[labelWeek]&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>{onSetWeekLabel(labelWeek,'');setLabelWeek(null)}}>Clear label</button>}
+        </div>
+      </div>
+    </div>}
   </div>)}
 
 // === LIBRARY (exercise list) ===
@@ -3002,6 +3034,8 @@ function App(){
   const[planned,setPlanned,plannedSynced]=useStore('planned2',[]);
   const[dayTypes,setDayTypes]=useStore('dayTypes',{});
   const setDayType=(k,t)=>setDayTypes(p=>{const n={...p};if(p[k]===t)delete n[k];else n[k]=t;return n});
+  const[weekLabels,setWeekLabels]=useStore('weekLabels',{});
+  const setWeekLabel=(k,l)=>setWeekLabels(p=>{const n={...p};if(!l)delete n[k];else n[k]=l;return n});
   const[customTags,setCustomTags]=useStore('customTags',[]);
   const[templates,setTemplates]=useStore('templates',[]);
   const allTags=[...DEFAULT_TAGS,...customTags];
@@ -3503,7 +3537,8 @@ function App(){
       workouts={workouts} planned={planned} onView={setViewing}
       onAddPlan={d=>setPlanEdit({date:d||dateKey(Date.now())})}
       onEditPlan={p=>setPlanEdit({plan:p})}
-      dayTypes={dayTypes} onSetDayType={setDayType}/>}
+      dayTypes={dayTypes} onSetDayType={setDayType}
+      weekLabels={weekLabels} onSetWeekLabel={setWeekLabel}/>}
     {tab==='lib'&&<LibraryScreen exercises={exercises} onSelect={setViewEx} onCreate={ex2=>setExercises(p=>[...p,ex2])}/>}
     {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote} athletes={athletes} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete}/>}
     {tab==='pred'&&<PredictionsScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} workouts={workouts} onEditAthlete={setEditAthlete}/>}

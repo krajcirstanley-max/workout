@@ -595,6 +595,9 @@ textarea.form-input{min-height:80px;font-size:14px;resize:vertical;font-family:v
 .cal-cell.today{background:var(--text);color:#fff;font-weight:900}
 .cal-cell .pdot{position:absolute;bottom:6px;width:5px;height:5px;border-radius:50%;background:var(--green)}
 .cal-cell.today .pdot{background:#fff}
+.cal-wk{display:flex;align-items:center;width:100%;background:transparent;border:none;padding:6px 2px 3px;cursor:pointer}
+.cal-wk-tag{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;background:var(--primary-dim);color:var(--primary);padding:3px 9px;border-radius:6px}
+.cal-wk-add{font-size:9px;font-weight:700;color:var(--text4);letter-spacing:.4px}
 .cal-cell.dhigh,.month-cell.dhigh,.date-cell.dhigh{box-shadow:inset 0 0 0 2px var(--red)}
 .cal-cell.dlow,.month-cell.dlow,.date-cell.dlow{box-shadow:inset 0 0 0 2px var(--green)}
 
@@ -5572,7 +5575,9 @@ function CalScreen({
   onAddPlan,
   onEditPlan,
   dayTypes,
-  onSetDayType
+  onSetDayType,
+  weekLabels,
+  onSetWeekLabel
 }) {
   const [sel, setSel] = useState(new Date());
   const [m, setM] = useState(() => {
@@ -5580,6 +5585,8 @@ function CalScreen({
     d.setDate(1);
     return d;
   });
+  const [labelWeek, setLabelWeek] = useState(null);
+  const [custom, setCustom] = useState('');
   const monthName = m.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
@@ -5600,6 +5607,8 @@ function CalScreen({
     dim: true,
     d: new Date(m.getFullYear(), m.getMonth() + 1, cells.length - dim - startDow + 1)
   });
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
   const todayK = dateKey(Date.now());
   const selK = dateKey(sel.getTime());
   const dayWk = workouts.filter(w => w.athletes?.[activeAth] && dateKey(w.startTime) === selK);
@@ -5691,30 +5700,50 @@ function CalScreen({
     key: i,
     className: "cal-day-h"
   }, x))), React.createElement("div", {
-    className: "cal-grid",
     style: {
       marginBottom: 18
     }
-  }, cells.map((c, i) => {
-    const k = dateKey(c.d.getTime());
-    const dWk = workouts.find(w => w.athletes?.[activeAth] && dateKey(w.startTime) === k);
-    const dPl = (planned || []).find(p => p.date === k);
-    const dt = dayTypes?.[k];
-    const isSel = k === selK;
-    const dotColor = dWk ? dWk.color || 'var(--green)' : dPl ? dPl.color || 'var(--primary)' : null;
-    return React.createElement("button", {
-      key: i,
-      className: 'cal-cell' + (c.dim ? ' dim' : '') + (dWk ? ' has' : '') + (k === todayK ? ' today' : '') + (dt === 'high' ? ' dhigh' : dt === 'low' ? ' dlow' : ''),
-      onClick: () => setSel(new Date(c.d)),
-      style: isSel && k !== todayK ? {
-        background: 'var(--surface3)'
-      } : {}
-    }, c.d.getDate(), dotColor && React.createElement("span", {
-      className: "pdot",
+  }, weeks.map((wk, wi) => {
+    const wKey = dateKey(wk[0].d.getTime());
+    const lbl = (weekLabels || {})[wKey];
+    return React.createElement("div", {
+      key: wi,
       style: {
-        background: dotColor
+        marginBottom: 2
       }
-    }));
+    }, React.createElement("button", {
+      className: 'cal-wk' + (lbl ? ' on' : ''),
+      onClick: () => {
+        setCustom(lbl || '');
+        setLabelWeek(wKey);
+      }
+    }, lbl ? React.createElement("span", {
+      className: "cal-wk-tag"
+    }, lbl) : React.createElement("span", {
+      className: "cal-wk-add"
+    }, "+ week label")), React.createElement("div", {
+      className: "cal-grid"
+    }, wk.map(c => {
+      const k = dateKey(c.d.getTime());
+      const dWk = workouts.find(w => w.athletes?.[activeAth] && dateKey(w.startTime) === k);
+      const dPl = (planned || []).find(p => p.date === k);
+      const dt = dayTypes?.[k];
+      const isSel = k === selK;
+      const dotColor = dWk ? dWk.color || 'var(--green)' : dPl ? dPl.color || 'var(--primary)' : null;
+      return React.createElement("button", {
+        key: k,
+        className: 'cal-cell' + (c.dim ? ' dim' : '') + (dWk ? ' has' : '') + (k === todayK ? ' today' : '') + (dt === 'high' ? ' dhigh' : dt === 'low' ? ' dlow' : ''),
+        onClick: () => setSel(new Date(c.d)),
+        style: isSel && k !== todayK ? {
+          background: 'var(--surface3)'
+        } : {}
+      }, c.d.getDate(), dotColor && React.createElement("span", {
+        className: "pdot",
+        style: {
+          background: dotColor
+        }
+      }));
+    })));
   }))), React.createElement("div", {
     className: "s-title"
   }, sel.toLocaleDateString('en-US', {
@@ -5787,7 +5816,69 @@ function CalScreen({
     wk: wk,
     exercises: [],
     onClick: () => onView(wk)
-  }))));
+  }))), labelWeek && React.createElement("div", {
+    className: "over",
+    onClick: e => e.target === e.currentTarget && setLabelWeek(null)
+  }, React.createElement("div", {
+    className: "modal"
+  }, React.createElement("div", {
+    className: "modal-h"
+  }, React.createElement("div", {
+    className: "modal-t"
+  }, "Week Label"), React.createElement("button", {
+    className: "modal-x",
+    onClick: () => setLabelWeek(null)
+  }, React.createElement(Ic, {
+    n: "x",
+    s: 20
+  }))), React.createElement("div", {
+    className: "modal-b"
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: 'var(--text3)',
+      fontWeight: 600,
+      marginBottom: 10
+    }
+  }, "Label the week of ", new Date(labelWeek).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  }), "."), React.createElement("div", {
+    className: "tag-row"
+  }, ['Deload', 'T1', 'T2', 'T3'].map(p => React.createElement("button", {
+    key: p,
+    className: "picker-chip",
+    onClick: () => {
+      onSetWeekLabel(labelWeek, p);
+      setLabelWeek(null);
+    }
+  }, p))), React.createElement("input", {
+    className: "form-input",
+    style: {
+      marginTop: 12
+    },
+    placeholder: "Custom label\u2026",
+    value: custom,
+    onChange: e => setCustom(e.target.value)
+  }), React.createElement("button", {
+    className: "btn btn-primary",
+    style: {
+      marginTop: 10
+    },
+    onClick: () => {
+      onSetWeekLabel(labelWeek, custom.trim());
+      setLabelWeek(null);
+    }
+  }, "Save"), (weekLabels || {})[labelWeek] && React.createElement("button", {
+    className: "btn btn-secondary",
+    style: {
+      marginTop: 8
+    },
+    onClick: () => {
+      onSetWeekLabel(labelWeek, '');
+      setLabelWeek(null);
+    }
+  }, "Clear label")))));
 }
 function LibraryScreen({
   exercises,
@@ -7559,6 +7650,14 @@ function App() {
     if (p[k] === t) delete n[k];else n[k] = t;
     return n;
   });
+  const [weekLabels, setWeekLabels] = useStore('weekLabels', {});
+  const setWeekLabel = (k, l) => setWeekLabels(p => {
+    const n = {
+      ...p
+    };
+    if (!l) delete n[k];else n[k] = l;
+    return n;
+  });
   const [customTags, setCustomTags] = useStore('customTags', []);
   const [templates, setTemplates] = useStore('templates', []);
   const allTags = [...DEFAULT_TAGS, ...customTags];
@@ -8886,7 +8985,9 @@ function App() {
       plan: p
     }),
     dayTypes: dayTypes,
-    onSetDayType: setDayType
+    onSetDayType: setDayType,
+    weekLabels: weekLabels,
+    onSetWeekLabel: setWeekLabel
   }), tab === 'lib' && React.createElement(LibraryScreen, {
     exercises: exercises,
     onSelect: setViewEx,
