@@ -2910,7 +2910,7 @@ function ActiveWorkout({
   const [showFinish, setShowFinish] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [phase, setPhase] = useState(() => _sv?.workout && _sv.workout.started === false ? 'prelude' : _sv?.workout ? 'active' : 'prelude');
-  const [blockIdx, setBlockIdx] = useState(0);
+  const [blockIdx, setBlockIdx] = useState(() => _sv?.blockIdx || 0);
   const [showOrganize, setShowOrganize] = useState(false);
   const [historyEid, setHistoryEid] = useState(null);
   const [prToast, setPrToast] = useState(null);
@@ -2921,15 +2921,17 @@ function ActiveWorkout({
   }, [prToast]);
   const stateRef = useRef();
   stateRef.current = {
-    workout
+    workout,
+    blockIdx
   };
   useEffect(() => {
     try {
       localStorage.setItem('wk2_v3_snap', JSON.stringify({
-        workout
+        workout,
+        blockIdx
       }));
     } catch {}
-  }, [workout]);
+  }, [workout, blockIdx]);
   useEffect(() => {
     const save = () => {
       try {

@@ -1508,15 +1508,16 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const[confirmCancel,setConfirmCancel]=useState(false);
   // new workouts open with the pre-workout check-in; a resumed/in-progress one skips straight in
   const[phase,setPhase]=useState(()=>(_sv?.workout&&_sv.workout.started===false)?'prelude':(_sv?.workout?'active':'prelude'));
-  const[blockIdx,setBlockIdx]=useState(0);
+  const[blockIdx,setBlockIdx]=useState(()=>_sv?.blockIdx||0);
   const[showOrganize,setShowOrganize]=useState(false);
   const[historyEid,setHistoryEid]=useState(null);
   const[prToast,setPrToast]=useState(null);
   useEffect(()=>{if(!prToast)return;const t=setTimeout(()=>setPrToast(null),3400);return()=>clearTimeout(t)},[prToast]);
   const stateRef=useRef();
-  stateRef.current={workout};
-  // Save snapshot on every change + on backgrounding
-  useEffect(()=>{try{localStorage.setItem('wk2_v3_snap',JSON.stringify({workout}))}catch{}},[workout]);
+  stateRef.current={workout,blockIdx};
+  // Save snapshot on every change + on backgrounding - blockIdx too, so a refresh
+  // resumes on the exercise you were on rather than jumping back to the first
+  useEffect(()=>{try{localStorage.setItem('wk2_v3_snap',JSON.stringify({workout,blockIdx}))}catch{}},[workout,blockIdx]);
   useEffect(()=>{const save=()=>{try{localStorage.setItem('wk2_v3_snap',JSON.stringify(stateRef.current))}catch{}};
     const onVis=()=>{if(document.visibilityState==='hidden')save()};
     document.addEventListener('visibilitychange',onVis);
