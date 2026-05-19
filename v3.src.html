@@ -2188,10 +2188,15 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
     const mets=Object.entries(p.metrics);if(!mets.length)return null;
     const pmEntry=mets.find(([m])=>m==='tf-time'||m==='weight')||mets[0];
     const pm=pmEntry[0],pmInfo=p.metrics[pm];
-    return(<button key={eid} className="pr-card" onClick={()=>ex&&onSelectEx&&onSelectEx(ex)}>
+    const CC={'T&F':'#06b6d4',Legs:'#8b5cf6',Chest:'#ef4444',Back:'#22c55e',Shoulders:'#f97316',Arms:'#2156f4',Core:'#f59e0b',Cardio:'#ec4899'};
+    const col=CC[p.category]||'#94a3b8';
+    return(<button key={eid} className="pr-card" style={{borderLeft:'3px solid '+col}} onClick={()=>ex&&onSelectEx&&onSelectEx(ex)}>
       <div className="pr-card-top">
         <span className="pr-card-name">{p.name}</span>
-        <Ic n="chevR" s={16}/>
+        <span style={{display:'flex',alignItems:'center',gap:7,flexShrink:0}}>
+          {p.category&&<span style={{fontFamily:'var(--mono)',fontSize:8.5,fontWeight:800,letterSpacing:'.5px',textTransform:'uppercase',color:col,background:col+'22',padding:'3px 7px',borderRadius:5}}>{p.category}</span>}
+          <Ic n="chevR" s={16}/>
+        </span>
       </div>
       <TrendChart values={seriesFor(eid,pm,pmInfo.lowerBetter)} lowerBetter={pmInfo.lowerBetter}/>
       <div className="pr-metrics">
