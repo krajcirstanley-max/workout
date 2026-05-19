@@ -5445,11 +5445,13 @@ function StatScreen({
     });
     const maxVel = flyPer.length ? Math.round(1000 / Math.min(...flyPer.slice(-2))) / 100 : null;
     const effSeries = [];
+    const effBG = {};
     sw.forEach(w => {
       const ad = w.athletes[activeAth];
       let be = null;
       Object.keys(ad.sets || {}).forEach(eid => {
-        if (!markGroupOf(eid)) return;
+        const g = markGroupOf(eid);
+        if (!g) return;
         (ad.sets[eid] || []).forEach(s => {
           if (!s.completed || s.warmup || s.flop) return;
           const d = Number(s.values && s.values['tf-dist']),
@@ -5457,12 +5459,15 @@ function StatScreen({
           if (d > 0 && t > 0) {
             const e = d * 100 / (10 / t);
             if (be == null || e > be) be = e;
+            const st = MARK_GROUP_STEPS[g] || 0;
+            if (!effBG[st] || e > effBG[st]) effBG[st] = e;
           }
         });
       });
       if (be != null) effSeries.push(Math.round(be * 10) / 10);
     });
-    const efficiency = effSeries.length ? effSeries[effSeries.length - 1] : null;
+    const effSteps = Object.keys(effBG).map(Number).sort((a, b) => b - a);
+    const efficiency = effSteps.length ? Math.round(effBG[effSteps[0]] * 10) / 10 : null;
     let pb = prof.startPB;
     myWk.forEach(w => {
       const ad = w.athletes[activeAth];
