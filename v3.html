@@ -9054,6 +9054,117 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_speed_2';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'ankle-dribble',
+      name: 'Ankle Dribble',
+      category: 'T&F',
+      metrics: ['distance']
+    }, {
+      id: 'calf-dribble',
+      name: 'Calf Dribble',
+      category: 'T&F',
+      metrics: ['distance']
+    }, {
+      id: 'knee-dribble',
+      name: 'Knee Dribble',
+      category: 'T&F',
+      metrics: ['distance']
+    }, {
+      id: 'free-leg-a-skip',
+      name: 'Free Leg A-Skip',
+      category: 'T&F',
+      metrics: ['reps']
+    }, {
+      id: 'free-leg-b-skip',
+      name: 'Free Leg B-Skip',
+      category: 'T&F',
+      metrics: ['reps']
+    }, {
+      id: 'zones-sprint-30m',
+      name: '30m Zones Sprint',
+      category: 'T&F',
+      metrics: ['distance']
+    }, {
+      id: 'cones-sprint',
+      name: 'Cones Sprint',
+      category: 'T&F',
+      metrics: ['reps']
+    }, {
+      id: 'med-ball-throw',
+      name: 'Med Ball Throw',
+      category: 'T&F',
+      metrics: ['weight', 'reps']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    setPlanned(p => {
+      if (p.find(x => x.id === 'pl-speed-2')) return p;
+      return [...p, {
+        id: 'pl-speed-2',
+        date: '2026-05-19',
+        name: 'Speed Session',
+        color: '#06b6d4',
+        exerciseIds: ['ankle-dribble', 'calf-dribble', 'knee-dribble', 'free-leg-a-skip', 'free-leg-b-skip', 'zones-sprint-30m', 'cones-sprint', 'med-ball-throw'],
+        supersets: [],
+        setConfigs: {
+          'ankle-dribble': [{
+            distance: 15
+          }],
+          'calf-dribble': [{
+            distance: 15
+          }],
+          'knee-dribble': [{
+            distance: 15
+          }],
+          'free-leg-a-skip': [{
+            reps: 4
+          }],
+          'free-leg-b-skip': [{
+            reps: 4
+          }, {
+            reps: 4
+          }],
+          'zones-sprint-30m': [{
+            distance: 30
+          }, {
+            distance: 30
+          }, {
+            distance: 30
+          }, {
+            distance: 30
+          }],
+          'cones-sprint': [{
+            reps: 8
+          }, {
+            reps: 8
+          }, {
+            reps: 8
+          }],
+          'med-ball-throw': [{
+            reps: 6
+          }, {
+            reps: 6
+          }, {
+            reps: 6
+          }]
+        },
+        exNotes: {
+          'free-leg-a-skip': 'Každá noha.',
+          'free-leg-b-skip': 'Každá noha.',
+          'zones-sprint-30m': 'Technika.',
+          'cones-sprint': '80%.'
+        },
+        notes: ''
+      }];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     if (!exSynced) return;
     const defs = {
       'drop-jump': {
@@ -9199,6 +9310,54 @@ function App() {
         name: 'Slider Eccentric Curl',
         category: 'Legs',
         metrics: ['reps']
+      },
+      'ankle-dribble': {
+        id: 'ankle-dribble',
+        name: 'Ankle Dribble',
+        category: 'T&F',
+        metrics: ['distance']
+      },
+      'calf-dribble': {
+        id: 'calf-dribble',
+        name: 'Calf Dribble',
+        category: 'T&F',
+        metrics: ['distance']
+      },
+      'knee-dribble': {
+        id: 'knee-dribble',
+        name: 'Knee Dribble',
+        category: 'T&F',
+        metrics: ['distance']
+      },
+      'free-leg-a-skip': {
+        id: 'free-leg-a-skip',
+        name: 'Free Leg A-Skip',
+        category: 'T&F',
+        metrics: ['reps']
+      },
+      'free-leg-b-skip': {
+        id: 'free-leg-b-skip',
+        name: 'Free Leg B-Skip',
+        category: 'T&F',
+        metrics: ['reps']
+      },
+      'zones-sprint-30m': {
+        id: 'zones-sprint-30m',
+        name: '30m Zones Sprint',
+        category: 'T&F',
+        metrics: ['distance']
+      },
+      'cones-sprint': {
+        id: 'cones-sprint',
+        name: 'Cones Sprint',
+        category: 'T&F',
+        metrics: ['reps']
+      },
+      'med-ball-throw': {
+        id: 'med-ball-throw',
+        name: 'Med Ball Throw',
+        category: 'T&F',
+        metrics: ['weight', 'reps']
       }
     };
     const have = new Set(exercises.map(e => e.id));
