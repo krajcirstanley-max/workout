@@ -9379,10 +9379,6 @@ function App() {
     onSetDayType: setDayType,
     weekLabels: weekLabels,
     onSetWeekLabel: setWeekLabel
-  }), tab === 'lib' && React.createElement(LibraryScreen, {
-    exercises: exercises,
-    onSelect: setViewEx,
-    onCreate: ex2 => setExercises(p => [...p, ex2])
   }), tab === 'stats' && React.createElement(StatScreen, {
     workouts: workouts,
     activeAth: activeAth,
@@ -9545,10 +9541,6 @@ function App() {
     id: 'train',
     ic: 'cal',
     l: 'Training'
-  }, {
-    id: 'lib',
-    ic: 'book',
-    l: 'Library'
   }, {
     id: 'stats',
     ic: 'bar',

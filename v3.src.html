@@ -3659,7 +3659,6 @@ function App(){
       onEditPlan={p=>setPlanEdit({plan:p})}
       dayTypes={dayTypes} onSetDayType={setDayType}
       weekLabels={weekLabels} onSetWeekLabel={setWeekLabel}/>}
-    {tab==='lib'&&<LibraryScreen exercises={exercises} onSelect={setViewEx} onCreate={ex2=>setExercises(p=>[...p,ex2])}/>}
     {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote} athletes={athletes} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete}/>}
     {tab==='pred'&&<PredictionsScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} workouts={workouts} onEditAthlete={setEditAthlete}/>}
 
@@ -3696,7 +3695,6 @@ function App(){
       {[
         {id:'today',ic:'home',l:'Home'},
         {id:'train',ic:'cal',l:'Training'},
-        {id:'lib',ic:'book',l:'Library'},
         {id:'stats',ic:'bar',l:'Insights'},
         {id:'pred',ic:'trophy',l:'Predict'},
       ].map(t=>(<button key={t.id} className={'tab'+(tab===t.id?' on':'')} onClick={()=>setTab(t.id)}>
