@@ -1424,7 +1424,7 @@ function WorkoutPrelude({athletes,workoutAthletes,allTags,initialTag,workouts,on
             <div className="prev-note-b">{prev.athletes[a.id].notes}</div></div>));
         })()}
       </div>
-      <div className="fs-card">
+      {tag?.id!=='gym'&&<div className="fs-card">
         <div className="fs-h">Conditions</div>
         <div className="cond-lbl">Venue</div>
         <div className="cond-seg">
@@ -1445,7 +1445,7 @@ function WorkoutPrelude({athletes,workoutAthletes,allTags,initialTag,workouts,on
           wx.status==='loading'?'Checking the weather…'
           :wx.status==='ok'?`Auto: ${wx.tempC!=null?Math.round(wx.tempC)+'°C':'—'}${wx.windKmh!=null?' · wind '+Math.round(wx.windKmh)+' km/h':''}`
           :'Weather unavailable — set it by hand'}</div>
-      </div>
+      </div>}
       <div className="fs-card">
         <div className="fs-h">Readiness</div>
         {aths.length>1&&<div style={{display:'flex',gap:6,justifyContent:'center',marginBottom:16}}>

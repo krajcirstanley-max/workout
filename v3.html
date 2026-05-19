@@ -2726,7 +2726,7 @@ function WorkoutPrelude({
     }, "Last ", tag.name, aths.length > 1 ? ' · ' + a.name : ''), React.createElement("div", {
       className: "prev-note-b"
     }, prev.athletes[a.id].notes)));
-  })()), React.createElement("div", {
+  })()), tag?.id !== 'gym' && React.createElement("div", {
     className: "fs-card"
   }, React.createElement("div", {
     className: "fs-h"
