@@ -600,6 +600,7 @@ textarea.form-input{min-height:80px;font-size:14px;resize:vertical;font-family:v
 .cal-wk-add{font-size:9px;font-weight:700;color:var(--text4);letter-spacing:.4px}
 .cal-cell.dhigh,.month-cell.dhigh,.date-cell.dhigh{box-shadow:inset 0 0 0 2px var(--red)}
 .cal-cell.dlow,.month-cell.dlow,.date-cell.dlow{box-shadow:inset 0 0 0 2px var(--green)}
+.cal-cell.doff,.month-cell.doff,.date-cell.doff{box-shadow:inset 0 0 0 2px var(--text3)}
 
 /* === PROFILE === */
 .profile-hero{text-align:center;padding:32px 22px 20px}
@@ -766,7 +767,7 @@ function DateStrip({selectedDate,onSelectDate,workouts,planned,activeAth,onExpan
       {days.map((d,i)=>{const k=dateKey(d.getTime());const isSel=k===dateKey(sel.getTime());
         const hasW=wkSet.has(k);const hasP=planSet.has(k);const dt=dayTypes?.[k];
         const dow=['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
-        return(<button key={i} className={'date-cell'+(isSel?' on':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':'')} onClick={()=>onSelectDate(d)}>
+        return(<button key={i} className={'date-cell'+(isSel?' on':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':dt==='off'?' doff':'')} onClick={()=>onSelectDate(d)}>
           <span className="date-dow">{dow}</span>
           <span className="date-num">{d.getDate()}</span>
           {(hasW||hasP)&&<span className="date-dot" style={{background:isSel?'#fff':(hasW?'var(--green)':'var(--primary)')}}/>}
@@ -792,7 +793,7 @@ function MonthGrid({month,onSelectDate,onClose,workouts,planned,activeAth,dayTyp
   return(<div className="month-grid">
     {['M','T','W','T','F','S','S'].map((x,i)=><div key={i} className="month-day-h">{x}</div>)}
     {cells.map((c,i)=>{const k=dateKey(c.d.getTime());const has=wkSet.has(k)||planSet.has(k);const dt=dayTypes?.[k];
-      return(<button key={i} className={'month-cell'+(c.dim?' dim':'')+(has?' has':'')+(k===todayK?' today':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':'')}
+      return(<button key={i} className={'month-cell'+(c.dim?' dim':'')+(has?' has':'')+(k===todayK?' today':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':dt==='off'?' doff':'')}
         onClick={()=>{onSelectDate(c.d);onClose()}}>
         {c.d.getDate()}{has&&<span className="pdot"/>}
       </button>)})}
@@ -802,7 +803,7 @@ function MonthGrid({month,onSelectDate,onClose,workouts,planned,activeAth,dayTyp
 function DayTypeToggle({type,onSet}){
   return(<div style={{display:'flex',alignItems:'center',gap:6,padding:'2px 22px 10px'}}>
     <span style={{fontFamily:'var(--mono)',fontSize:9,fontWeight:800,letterSpacing:'.6px',color:'var(--text3)',marginRight:2}}>DAY</span>
-    {[['high','HIGH','var(--red)'],['low','LOW','var(--green)']].map(([t,lbl,col])=>(
+    {[['high','HIGH','var(--red)'],['low','LOW','var(--green)'],['off','OFF','var(--text2)']].map(([t,lbl,col])=>(
       <button key={t} onClick={()=>onSet&&onSet(t)}
         style={{flex:1,padding:'7px 0',borderRadius:9,fontFamily:'var(--mono)',fontSize:10.5,fontWeight:800,letterSpacing:'.7px',
           border:'1.5px solid '+(type===t?col:'var(--border)'),
@@ -2053,7 +2054,7 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
         </div>
         :<div style={{padding:'10px 14px 24px'}}>
           <div className="prd-hero">
-            <div className="prd-hero-l">Predicted Jump</div>
+            <div className="prd-hero-l">Predicted Jump{effPick?' · '+effLabel+' approach':''}</div>
             <div className="prd-hero-big">{heroPred}<span>cm</span></div>
             <div className="prd-hero-pb">PB {pbCm} cm · <b style={{color:delta>=0?'#4ade80':'#f87171'}}>{delta>=0?'+':''}{delta} cm</b></div>
           </div>
@@ -2486,7 +2487,7 @@ function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAd
                   const dt=dayTypes?.[k];
                   const isSel=k===selK;
                   const dotColor=dWk?(dWk.color||'var(--green)'):dPl?(dPl.color||'var(--primary)'):null;
-                  return(<button key={k} className={'cal-cell'+(c.dim?' dim':'')+(dWk?' has':'')+(k===todayK?' today':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':'')}
+                  return(<button key={k} className={'cal-cell'+(c.dim?' dim':'')+(dWk?' has':'')+(k===todayK?' today':'')+(dt==='high'?' dhigh':dt==='low'?' dlow':dt==='off'?' doff':'')}
                     onClick={()=>setSel(new Date(c.d))}
                     style={isSel&&k!==todayK?{background:'var(--surface3)'}:{}}>
                     {c.d.getDate()}{dotColor&&<span className="pdot" style={{background:dotColor}}/>}

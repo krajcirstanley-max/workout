@@ -600,6 +600,7 @@ textarea.form-input{min-height:80px;font-size:14px;resize:vertical;font-family:v
 .cal-wk-add{font-size:9px;font-weight:700;color:var(--text4);letter-spacing:.4px}
 .cal-cell.dhigh,.month-cell.dhigh,.date-cell.dhigh{box-shadow:inset 0 0 0 2px var(--red)}
 .cal-cell.dlow,.month-cell.dlow,.date-cell.dlow{box-shadow:inset 0 0 0 2px var(--green)}
+.cal-cell.doff,.month-cell.doff,.date-cell.doff{box-shadow:inset 0 0 0 2px var(--text3)}
 
 /* === PROFILE === */
 .profile-hero{text-align:center;padding:32px 22px 20px}
@@ -1114,7 +1115,7 @@ function DateStrip({
     const dow = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][d.getDay()];
     return React.createElement("button", {
       key: i,
-      className: 'date-cell' + (isSel ? ' on' : '') + (dt === 'high' ? ' dhigh' : dt === 'low' ? ' dlow' : ''),
+      className: 'date-cell' + (isSel ? ' on' : '') + (dt === 'high' ? ' dhigh' : dt === 'low' ? ' dlow' : dt === 'off' ? ' doff' : ''),
       onClick: () => onSelectDate(d)
     }, React.createElement("span", {
       className: "date-dow"
@@ -1174,7 +1175,7 @@ function MonthGrid({
     const dt = dayTypes?.[k];
     return React.createElement("button", {
       key: i,
-      className: 'month-cell' + (c.dim ? ' dim' : '') + (has ? ' has' : '') + (k === todayK ? ' today' : '') + (dt === 'high' ? ' dhigh' : dt === 'low' ? ' dlow' : ''),
+      className: 'month-cell' + (c.dim ? ' dim' : '') + (has ? ' has' : '') + (k === todayK ? ' today' : '') + (dt === 'high' ? ' dhigh' : dt === 'low' ? ' dlow' : dt === 'off' ? ' doff' : ''),
       onClick: () => {
         onSelectDate(c.d);
         onClose();
@@ -1204,7 +1205,7 @@ function DayTypeToggle({
       color: 'var(--text3)',
       marginRight: 2
     }
-  }, "DAY"), [['high', 'HIGH', 'var(--red)'], ['low', 'LOW', 'var(--green)']].map(([t, lbl, col]) => React.createElement("button", {
+  }, "DAY"), [['high', 'HIGH', 'var(--red)'], ['low', 'LOW', 'var(--green)'], ['off', 'OFF', 'var(--text2)']].map(([t, lbl, col]) => React.createElement("button", {
     key: t,
     onClick: () => onSet && onSet(t),
     style: {
@@ -5028,7 +5029,7 @@ function PredictionsScreen({
     className: "prd-hero"
   }, React.createElement("div", {
     className: "prd-hero-l"
-  }, "Predicted Jump"), React.createElement("div", {
+  }, "Predicted Jump", effPick ? ' · ' + effLabel + ' approach' : ''), React.createElement("div", {
     className: "prd-hero-big"
   }, heroPred, React.createElement("span", null, "cm")), React.createElement("div", {
     className: "prd-hero-pb"
@@ -6084,7 +6085,7 @@ function CalScreen({
       const dotColor = dWk ? dWk.color || 'var(--green)' : dPl ? dPl.color || 'var(--primary)' : null;
       return React.createElement("button", {
         key: k,
-        className: 'cal-cell' + (c.dim ? ' dim' : '') + (dWk ? ' has' : '') + (k === todayK ? ' today' : '') + (dt === 'high' ? ' dhigh' : dt === 'low' ? ' dlow' : ''),
+        className: 'cal-cell' + (c.dim ? ' dim' : '') + (dWk ? ' has' : '') + (k === todayK ? ' today' : '') + (dt === 'high' ? ' dhigh' : dt === 'low' ? ' dlow' : dt === 'off' ? ' doff' : ''),
         onClick: () => setSel(new Date(c.d)),
         style: isSel && k !== todayK ? {
           background: 'var(--surface3)'
