@@ -1835,7 +1835,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
             style={{padding:'8px 14px',borderRadius:20,fontSize:12,fontWeight:800,background:selAth===a.id?(a.color||'var(--text)'):'var(--surface2)',color:selAth===a.id?'#fff':'var(--text2)',border:'none'}}>{a.name}</button>))}
         </div>}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:24}}>
-          <div className="profile-stat"><div className="profile-stat-v">{dur}</div><div className="profile-stat-l">Duration</div></div>
+          <div className="profile-stat"><div className="profile-stat-v">{dur}</div><div className="profile-stat-l">{wk.warmupMs>0?'Training':'Duration'}</div>{wk.warmupMs>0&&<div style={{fontSize:10,fontWeight:700,color:'var(--text3)',marginTop:3,fontFamily:'var(--mono)'}}>+{fmtDur(wk.warmupMs)} warm-up</div>}</div>
           <div className="profile-stat"><div className="profile-stat-v">{wk.exerciseIds.length}</div><div className="profile-stat-l">Exercises</div></div>
           <div className="profile-stat"><div className="profile-stat-v">{totalSets}</div><div className="profile-stat-l">Sets</div></div>
         </div>

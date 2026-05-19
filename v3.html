@@ -4077,7 +4077,15 @@ function WorkoutDetailModal({
     className: "profile-stat-v"
   }, dur), React.createElement("div", {
     className: "profile-stat-l"
-  }, "Duration")), React.createElement("div", {
+  }, wk.warmupMs > 0 ? 'Training' : 'Duration'), wk.warmupMs > 0 && React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--text3)',
+      marginTop: 3,
+      fontFamily: 'var(--mono)'
+    }
+  }, "+", fmtDur(wk.warmupMs), " warm-up")), React.createElement("div", {
     className: "profile-stat"
   }, React.createElement("div", {
     className: "profile-stat-v"
