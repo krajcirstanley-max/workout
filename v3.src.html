@@ -247,6 +247,10 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .eff-strip-l{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--text3)}
 .eff-chip{font-size:11px;font-weight:700;color:var(--text3)}
 .eff-chip b{font-weight:900;font-style:italic;font-size:13px;color:var(--primary);margin-right:2px}
+.eff-d{font-style:normal;font-size:10px;font-weight:800;margin-left:3px;color:var(--text3)}
+.eff-chip-best b,.eff-chip-best .eff-d{color:#22c55e}
+.eff-chip-ref{padding-left:9px;border-left:1.5px solid var(--border)}
+.eff-chip-ref b{color:var(--text2)}
 .sets-h{display:grid;align-items:center;gap:8px;padding:0 4px 8px;font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.2px}
 .sets-h .l{text-align:left}
 .sets-h span{text-align:center}
@@ -1224,12 +1228,25 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
       </div>
     </div>
     {mg&&(()=>{
-      const effs=sets.map((s,i)=>{const v=s.values||{};const d=Number(v['tf-dist']),t=Number(v['time-10-1m']);
-        return(d>0&&t>0)?{i,e:Math.round((d*100)/(10/t)*10)/10}:null}).filter(Boolean);
+      const effOf=(d,t)=>(d>0&&t>0)?(d*100)/(10/t):null;
+      const effs=sets.map((s,i)=>{const v=s.values||{};const e=effOf(Number(v['tf-dist']),Number(v['time-10-1m']));
+        return e!=null?{i,e:Math.round(e*10)/10}:null}).filter(Boolean);
       if(!effs.length)return null;
+      // best efficiency this athlete has logged for this step count (past sessions)
+      let best=0;
+      workouts.forEach(w=>{if(w.id===workout.id)return;const ws=w.athletes?.[activeAth]?.sets;if(!ws)return;
+        Object.keys(ws).forEach(k=>{if(markGroupOf(k)!==mg)return;
+          ws[k].forEach(s=>{if(s.flop||s.warmup)return;const v=s.values||{};
+            const e=effOf(Number(v['tf-dist']),Number(v['time-10-1m']));
+            if(e!=null&&e>best)best=e})})});
+      const bestR=best>0?Math.round(best*10)/10:null;
+      const stepLbl=MARK_GROUP_LABEL[mg]||'approach';
       return(<div className="eff-strip">
         <span className="eff-strip-l">Efficiency</span>
-        {effs.map(x=>(<span key={x.i} className="eff-chip"><b>{x.e}</b> set {x.i+1}</span>))}
+        {effs.map(x=>{const d=bestR!=null?Math.round((x.e-bestR)*10)/10:null;const beat=d!=null&&d>=0;
+          return(<span key={x.i} className={'eff-chip'+(beat?' eff-chip-best':'')}><b>{x.e}</b> set {x.i+1}
+            {d!=null&&<i className="eff-d">{(d>=0?'+':'')+d}</i>}</span>)})}
+        {bestR!=null&&<span className="eff-chip eff-chip-ref">{stepLbl} best <b>{bestR}</b></span>}
       </div>);
     })()}
     <textarea value={athNote} onChange={e=>onSetAthleteNote(eid,e.target.value)} placeholder="Add your note..." rows={1}
