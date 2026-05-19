@@ -243,6 +243,10 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 
 /* === SETS TABLE === */
 .sets-tbl{margin-top:6px}
+.eff-strip{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:9px;padding:9px 11px;background:var(--surface2);border-radius:11px}
+.eff-strip-l{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--text3)}
+.eff-chip{font-size:11px;font-weight:700;color:var(--text3)}
+.eff-chip b{font-weight:900;font-style:italic;font-size:13px;color:var(--primary);margin-right:2px}
 .sets-h{display:grid;align-items:center;gap:8px;padding:0 4px 8px;font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.2px}
 .sets-h .l{text-align:left}
 .sets-h span{text-align:center}
@@ -1219,6 +1223,15 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
         <button className="set-ctrl-btn" onClick={()=>onAddSet(eid)}>+</button>
       </div>
     </div>
+    {mg&&(()=>{
+      const effs=sets.map((s,i)=>{const v=s.values||{};const d=Number(v['tf-dist']),t=Number(v['time-10-1m']);
+        return(d>0&&t>0)?{i,e:Math.round((d*100)/(10/t)*10)/10}:null}).filter(Boolean);
+      if(!effs.length)return null;
+      return(<div className="eff-strip">
+        <span className="eff-strip-l">Efficiency</span>
+        {effs.map(x=>(<span key={x.i} className="eff-chip"><b>{x.e}</b> set {x.i+1}</span>))}
+      </div>);
+    })()}
     <textarea value={athNote} onChange={e=>onSetAthleteNote(eid,e.target.value)} placeholder="Add your note..." rows={1}
       style={{width:'100%',resize:'vertical',minHeight:40,border:'none',background:'var(--surface2)',borderRadius:10,padding:'11px 12px',fontSize:14,color:'var(--text)',fontFamily:'inherit',marginTop:10,boxSizing:'border-box'}}/>
     {showCands&&<ApproachCandidates cands={cands} today={{conditions:workout.conditions,leadIn:todayLeadIn}}
