@@ -9054,7 +9054,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_speed_2';
+    const KEY = 'wk2_v3_seed_speed_2b';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
@@ -9098,69 +9098,111 @@ function App() {
       name: 'Med Ball Throw',
       category: 'T&F',
       metrics: ['weight', 'reps']
+    }, {
+      id: 'sprint-band-overhead',
+      name: 'Band Sprint (Overhead)',
+      category: 'T&F',
+      metrics: ['distance']
+    }, {
+      id: 'sprint-band-front',
+      name: 'Band Sprint (In Front)',
+      category: 'T&F',
+      metrics: ['distance']
+    }, {
+      id: 'no-arm-sprint',
+      name: 'No-Arm Sprint',
+      category: 'T&F',
+      metrics: ['distance']
     }];
     const exIds = new Set(exercises.map(e => e.id));
     const missing = newExs.filter(e => !exIds.has(e.id));
     if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const plan = {
+      id: 'pl-speed-2',
+      date: '2026-05-19',
+      name: 'Speed Session',
+      color: '#06b6d4',
+      exerciseIds: ['ankle-dribble', 'calf-dribble', 'knee-dribble', 'free-leg-a-skip', 'free-leg-b-skip', 'zones-sprint-30m', 'sprint-band-overhead', 'sprint-band-front', 'no-arm-sprint', 'cones-sprint', 'med-ball-throw'],
+      supersets: [],
+      setConfigs: {
+        'ankle-dribble': [{
+          distance: 15
+        }],
+        'calf-dribble': [{
+          distance: 15
+        }],
+        'knee-dribble': [{
+          distance: 15
+        }],
+        'free-leg-a-skip': [{
+          reps: 4
+        }],
+        'free-leg-b-skip': [{
+          reps: 4
+        }, {
+          reps: 4
+        }],
+        'zones-sprint-30m': [{
+          distance: 30
+        }, {
+          distance: 30
+        }, {
+          distance: 30
+        }, {
+          distance: 30
+        }],
+        'sprint-band-overhead': [{
+          distance: 30
+        }, {
+          distance: 30
+        }],
+        'sprint-band-front': [{
+          distance: 30
+        }, {
+          distance: 30
+        }],
+        'no-arm-sprint': [{
+          distance: 30
+        }, {
+          distance: 30
+        }],
+        'cones-sprint': [{
+          reps: 8
+        }, {
+          reps: 8
+        }, {
+          reps: 8
+        }],
+        'med-ball-throw': [{
+          reps: 6
+        }, {
+          reps: 6
+        }, {
+          reps: 6
+        }]
+      },
+      exNotes: {
+        'free-leg-a-skip': 'Každá noha.',
+        'free-leg-b-skip': 'Každá noha.',
+        'zones-sprint-30m': 'Technika.',
+        'sprint-band-overhead': '80%.',
+        'sprint-band-front': '80%.',
+        'no-arm-sprint': '80%.',
+        'cones-sprint': '80%.'
+      },
+      notes: ''
+    };
     setPlanned(p => {
-      if (p.find(x => x.id === 'pl-speed-2')) return p;
-      return [...p, {
-        id: 'pl-speed-2',
-        date: '2026-05-19',
-        name: 'Speed Session',
-        color: '#06b6d4',
-        exerciseIds: ['ankle-dribble', 'calf-dribble', 'knee-dribble', 'free-leg-a-skip', 'free-leg-b-skip', 'zones-sprint-30m', 'cones-sprint', 'med-ball-throw'],
-        supersets: [],
-        setConfigs: {
-          'ankle-dribble': [{
-            distance: 15
-          }],
-          'calf-dribble': [{
-            distance: 15
-          }],
-          'knee-dribble': [{
-            distance: 15
-          }],
-          'free-leg-a-skip': [{
-            reps: 4
-          }],
-          'free-leg-b-skip': [{
-            reps: 4
-          }, {
-            reps: 4
-          }],
-          'zones-sprint-30m': [{
-            distance: 30
-          }, {
-            distance: 30
-          }, {
-            distance: 30
-          }, {
-            distance: 30
-          }],
-          'cones-sprint': [{
-            reps: 8
-          }, {
-            reps: 8
-          }, {
-            reps: 8
-          }],
-          'med-ball-throw': [{
-            reps: 6
-          }, {
-            reps: 6
-          }, {
-            reps: 6
-          }]
-        },
-        exNotes: {
-          'free-leg-a-skip': 'Každá noha.',
-          'free-leg-b-skip': 'Každá noha.',
-          'zones-sprint-30m': 'Technika.',
-          'cones-sprint': '80%.'
-        },
-        notes: ''
-      }];
+      const i = p.findIndex(x => x.id === 'pl-speed-2');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
     });
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
@@ -9358,6 +9400,24 @@ function App() {
         name: 'Med Ball Throw',
         category: 'T&F',
         metrics: ['weight', 'reps']
+      },
+      'sprint-band-overhead': {
+        id: 'sprint-band-overhead',
+        name: 'Band Sprint (Overhead)',
+        category: 'T&F',
+        metrics: ['distance']
+      },
+      'sprint-band-front': {
+        id: 'sprint-band-front',
+        name: 'Band Sprint (In Front)',
+        category: 'T&F',
+        metrics: ['distance']
+      },
+      'no-arm-sprint': {
+        id: 'no-arm-sprint',
+        name: 'No-Arm Sprint',
+        category: 'T&F',
+        metrics: ['distance']
       }
     };
     const have = new Set(exercises.map(e => e.id));
