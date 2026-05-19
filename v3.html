@@ -5626,8 +5626,9 @@ function StatScreen({
       }
       if (!sess) return null;
       const best = Math.min(...sess);
+      const bestIdx = sess.indexOf(best);
       const thr = best * 1.04;
-      const overN = sess.filter(t => t > thr).length;
+      const decayN = sess.filter((t, i) => i > bestIdx && t > thr).length;
       return React.createElement(React.Fragment, null, React.createElement("div", {
         className: "s-title"
       }, "Session Velocity Decay"), React.createElement("div", {
@@ -5652,7 +5653,7 @@ function StatScreen({
           width: '100%',
           height: Math.max(16, 90 - (t - best) / best * 900),
           borderRadius: 5,
-          background: t > thr ? 'var(--red)' : t === best ? 'var(--green)' : 'var(--surface3)'
+          background: t === best ? 'var(--green)' : i > bestIdx && t > thr ? 'var(--red)' : 'var(--surface3)'
         }
       }), React.createElement("span", {
         style: {
@@ -5666,7 +5667,7 @@ function StatScreen({
         style: {
           margin: '6px 14px 0'
         }
-      }, overN > 0 ? overN + ' rep' + (overN > 1 ? 's' : '') + ' fell more than 4% below your best 10m — fatigue, you should have stopped.' : 'No rep dropped past the 4% fatigue line — clean session.'));
+      }, decayN > 0 ? decayN + ' rep' + (decayN > 1 ? 's' : '') + ' dropped more than 4% off after your fastest 10m — fatigue set in, that was the point to stop.' : 'No decay — you held speed all the way through' + (bestIdx >= sess.length - 2 ? ' and peaked at the end.' : '.')));
     })(), (() => {
       let ob = null;
       sw.forEach(w => {

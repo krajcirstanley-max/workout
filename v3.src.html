@@ -2318,16 +2318,17 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
                 (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup)return;FLY.forEach(m=>{const t=Number(s.values&&s.values[m]);if(t>0)sp.push(t)})})});
               if(sp.length>=2)sess=sp}
             if(!sess)return null;
-            const best=Math.min(...sess);const thr=best*1.04;const overN=sess.filter(t=>t>thr).length;
+            const best=Math.min(...sess);const bestIdx=sess.indexOf(best);const thr=best*1.04;
+            const decayN=sess.filter((t,i)=>i>bestIdx&&t>thr).length;
             return(<>
               <div className="s-title">Session Velocity Decay</div>
               <div style={{margin:'0 14px',display:'flex',gap:4,alignItems:'flex-end',height:92}}>
                 {sess.map((t,i)=>(<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
-                  <div style={{width:'100%',height:Math.max(16,90-(t-best)/best*900),borderRadius:5,background:t>thr?'var(--red)':t===best?'var(--green)':'var(--surface3)'}}/>
+                  <div style={{width:'100%',height:Math.max(16,90-(t-best)/best*900),borderRadius:5,background:t===best?'var(--green)':(i>bestIdx&&t>thr)?'var(--red)':'var(--surface3)'}}/>
                   <span style={{fontFamily:'var(--mono)',fontSize:8,fontWeight:700,color:'var(--text3)'}}>{t.toFixed(2)}</span>
                 </div>))}
               </div>
-              <div className="prd-meta" style={{margin:'6px 14px 0'}}>{overN>0?overN+' rep'+(overN>1?'s':'')+' fell more than 4% below your best 10m — fatigue, you should have stopped.':'No rep dropped past the 4% fatigue line — clean session.'}</div>
+              <div className="prd-meta" style={{margin:'6px 14px 0'}}>{decayN>0?decayN+' rep'+(decayN>1?'s':'')+' dropped more than 4% off after your fastest 10m — fatigue set in, that was the point to stop.':'No decay — you held speed all the way through'+(bestIdx>=sess.length-2?' and peaked at the end.':'.')}</div>
             </>);
           })()}
           {(()=>{
