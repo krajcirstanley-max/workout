@@ -894,6 +894,12 @@ const METRIC_MAP = {
     unit: 'm',
     step: .05
   },
+  'wicket-spc': {
+    id: 'wicket-spc',
+    name: 'Spacing',
+    unit: 'm',
+    step: .05
+  },
   gct: {
     id: 'gct',
     name: 'GCT',
@@ -1233,7 +1239,8 @@ function DayTypeToggle({
 }
 function TrendChart({
   values,
-  lowerBetter
+  lowerBetter,
+  refLines
 }) {
   const W = 320,
     H = 84,
@@ -1252,8 +1259,12 @@ function TrendChart({
       margin: '2px 0 8px'
     }
   }, "Trend appears after 2+ sessions");
-  const min = Math.min(...values),
-    max = Math.max(...values),
+  const refs = (refLines || []).map(r => typeof r === 'number' ? {
+    val: r
+  } : r).filter(r => typeof r.val === 'number' && !isNaN(r.val));
+  const all = [...values, ...refs.map(r => r.val)];
+  const min = Math.min(...all),
+    max = Math.max(...all),
     range = max - min || 1;
   const X = i => pad + i / (values.length - 1) * (W - 2 * pad);
   const Y = v => H - pad - (v - min) / range * (H - 2 * pad);
@@ -1269,7 +1280,32 @@ function TrendChart({
       display: 'block',
       margin: '4px 0 12px'
     }
-  }, React.createElement("polygon", {
+  }, refs.map((r, i) => {
+    const y = Y(r.val);
+    const c = r.color || 'rgba(148,163,184,.7)';
+    return React.createElement("g", {
+      key: 'r' + i
+    }, React.createElement("line", {
+      x1: pad,
+      y1: y,
+      x2: W - pad,
+      y2: y,
+      stroke: c,
+      strokeWidth: "1",
+      strokeDasharray: "4 3"
+    }), r.label && React.createElement("text", {
+      x: W - pad,
+      y: y - 3,
+      textAnchor: "end",
+      fontSize: "9",
+      fontWeight: "700",
+      fill: c,
+      fontFamily: "var(--mono)",
+      style: {
+        letterSpacing: '.4px'
+      }
+    }, r.label));
+  }), React.createElement("polygon", {
     points: `${X(0)},${H} ${line} ${X(values.length - 1)},${H}`,
     fill: color,
     fillOpacity: "0.1"
@@ -3045,7 +3081,7 @@ function ActiveWorkout({
       Object.keys(w.athletes?.[activeAth]?.sets || {}).filter(k => baseExId(k) === base).forEach(k => {
         w.athletes[activeAth].sets[k].filter(s => s.completed && !s.warmup).forEach(s => {
           Object.entries(s.values || {}).forEach(([m, v]) => {
-            if (m === 'approach-mark') return;
+            if (m === 'approach-mark' || m === 'wicket-spc') return;
             const n = Number(v);
             if (!n || isNaN(n)) return;
             prior[m] = prior[m] == null ? n : lowerBetter(m) ? Math.min(prior[m], n) : Math.max(prior[m], n);
@@ -3055,7 +3091,7 @@ function ActiveWorkout({
     });
     let hit = null;
     Object.entries(vals || {}).forEach(([m, v]) => {
-      if (m === 'approach-mark') return;
+      if (m === 'approach-mark' || m === 'wicket-spc') return;
       const n = Number(v);
       if (!n || isNaN(n)) return;
       const pb = prior[m];
@@ -3488,7 +3524,7 @@ function ActiveWorkout({
     allTags: allTags,
     onSave: data => {
       const cust = data.customDuration != null ? data.customDuration : elapsed;
-      const hasVal = s => s.values && Object.entries(s.values).some(([m, v]) => m !== 'approach-mark' && v !== '' && v != null);
+      const hasVal = s => s.values && Object.entries(s.values).some(([m, v]) => m !== 'approach-mark' && m !== 'wicket-spc' && v !== '' && v != null);
       const cleanA = {};
       Object.entries(workout.athletes).forEach(([aId, ad]) => {
         const cs = {};
@@ -3967,7 +4003,7 @@ function WorkoutDetailModal({
         ad.sets[eid].forEach((s, si) => {
           if (!s.completed || s.warmup) return;
           Object.entries(s.values || {}).forEach(([mid, val]) => {
-            if (mid === 'approach-mark') return;
+            if (mid === 'approach-mark' || mid === 'wicket-spc') return;
             const v = Number(val);
             if (!v || isNaN(v)) return;
             if (!m[base]) m[base] = {};
@@ -4174,7 +4210,187 @@ function WorkoutDetailModal({
       color: 'var(--text2)',
       fontStyle: 'italic'
     }
-  }, ad.notes), wk.exerciseIds.map((eid, i) => {
+  }, ad.notes), (() => {
+    if (!ad || !workouts) return null;
+    const tagId = wk.tag?.id;
+    const cand = workouts.filter(w => w.id !== wk.id && w.endTime && w.startTime < wk.startTime && w.athletes?.[selAth] && (!tagId || w.tag?.id === tagId));
+    const prev = cand.sort((a, b) => b.startTime - a.startTime)[0];
+    if (!prev) return null;
+    const prevAd = prev.athletes[selAth];
+    if (!prevAd) return null;
+    const daysAgo = Math.round((wk.startTime - prev.startTime) / 86400000);
+    const lb = m => {
+      const md = METRIC_MAP[m];
+      return md?.unit === 's' || m === 'tf-time' || m.startsWith('split-') || m.startsWith('fly-') || m.startsWith('time-') || m.startsWith('seg-');
+    };
+    const sumReps = ss => ss.filter(s => s.completed && !s.flop).reduce((a, s) => a + (Number(s.values?.reps) || 0), 0);
+    const bestOf = (ss, m, lower) => {
+      const vs = ss.filter(s => s.completed && !s.flop).map(s => Number(s.values?.[m])).filter(v => v > 0);
+      if (!vs.length) return null;
+      return lower ? Math.min(...vs) : Math.max(...vs);
+    };
+    const byEx = [];
+    wk.exerciseIds.forEach(eid => {
+      const bx = baseExId(eid);
+      const ex = exercises.find(e => e.id === bx);
+      if (!ex) return;
+      const thisSets = ad.sets?.[eid] || [];
+      const prevK = Object.keys(prevAd.sets || {}).find(k => baseExId(k) === bx);
+      if (!prevK) return;
+      const prevSets = prevAd.sets[prevK] || [];
+      const rows = [];
+      (ex.metrics || []).forEach(m => {
+        if (m === 'approach-mark' || m === 'wicket-spc') return;
+        if (m === 'reps') {
+          const t = sumReps(thisSets),
+            p = sumReps(prevSets);
+          if (!t && !p) return;
+          rows.push({
+            m,
+            t,
+            p,
+            lower: false,
+            sum: true,
+            md: METRIC_MAP[m] || {
+              name: 'Reps',
+              unit: ''
+            }
+          });
+        } else {
+          const lower = lb(m);
+          const t = bestOf(thisSets, m, lower),
+            p = bestOf(prevSets, m, lower);
+          if (t == null && p == null) return;
+          rows.push({
+            m,
+            t,
+            p,
+            lower,
+            sum: false,
+            md: METRIC_MAP[m] || {
+              name: m,
+              unit: ''
+            }
+          });
+        }
+      });
+      if (rows.length) byEx.push({
+        name: ex.name,
+        rows
+      });
+    });
+    if (!byEx.length) return null;
+    const fmt = (v, md) => v == null ? '—' : md.unit === 's' ? (Math.round(v * 100) / 100).toFixed(2) : Math.round(v * 100) / 100;
+    return React.createElement("div", {
+      style: {
+        margin: '0 0 22px',
+        padding: 14,
+        background: 'var(--surface2)',
+        borderRadius: 14
+      }
+    }, React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        marginBottom: 10
+      }
+    }, React.createElement("div", null, React.createElement("div", {
+      style: {
+        fontFamily: 'var(--mono)',
+        fontSize: 10,
+        fontWeight: 800,
+        color: 'var(--text3)',
+        letterSpacing: '.6px',
+        textTransform: 'uppercase'
+      }
+    }, "vs Last ", wk.tag?.name || 'Session'), React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 800,
+        color: 'var(--text2)',
+        marginTop: 2
+      }
+    }, new Date(prev.startTime).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }), " \xB7 ", daysAgo, "d ago")), React.createElement("div", {
+      style: {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 8,
+        minWidth: 180,
+        fontFamily: 'var(--mono)',
+        fontSize: 9,
+        fontWeight: 800,
+        color: 'var(--text3)',
+        letterSpacing: '.5px',
+        textTransform: 'uppercase',
+        textAlign: 'right'
+      }
+    }, React.createElement("span", null, "This"), React.createElement("span", null, "Prev"), React.createElement("span", null, "\u0394"))), byEx.map((e, ei) => React.createElement("div", {
+      key: ei,
+      style: {
+        marginBottom: 8
+      }
+    }, React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 900,
+        fontStyle: 'italic',
+        color: 'var(--text)',
+        marginBottom: 3,
+        textTransform: 'uppercase',
+        letterSpacing: '-.2px'
+      }
+    }, e.name), e.rows.map((r, i) => {
+      const d = r.t != null && r.p != null ? r.t - r.p : null;
+      const better = d != null && (r.lower ? d < 0 : d > 0) && Math.abs(d) > 0.0001;
+      const worse = d != null && (r.lower ? d > 0 : d < 0) && Math.abs(d) > 0.0001;
+      return React.createElement("div", {
+        key: i,
+        style: {
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1fr 1fr 1fr',
+          gap: 8,
+          padding: '2px 0',
+          alignItems: 'center',
+          fontSize: 12,
+          fontFamily: 'var(--mono)'
+        }
+      }, React.createElement("span", {
+        style: {
+          color: 'var(--text3)',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '.4px',
+          fontSize: 9
+        }
+      }, r.md.name, r.sum ? ' Σ' : ''), React.createElement("span", {
+        style: {
+          fontWeight: 800,
+          color: 'var(--text)',
+          fontVariantNumeric: 'tabular-nums',
+          textAlign: 'right'
+        }
+      }, fmt(r.t, r.md), r.md.unit || ''), React.createElement("span", {
+        style: {
+          fontWeight: 700,
+          color: 'var(--text3)',
+          fontVariantNumeric: 'tabular-nums',
+          textAlign: 'right'
+        }
+      }, fmt(r.p, r.md), r.md.unit || ''), React.createElement("span", {
+        style: {
+          fontWeight: 900,
+          fontStyle: 'italic',
+          color: better ? '#16a34a' : worse ? '#ef4444' : 'var(--text3)',
+          fontVariantNumeric: 'tabular-nums',
+          textAlign: 'right'
+        }
+      }, d == null ? '—' : (d >= 0 ? '+' : '') + fmt(d, r.md)));
+    }))));
+  })(), wk.exerciseIds.map((eid, i) => {
     const ex = exercises.find(e => e.id === baseExId(eid));
     const sets = (ad?.sets?.[eid] || []).filter(s => s.completed || s.flop);
     if (!sets.length) return null;
@@ -5241,6 +5457,63 @@ function PredictionsScreen({
     }, cf.map(renderFactorCard), extra));
   }))));
 }
+function computeWeekLoad(sw, activeAth) {
+  const distOf = (eid, v) => {
+    if (markGroupOf(eid)) {
+      const d = Number(v['tf-dist']);
+      return d > 0 ? d : 0;
+    }
+    const mm = baseExId(eid).match(/(\d+)m/);
+    if (mm) return Number(mm[1]);
+    const d = Number(v.distance) || Number(v['tf-dist']);
+    return d > 0 ? d : 0;
+  };
+  const hi = eid => {
+    const bx = baseExId(eid);
+    return /sprint|start-|accel|overspeed|fly|wicket|bound/.test(bx) || !!markGroupOf(eid);
+  };
+  const wkm = {};
+  const wkTs = {};
+  sw.forEach(w => {
+    const ad = w.athletes[activeAth];
+    if (!ad) return;
+    const d = new Date(w.startTime);
+    const mon = new Date(d);
+    mon.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    mon.setHours(0, 0, 0, 0);
+    const key = dateKey(mon.getTime());
+    Object.keys(ad.sets || {}).forEach(eid => {
+      if (!hi(eid)) return;
+      (ad.sets[eid] || []).forEach(s => {
+        if (!s.completed || s.warmup || s.flop) return;
+        wkm[key] = (wkm[key] || 0) + distOf(eid, s.values || {});
+        wkTs[key] = mon.getTime();
+      });
+    });
+  });
+  const keys = Object.keys(wkm).sort();
+  if (!keys.length) return null;
+  const vals = keys.map(k => Math.round(wkm[k]));
+  const last = vals[vals.length - 1];
+  const prev = vals.slice(-5, -1);
+  const avg = prev.length ? prev.reduce((a, b) => a + b, 0) / prev.length : 0;
+  const spike = avg > 0 && last > avg * 1.3;
+  const mx = Math.max(...vals, 1);
+  const wkData = keys.map(k => ({
+    ts: wkTs[k],
+    val: Math.round(wkm[k])
+  }));
+  return {
+    wkm,
+    keys,
+    vals,
+    last,
+    avg,
+    spike,
+    mx,
+    wkData
+  };
+}
 function StatScreen({
   workouts,
   activeAth,
@@ -5272,7 +5545,7 @@ function StatScreen({
           lastDate: 0
         };
         ex.metrics.forEach(m => {
-          if (m === 'approach-mark') return;
+          if (m === 'approach-mark' || m === 'wicket-spc') return;
           const val = Number(v[m]);
           if (!val || isNaN(val)) return;
           const md = METRIC_MAP[m] || {
@@ -5479,9 +5752,14 @@ function StatScreen({
       style: {
         color: delta > 0 ? '#16a34a' : delta < 0 ? '#ef4444' : 'rgba(255,255,255,.5)'
       }
-    }, delta > 0 ? '▲' : delta < 0 ? '▼' : '•', " ", Math.abs(delta).toFixed(2), " m/s vs last session"), React.createElement(TrendChart, {
+    }, delta > 0 ? '▲' : delta < 0 ? '▼' : '•', " ", Math.abs(delta).toFixed(2), " m/s (", delta >= 0 ? '+' : '', (delta / (last - delta || 1) * 100).toFixed(1), "%) vs last session"), React.createElement(TrendChart, {
       values: velo,
-      lowerBetter: false
+      lowerBetter: false,
+      refLines: [{
+        val: best,
+        label: 'BEST ' + best.toFixed(2),
+        color: 'rgba(255,255,255,.45)'
+      }]
     })) : React.createElement("div", {
       className: "velo-delta",
       style: {
@@ -5577,11 +5855,14 @@ function StatScreen({
       });
     });
     const pred = maxVel && efficiency ? Math.round(maxVel * 0.95 * efficiency) : null;
-    const tend = [];
+    const tendData = [];
     sw.forEach(w => {
       const ad = w.athletes[activeAth];
       const t = Number(ad && ad.tendons);
-      if (t > 0) tend.push(t);
+      if (t > 0) tendData.push({
+        ts: w.startTime,
+        val: t
+      });
     });
     const isMiska = (athletes.find(a => a.id === activeAth) || {}).name === 'Miška';
     return React.createElement(React.Fragment, null, pred != null && React.createElement(React.Fragment, null, React.createElement("div", {
@@ -5606,69 +5887,146 @@ function StatScreen({
       style: {
         color: 'rgba(255,255,255,.7)'
       }
-    }, pred - pb >= 0 ? '+' : '', pred - pb, " cm vs PB \xB7 full breakdown on the Predict tab"))), effSeries.length >= 1 && React.createElement(React.Fragment, null, React.createElement("div", {
-      className: "s-title"
-    }, "Efficiency Trend"), React.createElement("div", {
-      style: {
-        margin: '0 14px'
-      }
-    }, React.createElement("div", {
-      style: {
-        fontSize: 24,
-        fontWeight: 900,
-        fontStyle: 'italic',
-        color: 'var(--text)'
-      }
-    }, efficiency, React.createElement("span", {
-      style: {
-        fontSize: 13,
-        color: 'var(--text3)',
-        fontWeight: 700,
-        marginLeft: 5,
-        fontStyle: 'normal'
-      }
-    }, "cm per m/s")), effSeries.length >= 2 ? React.createElement(TrendChart, {
-      values: effSeries,
-      lowerBetter: false
-    }) : React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: 'var(--text3)',
-        fontWeight: 600,
-        padding: '8px 0'
-      }
-    }, "Log another jump session for the trend."))), isMiska && tend.length >= 1 && React.createElement(React.Fragment, null, React.createElement("div", {
-      className: "s-title"
-    }, "Tendon Pain Trend"), React.createElement("div", {
-      style: {
-        margin: '0 14px 6px'
-      }
-    }, React.createElement("div", {
-      style: {
-        fontSize: 24,
-        fontWeight: 900,
-        fontStyle: 'italic',
-        color: 'var(--text)'
-      }
-    }, tend[tend.length - 1], React.createElement("span", {
-      style: {
-        fontSize: 13,
-        color: 'var(--text3)',
-        fontWeight: 700,
-        marginLeft: 5,
-        fontStyle: 'normal'
-      }
-    }, "/ 10")), tend.length >= 2 ? React.createElement(TrendChart, {
-      values: tend,
-      lowerBetter: true
-    }) : React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: 'var(--text3)',
-        fontWeight: 600,
-        padding: '8px 0'
-      }
-    }, "Logs from the \u0160\u013Eachy slider each session."))), (() => {
+    }, pred - pb >= 0 ? '+' : '', pred - pb, " cm vs PB \xB7 full breakdown on the Predict tab"))), effSeries.length >= 1 && (() => {
+      const eliteV = ELITE_EFF[prof.sex] || ELITE_EFF.m;
+      return React.createElement(React.Fragment, null, React.createElement("div", {
+        className: "s-title"
+      }, "Efficiency Trend"), React.createElement("div", {
+        style: {
+          margin: '0 14px'
+        }
+      }, React.createElement("div", {
+        style: {
+          fontSize: 24,
+          fontWeight: 900,
+          fontStyle: 'italic',
+          color: 'var(--text)'
+        }
+      }, efficiency, React.createElement("span", {
+        style: {
+          fontSize: 13,
+          color: 'var(--text3)',
+          fontWeight: 700,
+          marginLeft: 5,
+          fontStyle: 'normal'
+        }
+      }, "cm per m/s"), React.createElement("span", {
+        style: {
+          fontFamily: 'var(--mono)',
+          fontSize: 10,
+          fontWeight: 700,
+          color: 'var(--text3)',
+          marginLeft: 8,
+          letterSpacing: '.4px'
+        }
+      }, "ELITE ", eliteV)), effSeries.length >= 2 ? React.createElement(TrendChart, {
+        values: effSeries,
+        lowerBetter: false,
+        refLines: [{
+          val: eliteV,
+          label: 'ELITE ' + eliteV,
+          color: 'rgba(148,163,184,.7)'
+        }]
+      }) : React.createElement("div", {
+        style: {
+          fontSize: 12,
+          color: 'var(--text3)',
+          fontWeight: 600,
+          padding: '8px 0'
+        }
+      }, "Log another jump session for the trend.")));
+    })(), isMiska && tendData.length >= 1 && (() => {
+      const wk = computeWeekLoad(sw, activeAth);
+      const wkD = wk ? wk.wkData : [];
+      const tD = tendData;
+      const W = 320,
+        H = 110,
+        pad = 15;
+      const allTs = [...tD.map(p => p.ts), ...wkD.map(p => p.ts)];
+      const t0 = Math.min(...allTs),
+        t1 = Math.max(...allTs);
+      const tspan = t1 - t0 || 1;
+      const X = t => pad + (t - t0) / tspan * (W - 2 * pad);
+      const Ytendon = v => H - pad - v / 10 * (H - 2 * pad);
+      const wkMax = Math.max(...wkD.map(p => p.val), 1);
+      const Ywk = v => H - pad - v / wkMax * (H - 2 * pad);
+      const tendLine = tD.map(p => `${X(p.ts).toFixed(1)},${Ytendon(p.val).toFixed(1)}`).join(' ');
+      const lst = tD[tD.length - 1].val;
+      const barW = Math.max(8, (W - 2 * pad) / Math.max(6, wkD.length + 1) * 0.65);
+      return React.createElement(React.Fragment, null, React.createElement("div", {
+        className: "s-title"
+      }, "Tendon Pain Trend"), React.createElement("div", {
+        style: {
+          margin: '0 14px 6px'
+        }
+      }, React.createElement("div", {
+        style: {
+          fontSize: 24,
+          fontWeight: 900,
+          fontStyle: 'italic',
+          color: 'var(--text)'
+        }
+      }, lst, React.createElement("span", {
+        style: {
+          fontSize: 13,
+          color: 'var(--text3)',
+          fontWeight: 700,
+          marginLeft: 5,
+          fontStyle: 'normal'
+        }
+      }, "/ 10"), wkD.length > 0 && React.createElement("span", {
+        style: {
+          fontFamily: 'var(--mono)',
+          fontSize: 10,
+          fontWeight: 700,
+          color: 'var(--text3)',
+          marginLeft: 10,
+          letterSpacing: '.4px'
+        }
+      }, "vs WEEK LOAD")), React.createElement("svg", {
+        viewBox: `0 0 ${W} ${H}`,
+        style: {
+          width: '100%',
+          display: 'block',
+          margin: '4px 0 6px'
+        }
+      }, wkD.map((p, i) => {
+        const x = X(p.ts);
+        const y = Ywk(p.val);
+        return React.createElement("rect", {
+          key: 'w' + i,
+          x: x - barW / 2,
+          y: y,
+          width: barW,
+          height: H - pad - y,
+          fill: "var(--primary)",
+          fillOpacity: "0.18",
+          rx: "2"
+        });
+      }), tD.length >= 2 && React.createElement("polyline", {
+        points: tendLine,
+        fill: "none",
+        stroke: "#ef4444",
+        strokeWidth: "2.6",
+        strokeLinecap: "round",
+        strokeLinejoin: "round"
+      }), tD.map((p, i) => React.createElement("circle", {
+        key: 't' + i,
+        cx: X(p.ts),
+        cy: Ytendon(p.val),
+        r: "3.5",
+        fill: "#ef4444"
+      }))), tD.length < 2 ? React.createElement("div", {
+        style: {
+          fontSize: 12,
+          color: 'var(--text3)',
+          fontWeight: 600,
+          padding: '0 0 8px'
+        }
+      }, "Logs from the \u0160\u013Eachy slider each session.") : React.createElement("div", {
+        className: "prd-meta"
+      }, "Red line = tendon score (lower better). Pink bars = high-intensity meters that week.")));
+    })(), (() => {
       let sess = null;
       for (let i = sw.length - 1; i >= 0 && !sess; i--) {
         const ad = sw[i].athletes[activeAth];
@@ -5749,6 +6107,44 @@ function StatScreen({
       if (ob == null || maxVel == null) return null;
       const ov = Math.round(1000 / ob) / 100;
       const gap = Math.round((ov - maxVel) / maxVel * 1000) / 10;
+      const gapSeries = [];
+      sw.forEach(w => {
+        const ad = w.athletes[activeAth];
+        let bestFree = Infinity,
+          bestOv = Infinity;
+        Object.keys(ad.sets || {}).forEach(eid => {
+          const bx = baseExId(eid);
+          const isOv = bx.includes('overspeed');
+          if (bx.includes('resisted')) return;
+          (ad.sets[eid] || []).forEach(s => {
+            if (!s.completed || s.warmup) return;
+            FLY.forEach(m => {
+              const t = Number(s.values && s.values[m]);
+              if (t > 0) {
+                if (isOv) {
+                  if (t < bestOv) bestOv = t;
+                } else {
+                  if (t < bestFree) bestFree = t;
+                }
+              }
+            });
+            if (isOv) {
+              const v = s.values || {};
+              const segs = [Number(v['split-10m']), Number(v['split-20m']) - Number(v['split-10m']), Number(v['split-30m']) - Number(v['split-20m']), Number(v['split-40m']) - Number(v['split-30m'])].filter(x => x > 0.05);
+              if (segs.length) {
+                const mn = Math.min(...segs);
+                if (mn < bestOv) bestOv = mn;
+              }
+            }
+          });
+        });
+        if (bestFree < Infinity && bestOv < Infinity) {
+          const fV = 10 / bestFree,
+            oV = 10 / bestOv;
+          const gp = Math.round((oV - fV) / fV * 1000) / 10;
+          if (gp >= 0 && gp < 50) gapSeries.push(gp);
+        }
+      });
       return React.createElement(React.Fragment, null, React.createElement("div", {
         className: "s-title"
       }, "Overspeed Gap"), React.createElement("div", {
@@ -5791,73 +6187,89 @@ function StatScreen({
         style: {
           margin: '6px 14px 0'
         }
-      }, gap, "% faster assisted \u2014 a shrinking gap means your free speed is catching up."));
-    })(), (() => {
-      const distOf = (eid, v) => {
-        if (markGroupOf(eid)) {
-          const d = Number(v['tf-dist']);
-          return d > 0 ? d : 0;
+      }, gap, "% faster assisted \u2014 a shrinking gap means your free speed is catching up."), gapSeries.length >= 2 && React.createElement("div", {
+        style: {
+          margin: '8px 14px 0'
         }
-        const mm = baseExId(eid).match(/(\d+)m/);
-        if (mm) return Number(mm[1]);
-        const d = Number(v.distance) || Number(v['tf-dist']);
-        return d > 0 ? d : 0;
-      };
-      const hi = eid => {
-        const bx = baseExId(eid);
-        return /sprint|start-|accel|overspeed|fly|wicket|bound/.test(bx) || !!markGroupOf(eid);
-      };
-      const wkm = {};
-      sw.forEach(w => {
-        const ad = w.athletes[activeAth];
-        const d = new Date(w.startTime);
-        const mon = new Date(d);
-        mon.setDate(d.getDate() - (d.getDay() + 6) % 7);
-        const key = dateKey(mon.getTime());
-        Object.keys(ad.sets || {}).forEach(eid => {
-          if (!hi(eid)) return;
-          (ad.sets[eid] || []).forEach(s => {
-            if (!s.completed || s.warmup || s.flop) return;
-            wkm[key] = (wkm[key] || 0) + distOf(eid, s.values || {});
-          });
-        });
-      });
-      const keys = Object.keys(wkm).sort();
-      if (!keys.length) return null;
-      const vals = keys.map(k => Math.round(wkm[k]));
-      const last = vals[vals.length - 1];
-      const prev = vals.slice(-5, -1);
-      const avg = prev.length ? prev.reduce((a, b) => a + b, 0) / prev.length : 0;
-      const spike = avg > 0 && last > avg * 1.3;
-      const mx = Math.max(...vals, 1);
+      }, React.createElement("div", {
+        style: {
+          fontFamily: 'var(--mono)',
+          fontSize: 10,
+          fontWeight: 800,
+          color: 'var(--text3)',
+          letterSpacing: '.6px',
+          textTransform: 'uppercase'
+        }
+      }, "Gap Trend \xB7 target < 5%"), React.createElement(TrendChart, {
+        values: gapSeries,
+        lowerBetter: true,
+        refLines: [{
+          val: 5,
+          label: 'TARGET 5%',
+          color: 'rgba(34,197,94,.7)'
+        }]
+      })));
+    })(), (() => {
+      const wk = computeWeekLoad(sw, activeAth);
+      if (!wk) return null;
+      const {
+        vals,
+        last,
+        avg,
+        spike,
+        mx
+      } = wk;
+      const LO = 400,
+        HI = 600;
+      const barMax = 70;
+      const yFromVal = v => Math.min(barMax, v / mx * barMax);
       return React.createElement(React.Fragment, null, React.createElement("div", {
         className: "s-title"
       }, "Week Load"), React.createElement("div", {
         style: {
-          margin: '0 14px',
-          display: 'flex',
-          gap: 5,
-          alignItems: 'flex-end',
-          height: 84
-        }
-      }, vals.slice(-8).map((v, i, a) => React.createElement("div", {
-        key: i,
-        style: {
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 3
+          margin: '0 14px'
         }
       }, React.createElement("div", {
         style: {
-          width: '100%',
-          height: Math.max(8, v / mx * 70),
-          borderRadius: 5,
-          background: i === a.length - 1 && spike ? 'var(--red)' : 'var(--primary)'
+          display: 'flex',
+          gap: 5,
+          alignItems: 'flex-end',
+          height: barMax + 2,
+          position: 'relative'
         }
-      }), React.createElement("span", {
+      }, mx >= LO && React.createElement("div", {
         style: {
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: yFromVal(LO) + 'px',
+          height: yFromVal(Math.min(HI, mx)) - yFromVal(LO) + 'px',
+          background: 'rgba(34,197,94,.10)',
+          borderTop: '1px dashed rgba(34,197,94,.5)',
+          borderBottom: '1px dashed rgba(34,197,94,.5)',
+          pointerEvents: 'none'
+        }
+      }), vals.slice(-8).map((v, i, a) => React.createElement("div", {
+        key: i,
+        style: {
+          flex: 1,
+          height: Math.max(8, yFromVal(v)),
+          borderRadius: 5,
+          background: i === a.length - 1 && spike ? 'var(--red)' : 'var(--primary)',
+          position: 'relative',
+          zIndex: 1
+        }
+      }))), React.createElement("div", {
+        style: {
+          display: 'flex',
+          gap: 5,
+          marginTop: 3
+        }
+      }, vals.slice(-8).map((v, i) => React.createElement("span", {
+        key: i,
+        style: {
+          flex: 1,
+          textAlign: 'center',
           fontFamily: 'var(--mono)',
           fontSize: 8,
           fontWeight: 700,
@@ -5868,7 +6280,7 @@ function StatScreen({
         style: {
           margin: '6px 14px 0'
         }
-      }, spike ? '⚠ This week is ' + Math.round((last / avg - 1) * 100) + '% over your 4-week average — volume spike, injury risk.' : 'High-intensity metres per week (sprints, approaches, bounds).'));
+      }, spike ? '⚠ This week is ' + Math.round((last / avg - 1) * 100) + '% over your 4-week average — volume spike, injury risk.' : 'High-intensity metres per week (sprints, approaches, bounds). Shaded band = 400–600 m target.'));
     })());
   })(), React.createElement("div", {
     className: "s-title"
@@ -9533,6 +9945,26 @@ function App() {
           return {
             ...e,
             metrics: [...(e.metrics || []), 'height']
+          };
+        }
+        return e;
+      });
+      return changed ? n : p;
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exSynced, exercises.length]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_wicket_spc_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !exercises.length) return;
+    setExercises(p => {
+      let changed = false;
+      const n = p.map(e => {
+        if (e.id === 'wickets-8' && !(e.metrics || []).includes('wicket-spc')) {
+          changed = true;
+          return {
+            ...e,
+            metrics: [...(e.metrics || []), 'wicket-spc']
           };
         }
         return e;

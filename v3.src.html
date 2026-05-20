@@ -703,6 +703,7 @@ const METRIC_MAP={
   'time-10-1m':{id:'time-10-1m',name:'10–1m',unit:'s',step:.01},
   'time-20-11m':{id:'time-20-11m',name:'20–11m',unit:'s',step:.01},
   'approach-mark':{id:'approach-mark',name:'Mark',unit:'m',step:.05},
+  'wicket-spc':{id:'wicket-spc',name:'Spacing',unit:'m',step:.05},
   gct:{id:'gct',name:'GCT',unit:'s',step:.001},
 };
 
@@ -823,16 +824,22 @@ function DayTypeToggle({type,onSet}){
 
 // === SPARKLINE ===
 // Line chart of a metric's progression, coloured by whether it is improving
-function TrendChart({values,lowerBetter}){
+function TrendChart({values,lowerBetter,refLines}){
   const W=320,H=84,pad=15;
   if(!values||values.length<2)return(<div style={{height:30,display:'flex',alignItems:'center',color:'var(--text4)',fontFamily:'var(--mono)',fontSize:9.5,fontWeight:800,letterSpacing:'.6px',textTransform:'uppercase',margin:'2px 0 8px'}}>Trend appears after 2+ sessions</div>);
-  const min=Math.min(...values),max=Math.max(...values),range=max-min||1;
+  const refs=(refLines||[]).map(r=>typeof r==='number'?{val:r}:r).filter(r=>typeof r.val==='number'&&!isNaN(r.val));
+  const all=[...values,...refs.map(r=>r.val)];
+  const min=Math.min(...all),max=Math.max(...all),range=max-min||1;
   const X=i=>pad+(i/(values.length-1))*(W-2*pad);
   const Y=v=>H-pad-((v-min)/range)*(H-2*pad);
   const line=values.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
   const lst=values[values.length-1],fst=values[0];
   const flat=lst===fst;const color=flat?'#9ca3af':((lowerBetter?lst<fst:lst>fst)?'#16a34a':'#ef4444');
   return(<svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',display:'block',margin:'4px 0 12px'}}>
+    {refs.map((r,i)=>{const y=Y(r.val);const c=r.color||'rgba(148,163,184,.7)';return(<g key={'r'+i}>
+      <line x1={pad} y1={y} x2={W-pad} y2={y} stroke={c} strokeWidth="1" strokeDasharray="4 3"/>
+      {r.label&&<text x={W-pad} y={y-3} textAnchor="end" fontSize="9" fontWeight="700" fill={c} fontFamily="var(--mono)" style={{letterSpacing:'.4px'}}>{r.label}</text>}
+    </g>)})}
     <polygon points={`${X(0)},${H} ${line} ${X(values.length-1)},${H}`} fill={color} fillOpacity="0.1"/>
     <polyline points={line} fill="none" stroke={color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
     <circle cx={X(values.length-1)} cy={Y(lst)} r="4" fill={color}/>
@@ -1562,10 +1569,10 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     workouts.forEach(w=>{if(w.id===workout.id)return;
       Object.keys(w.athletes?.[activeAth]?.sets||{}).filter(k=>baseExId(k)===base).forEach(k=>{
         w.athletes[activeAth].sets[k].filter(s=>s.completed&&!s.warmup).forEach(s=>{
-          Object.entries(s.values||{}).forEach(([m,v])=>{if(m==='approach-mark')return;const n=Number(v);if(!n||isNaN(n))return;
+          Object.entries(s.values||{}).forEach(([m,v])=>{if(m==='approach-mark'||m==='wicket-spc')return;const n=Number(v);if(!n||isNaN(n))return;
             prior[m]=prior[m]==null?n:(lowerBetter(m)?Math.min(prior[m],n):Math.max(prior[m],n))})})})});
     let hit=null;
-    Object.entries(vals||{}).forEach(([m,v])=>{if(m==='approach-mark')return;const n=Number(v);if(!n||isNaN(n))return;
+    Object.entries(vals||{}).forEach(([m,v])=>{if(m==='approach-mark'||m==='wicket-spc')return;const n=Number(v);if(!n||isNaN(n))return;
       const pb=prior[m];if(pb==null)return;
       if(lowerBetter(m)?n<pb:n>pb){const md=METRIC_MAP[m]||{name:m,unit:''};hit={name:ex.name,text:`${md.name} ${n}${md.unit||''}`}}});
     return hit};
@@ -1665,7 +1672,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     onSave={data=>{const cust=data.customDuration!=null?data.customDuration:elapsed;
       // a set is logged if checked, a flop, OR has a value entered - so filling numbers without
       // tapping the check still saves (the approach mark alone does not count as a logged set)
-      const hasVal=s=>s.values&&Object.entries(s.values).some(([m,v])=>m!=='approach-mark'&&v!==''&&v!=null);
+      const hasVal=s=>s.values&&Object.entries(s.values).some(([m,v])=>m!=='approach-mark'&&m!=='wicket-spc'&&v!==''&&v!=null);
       const cleanA={};Object.entries(workout.athletes).forEach(([aId,ad])=>{const cs={};
         Object.entries(ad.sets||{}).forEach(([k,sets])=>{
           const keep=sets.filter(s=>s.completed||s.flop||hasVal(s)).map(s=>(s.completed||s.flop)?s:{...s,completed:true});
@@ -1812,7 +1819,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
     [...workouts].sort((a,b)=>(a.startTime||0)-(b.startTime||0)).forEach(w=>{const ad=w.athletes?.[selAth];if(!ad)return;
       Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);
         ad.sets[eid].forEach((s,si)=>{if(!s.completed||s.warmup)return;
-          Object.entries(s.values||{}).forEach(([mid,val])=>{if(mid==='approach-mark')return;const v=Number(val);if(!v||isNaN(v))return;
+          Object.entries(s.values||{}).forEach(([mid,val])=>{if(mid==='approach-mark'||mid==='wicket-spc')return;const v=Number(val);if(!v||isNaN(v))return;
             if(!m[base])m[base]={};
             const lb=lowerBetter(mid);const cur=m[base][mid];
             // STRICTLY better (not >=) so first occurrence keeps the crown
@@ -1862,6 +1869,57 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
           <input type="range" min="1" max="10" value={ad?.rpe||5} onChange={e=>setRpe(Number(e.target.value))} style={{width:'100%'}}/>
         </div>:ad?.rpe&&<div style={{textAlign:'center',marginBottom:18,fontSize:13,color:'var(--text2)'}}>RPE <strong style={{color:'var(--text)',fontSize:18,fontStyle:'italic'}}>{ad.rpe}/10</strong></div>}
         {ad?.notes&&!editing&&<div style={{padding:14,background:'var(--surface2)',borderRadius:12,marginBottom:18,fontSize:14,color:'var(--text2)',fontStyle:'italic'}}>{ad.notes}</div>}
+        {(()=>{
+          // Side-by-side comparison vs the most recent prior session of the same training type
+          if(!ad||!workouts)return null;
+          const tagId=wk.tag?.id;
+          const cand=workouts.filter(w=>w.id!==wk.id&&w.endTime&&w.startTime<wk.startTime&&w.athletes?.[selAth]&&(!tagId||w.tag?.id===tagId));
+          const prev=cand.sort((a,b)=>b.startTime-a.startTime)[0];
+          if(!prev)return null;
+          const prevAd=prev.athletes[selAth];if(!prevAd)return null;
+          const daysAgo=Math.round((wk.startTime-prev.startTime)/86400000);
+          const lb=m=>{const md=METRIC_MAP[m];return md?.unit==='s'||m==='tf-time'||m.startsWith('split-')||m.startsWith('fly-')||m.startsWith('time-')||m.startsWith('seg-')};
+          const sumReps=ss=>ss.filter(s=>s.completed&&!s.flop).reduce((a,s)=>a+(Number(s.values?.reps)||0),0);
+          const bestOf=(ss,m,lower)=>{const vs=ss.filter(s=>s.completed&&!s.flop).map(s=>Number(s.values?.[m])).filter(v=>v>0);if(!vs.length)return null;return lower?Math.min(...vs):Math.max(...vs)};
+          const byEx=[];
+          wk.exerciseIds.forEach(eid=>{const bx=baseExId(eid);
+            const ex=exercises.find(e=>e.id===bx);if(!ex)return;
+            const thisSets=ad.sets?.[eid]||[];
+            const prevK=Object.keys(prevAd.sets||{}).find(k=>baseExId(k)===bx);if(!prevK)return;
+            const prevSets=prevAd.sets[prevK]||[];
+            const rows=[];
+            (ex.metrics||[]).forEach(m=>{if(m==='approach-mark'||m==='wicket-spc')return;
+              if(m==='reps'){const t=sumReps(thisSets),p=sumReps(prevSets);if(!t&&!p)return;
+                rows.push({m,t,p,lower:false,sum:true,md:METRIC_MAP[m]||{name:'Reps',unit:''}})}
+              else{const lower=lb(m);const t=bestOf(thisSets,m,lower),p=bestOf(prevSets,m,lower);
+                if(t==null&&p==null)return;rows.push({m,t,p,lower,sum:false,md:METRIC_MAP[m]||{name:m,unit:''}})}});
+            if(rows.length)byEx.push({name:ex.name,rows})});
+          if(!byEx.length)return null;
+          const fmt=(v,md)=>v==null?'—':(md.unit==='s'?(Math.round(v*100)/100).toFixed(2):(Math.round(v*100)/100));
+          return(<div style={{margin:'0 0 22px',padding:14,background:'var(--surface2)',borderRadius:14}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:10}}>
+              <div>
+                <div style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,color:'var(--text3)',letterSpacing:'.6px',textTransform:'uppercase'}}>vs Last {wk.tag?.name||'Session'}</div>
+                <div style={{fontSize:14,fontWeight:800,color:'var(--text2)',marginTop:2}}>{new Date(prev.startTime).toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {daysAgo}d ago</div>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,minWidth:180,fontFamily:'var(--mono)',fontSize:9,fontWeight:800,color:'var(--text3)',letterSpacing:'.5px',textTransform:'uppercase',textAlign:'right'}}>
+                <span>This</span><span>Prev</span><span>Δ</span>
+              </div>
+            </div>
+            {byEx.map((e,ei)=>(<div key={ei} style={{marginBottom:8}}>
+              <div style={{fontSize:12,fontWeight:900,fontStyle:'italic',color:'var(--text)',marginBottom:3,textTransform:'uppercase',letterSpacing:'-.2px'}}>{e.name}</div>
+              {e.rows.map((r,i)=>{const d=(r.t!=null&&r.p!=null)?(r.t-r.p):null;
+                const better=d!=null&&(r.lower?d<0:d>0)&&Math.abs(d)>0.0001;
+                const worse=d!=null&&(r.lower?d>0:d<0)&&Math.abs(d)>0.0001;
+                return(<div key={i} style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 1fr 1fr',gap:8,padding:'2px 0',alignItems:'center',fontSize:12,fontFamily:'var(--mono)'}}>
+                  <span style={{color:'var(--text3)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.4px',fontSize:9}}>{r.md.name}{r.sum?' Σ':''}</span>
+                  <span style={{fontWeight:800,color:'var(--text)',fontVariantNumeric:'tabular-nums',textAlign:'right'}}>{fmt(r.t,r.md)}{r.md.unit||''}</span>
+                  <span style={{fontWeight:700,color:'var(--text3)',fontVariantNumeric:'tabular-nums',textAlign:'right'}}>{fmt(r.p,r.md)}{r.md.unit||''}</span>
+                  <span style={{fontWeight:900,fontStyle:'italic',color:better?'#16a34a':worse?'#ef4444':'var(--text3)',fontVariantNumeric:'tabular-nums',textAlign:'right'}}>{d==null?'—':((d>=0?'+':'')+fmt(d,r.md))}</span>
+                </div>);})}
+            </div>))}
+          </div>);
+        })()}
         {wk.exerciseIds.map((eid,i)=>{const ex=exercises.find(e=>e.id===baseExId(eid));
           const sets=(ad?.sets?.[eid]||[]).filter(s=>s.completed||s.flop);
           if(!sets.length)return null;
@@ -2171,6 +2229,33 @@ function PredictionsScreen({athletes,activeAth,setActiveAth,workouts,onEditAthle
   </div>);
 }
 
+// High-intensity weekly load — sprints, approaches, bounds, wickets, flys. Used
+// by the Week Load chart and overlaid behind the Tendon Pain Trend.
+function computeWeekLoad(sw,activeAth){
+  const distOf=(eid,v)=>{if(markGroupOf(eid)){const d=Number(v['tf-dist']);return d>0?d:0}
+    const mm=baseExId(eid).match(/(\d+)m/);if(mm)return Number(mm[1]);
+    const d=Number(v.distance)||Number(v['tf-dist']);return d>0?d:0};
+  const hi=eid=>{const bx=baseExId(eid);return /sprint|start-|accel|overspeed|fly|wicket|bound/.test(bx)||!!markGroupOf(eid)};
+  const wkm={};const wkTs={};
+  sw.forEach(w=>{const ad=w.athletes[activeAth];if(!ad)return;
+    const d=new Date(w.startTime);
+    const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));mon.setHours(0,0,0,0);
+    const key=dateKey(mon.getTime());
+    Object.keys(ad.sets||{}).forEach(eid=>{if(!hi(eid))return;
+      (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup||s.flop)return;
+        wkm[key]=(wkm[key]||0)+distOf(eid,s.values||{});wkTs[key]=mon.getTime()})})});
+  const keys=Object.keys(wkm).sort();
+  if(!keys.length)return null;
+  const vals=keys.map(k=>Math.round(wkm[k]));
+  const last=vals[vals.length-1];
+  const prev=vals.slice(-5,-1);
+  const avg=prev.length?prev.reduce((a,b)=>a+b,0)/prev.length:0;
+  const spike=avg>0&&last>avg*1.3;
+  const mx=Math.max(...vals,1);
+  const wkData=keys.map(k=>({ts:wkTs[k],val:Math.round(wkm[k])}));
+  return{wkm,keys,vals,last,avg,spike,mx,wkData};
+}
+
 function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSession,onResume,athletes,setActiveAth,onEditAthlete}){
   const myWk=workouts.filter(w=>w.athletes?.[activeAth]);
   const[q,setQ]=useState('');
@@ -2182,7 +2267,7 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
       ad.sets[eid].filter(s=>s.completed&&!s.warmup).forEach(s=>{
         const v=s.values||{};
         if(!prMap[base])prMap[base]={name:ex.name,category:ex.category,metrics:{},lastDate:0};
-        ex.metrics.forEach(m=>{if(m==='approach-mark')return;const val=Number(v[m]);if(!val||isNaN(val))return;
+        ex.metrics.forEach(m=>{if(m==='approach-mark'||m==='wicket-spc')return;const val=Number(v[m]);if(!val||isNaN(val))return;
           const md=METRIC_MAP[m]||{name:m,unit:''};
           // Time metrics: lower is better. Distance/weight/reps: higher is better.
           const lowerBetter=md.unit==='s'||m==='tf-time'||m.startsWith('split-')||m.startsWith('fly-')||m.startsWith('time-');
@@ -2276,8 +2361,8 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
           </div>
           <div className="velo-big">{last.toFixed(2)}<span className="velo-unit">m/s</span></div>
           {hasPrev?<><div className="velo-delta" style={{color:delta>0?'#16a34a':delta<0?'#ef4444':'rgba(255,255,255,.5)'}}>
-            {delta>0?'▲':delta<0?'▼':'•'} {Math.abs(delta).toFixed(2)} m/s vs last session</div>
-            <TrendChart values={velo} lowerBetter={false}/></>
+            {delta>0?'▲':delta<0?'▼':'•'} {Math.abs(delta).toFixed(2)} m/s ({delta>=0?'+':''}{(delta/(last-delta||1)*100).toFixed(1)}%) vs last session</div>
+            <TrendChart values={velo} lowerBetter={false} refLines={[{val:best,label:'BEST '+best.toFixed(2),color:'rgba(255,255,255,.45)'}]}/></>
             :<div className="velo-delta" style={{color:'rgba(255,255,255,.5)'}}>Log another speed session to see the trend</div>}
         </div>)})()}
 
@@ -2318,7 +2403,7 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
           Object.keys(ad.sets||{}).forEach(eid=>{if(!markGroupOf(eid))return;
             (ad.sets[eid]||[]).forEach(s=>{if(s.completed&&!s.warmup&&!s.flop){const d=Number(s.values&&s.values['tf-dist']);if(d>0&&Math.round(d*100)>pb)pb=Math.round(d*100)}})})});
         const pred=(maxVel&&efficiency)?Math.round(maxVel*0.95*efficiency):null;
-        const tend=[];sw.forEach(w=>{const ad=w.athletes[activeAth];const t=Number(ad&&ad.tendons);if(t>0)tend.push(t)});
+        const tendData=[];sw.forEach(w=>{const ad=w.athletes[activeAth];const t=Number(ad&&ad.tendons);if(t>0)tendData.push({ts:w.startTime,val:t})});
         const isMiska=(athletes.find(a=>a.id===activeAth)||{}).name==='Miška';
         return(<>
           {pred!=null&&<>
@@ -2329,20 +2414,44 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
               <div className="velo-delta" style={{color:'rgba(255,255,255,.7)'}}>{pred-pb>=0?'+':''}{pred-pb} cm vs PB · full breakdown on the Predict tab</div>
             </div>
           </>}
-          {effSeries.length>=1&&<>
+          {effSeries.length>=1&&(()=>{const eliteV=ELITE_EFF[prof.sex]||ELITE_EFF.m;return<>
             <div className="s-title">Efficiency Trend</div>
             <div style={{margin:'0 14px'}}>
-              <div style={{fontSize:24,fontWeight:900,fontStyle:'italic',color:'var(--text)'}}>{efficiency}<span style={{fontSize:13,color:'var(--text3)',fontWeight:700,marginLeft:5,fontStyle:'normal'}}>cm per m/s</span></div>
-              {effSeries.length>=2?<TrendChart values={effSeries} lowerBetter={false}/>:<div style={{fontSize:12,color:'var(--text3)',fontWeight:600,padding:'8px 0'}}>Log another jump session for the trend.</div>}
+              <div style={{fontSize:24,fontWeight:900,fontStyle:'italic',color:'var(--text)'}}>{efficiency}<span style={{fontSize:13,color:'var(--text3)',fontWeight:700,marginLeft:5,fontStyle:'normal'}}>cm per m/s</span>
+                <span style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:700,color:'var(--text3)',marginLeft:8,letterSpacing:'.4px'}}>ELITE {eliteV}</span></div>
+              {effSeries.length>=2?<TrendChart values={effSeries} lowerBetter={false} refLines={[{val:eliteV,label:'ELITE '+eliteV,color:'rgba(148,163,184,.7)'}]}/>:<div style={{fontSize:12,color:'var(--text3)',fontWeight:600,padding:'8px 0'}}>Log another jump session for the trend.</div>}
             </div>
-          </>}
-          {isMiska&&tend.length>=1&&<>
-            <div className="s-title">Tendon Pain Trend</div>
-            <div style={{margin:'0 14px 6px'}}>
-              <div style={{fontSize:24,fontWeight:900,fontStyle:'italic',color:'var(--text)'}}>{tend[tend.length-1]}<span style={{fontSize:13,color:'var(--text3)',fontWeight:700,marginLeft:5,fontStyle:'normal'}}>/ 10</span></div>
-              {tend.length>=2?<TrendChart values={tend} lowerBetter={true}/>:<div style={{fontSize:12,color:'var(--text3)',fontWeight:600,padding:'8px 0'}}>Logs from the Šľachy slider each session.</div>}
-            </div>
-          </>}
+          </>})()}
+          {isMiska&&tendData.length>=1&&(()=>{
+            const wk=computeWeekLoad(sw,activeAth);
+            const wkD=wk?wk.wkData:[];
+            const tD=tendData;
+            const W=320,H=110,pad=15;
+            const allTs=[...tD.map(p=>p.ts),...wkD.map(p=>p.ts)];
+            const t0=Math.min(...allTs),t1=Math.max(...allTs);const tspan=t1-t0||1;
+            const X=t=>pad+((t-t0)/tspan)*(W-2*pad);
+            const Ytendon=v=>H-pad-(v/10)*(H-2*pad);
+            const wkMax=Math.max(...wkD.map(p=>p.val),1);
+            const Ywk=v=>H-pad-(v/wkMax)*(H-2*pad);
+            const tendLine=tD.map(p=>`${X(p.ts).toFixed(1)},${Ytendon(p.val).toFixed(1)}`).join(' ');
+            const lst=tD[tD.length-1].val;
+            const barW=Math.max(8,(W-2*pad)/Math.max(6,wkD.length+1)*0.65);
+            return(<>
+              <div className="s-title">Tendon Pain Trend</div>
+              <div style={{margin:'0 14px 6px'}}>
+                <div style={{fontSize:24,fontWeight:900,fontStyle:'italic',color:'var(--text)'}}>{lst}<span style={{fontSize:13,color:'var(--text3)',fontWeight:700,marginLeft:5,fontStyle:'normal'}}>/ 10</span>
+                  {wkD.length>0&&<span style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:700,color:'var(--text3)',marginLeft:10,letterSpacing:'.4px'}}>vs WEEK LOAD</span>}</div>
+                <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',display:'block',margin:'4px 0 6px'}}>
+                  {wkD.map((p,i)=>{const x=X(p.ts);const y=Ywk(p.val);
+                    return(<rect key={'w'+i} x={x-barW/2} y={y} width={barW} height={H-pad-y} fill="var(--primary)" fillOpacity="0.18" rx="2"/>)})}
+                  {tD.length>=2&&<polyline points={tendLine} fill="none" stroke="#ef4444" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>}
+                  {tD.map((p,i)=>(<circle key={'t'+i} cx={X(p.ts)} cy={Ytendon(p.val)} r="3.5" fill="#ef4444"/>))}
+                </svg>
+                {tD.length<2?<div style={{fontSize:12,color:'var(--text3)',fontWeight:600,padding:'0 0 8px'}}>Logs from the Šľachy slider each session.</div>
+                  :<div className="prd-meta">Red line = tendon score (lower better). Pink bars = high-intensity meters that week.</div>}
+              </div>
+            </>);
+          })()}
           {(()=>{
             let sess=null;for(let i=sw.length-1;i>=0&&!sess;i--){const ad=sw[i].athletes[activeAth];const sp=[];
               Object.keys(ad.sets||{}).forEach(eid=>{const bx=baseExId(eid);if(bx.includes('overspeed')||bx.includes('resisted'))return;
@@ -2370,6 +2479,21 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
                   if(segs.length){const mn=Math.min(...segs);if(ob==null||mn<ob)ob=mn}})})});
             if(ob==null||maxVel==null)return null;
             const ov=Math.round(1000/ob)/100;const gap=Math.round((ov-maxVel)/maxVel*1000)/10;
+            // per-session gap %: smaller gap = transfer is working
+            const gapSeries=[];
+            sw.forEach(w=>{const ad=w.athletes[activeAth];
+              let bestFree=Infinity,bestOv=Infinity;
+              Object.keys(ad.sets||{}).forEach(eid=>{const bx=baseExId(eid);
+                const isOv=bx.includes('overspeed');if(bx.includes('resisted'))return;
+                (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup)return;
+                  FLY.forEach(m=>{const t=Number(s.values&&s.values[m]);if(t>0){if(isOv){if(t<bestOv)bestOv=t}else{if(t<bestFree)bestFree=t}}});
+                  if(isOv){const v=s.values||{};
+                    const segs=[Number(v['split-10m']),Number(v['split-20m'])-Number(v['split-10m']),Number(v['split-30m'])-Number(v['split-20m']),Number(v['split-40m'])-Number(v['split-30m'])].filter(x=>x>0.05);
+                    if(segs.length){const mn=Math.min(...segs);if(mn<bestOv)bestOv=mn}}})});
+              if(bestFree<Infinity&&bestOv<Infinity){
+                const fV=10/bestFree,oV=10/bestOv;
+                const gp=Math.round((oV-fV)/fV*1000)/10;
+                if(gp>=0&&gp<50)gapSeries.push(gp)}});
             return(<>
               <div className="s-title">Overspeed Gap</div>
               <div style={{margin:'0 14px',display:'flex',gap:10}}>
@@ -2380,30 +2504,31 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
                   </div>))}
               </div>
               <div className="prd-meta" style={{margin:'6px 14px 0'}}>{gap}% faster assisted — a shrinking gap means your free speed is catching up.</div>
+              {gapSeries.length>=2&&<div style={{margin:'8px 14px 0'}}>
+                <div style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,color:'var(--text3)',letterSpacing:'.6px',textTransform:'uppercase'}}>Gap Trend · target &lt; 5%</div>
+                <TrendChart values={gapSeries} lowerBetter={true} refLines={[{val:5,label:'TARGET 5%',color:'rgba(34,197,94,.7)'}]}/>
+              </div>}
             </>);
           })()}
           {(()=>{
-            const distOf=(eid,v)=>{if(markGroupOf(eid)){const d=Number(v['tf-dist']);return d>0?d:0}
-              const mm=baseExId(eid).match(/(\d+)m/);if(mm)return Number(mm[1]);
-              const d=Number(v.distance)||Number(v['tf-dist']);return d>0?d:0};
-            const hi=eid=>{const bx=baseExId(eid);return /sprint|start-|accel|overspeed|fly|wicket|bound/.test(bx)||!!markGroupOf(eid)};
-            const wkm={};sw.forEach(w=>{const ad=w.athletes[activeAth];const d=new Date(w.startTime);
-              const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));const key=dateKey(mon.getTime());
-              Object.keys(ad.sets||{}).forEach(eid=>{if(!hi(eid))return;
-                (ad.sets[eid]||[]).forEach(s=>{if(!s.completed||s.warmup||s.flop)return;wkm[key]=(wkm[key]||0)+distOf(eid,s.values||{})})})});
-            const keys=Object.keys(wkm).sort();if(!keys.length)return null;
-            const vals=keys.map(k=>Math.round(wkm[k]));const last=vals[vals.length-1];
-            const prev=vals.slice(-5,-1);const avg=prev.length?prev.reduce((a,b)=>a+b,0)/prev.length:0;
-            const spike=avg>0&&last>avg*1.3;const mx=Math.max(...vals,1);
+            const wk=computeWeekLoad(sw,activeAth);if(!wk)return null;
+            const{vals,last,avg,spike,mx}=wk;
+            const LO=400,HI=600;
+            const barMax=70;// px
+            const yFromVal=v=>Math.min(barMax,v/mx*barMax);
             return(<>
               <div className="s-title">Week Load</div>
-              <div style={{margin:'0 14px',display:'flex',gap:5,alignItems:'flex-end',height:84}}>
-                {vals.slice(-8).map((v,i,a)=>(<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
-                  <div style={{width:'100%',height:Math.max(8,v/mx*70),borderRadius:5,background:i===a.length-1&&spike?'var(--red)':'var(--primary)'}}/>
-                  <span style={{fontFamily:'var(--mono)',fontSize:8,fontWeight:700,color:'var(--text3)'}}>{v}</span>
-                </div>))}
+              <div style={{margin:'0 14px'}}>
+                <div style={{display:'flex',gap:5,alignItems:'flex-end',height:barMax+2,position:'relative'}}>
+                  {/* 400-600m target zone */}
+                  {mx>=LO&&<div style={{position:'absolute',left:0,right:0,bottom:yFromVal(LO)+'px',height:(yFromVal(Math.min(HI,mx))-yFromVal(LO))+'px',background:'rgba(34,197,94,.10)',borderTop:'1px dashed rgba(34,197,94,.5)',borderBottom:'1px dashed rgba(34,197,94,.5)',pointerEvents:'none'}}/>}
+                  {vals.slice(-8).map((v,i,a)=>(<div key={i} style={{flex:1,height:Math.max(8,yFromVal(v)),borderRadius:5,background:i===a.length-1&&spike?'var(--red)':'var(--primary)',position:'relative',zIndex:1}}/>))}
+                </div>
+                <div style={{display:'flex',gap:5,marginTop:3}}>
+                  {vals.slice(-8).map((v,i)=>(<span key={i} style={{flex:1,textAlign:'center',fontFamily:'var(--mono)',fontSize:8,fontWeight:700,color:'var(--text3)'}}>{v}</span>))}
+                </div>
               </div>
-              <div className="prd-meta" style={{margin:'6px 14px 0'}}>{spike?'⚠ This week is '+Math.round((last/avg-1)*100)+'% over your 4-week average — volume spike, injury risk.':'High-intensity metres per week (sprints, approaches, bounds).'}</div>
+              <div className="prd-meta" style={{margin:'6px 14px 0'}}>{spike?'⚠ This week is '+Math.round((last/avg-1)*100)+'% over your 4-week average — volume spike, injury risk.':'High-intensity metres per week (sprints, approaches, bounds). Shaded band = 400–600 m target.'}</div>
             </>);
           })()}
         </>);
@@ -3697,6 +3822,17 @@ function App(){
     setExercises(p=>{let changed=false;
       const n=p.map(e=>{if(e.id==='hurdle-jumps'&&!(e.metrics||[]).includes('height')){
         changed=true;return{...e,metrics:[...(e.metrics||[]),'height']}}return e});
+      return changed?n:p});
+    localStorage.setItem(KEY,'1')
+  },[exSynced,exercises.length]);
+
+  // Migration: 8 Wickets gets a per-set spacing (m) metric for tracking the gap
+  useEffect(()=>{const KEY='wk2_v3_wicket_spc_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!exercises.length)return;
+    setExercises(p=>{let changed=false;
+      const n=p.map(e=>{if(e.id==='wickets-8'&&!(e.metrics||[]).includes('wicket-spc')){
+        changed=true;return{...e,metrics:[...(e.metrics||[]),'wicket-spc']}}return e});
       return changed?n:p});
     localStorage.setItem(KEY,'1')
   },[exSynced,exercises.length]);
