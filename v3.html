@@ -6144,6 +6144,10 @@ function StatScreen({
             if (!s.completed || s.warmup) return;
             const v = s.values || {};
             const segs = [Number(v['split-10m']), Number(v['split-20m']) - Number(v['split-10m']), Number(v['split-30m']) - Number(v['split-20m']), Number(v['split-40m']) - Number(v['split-30m'])].filter(x => x > 0.05);
+            ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'].forEach(m => {
+              const x = Number(v[m]);
+              if (x > 0.05) segs.push(x);
+            });
             if (segs.length) {
               const mn = Math.min(...segs);
               if (ob == null || mn < ob) ob = mn;
@@ -6178,6 +6182,10 @@ function StatScreen({
             if (isOv) {
               const v = s.values || {};
               const segs = [Number(v['split-10m']), Number(v['split-20m']) - Number(v['split-10m']), Number(v['split-30m']) - Number(v['split-20m']), Number(v['split-40m']) - Number(v['split-30m'])].filter(x => x > 0.05);
+              ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'].forEach(m => {
+                const x = Number(v[m]);
+                if (x > 0.05) segs.push(x);
+              });
               if (segs.length) {
                 const mn = Math.min(...segs);
                 if (mn < bestOv) bestOv = mn;
@@ -9668,6 +9676,99 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_maxvel_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'sprint-20m',
+      name: '20m Sprint',
+      category: 'T&F',
+      metrics: ['tf-time']
+    }, {
+      id: 'resisted-sprint-20m',
+      name: '20m Resisted Sprint',
+      category: 'T&F',
+      metrics: ['tf-time']
+    }, {
+      id: 'sprint-60m',
+      name: 'Sprint 60m',
+      category: 'T&F',
+      metrics: ['tf-time', 'split-10m', 'split-20m', 'split-30m', 'split-40m', 'split-50m', 'split-60m']
+    }, {
+      id: 'approach-tech',
+      name: 'Approach Technique',
+      category: 'T&F',
+      metrics: ['distance']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const plan = {
+      id: 'pl-maxvel-1',
+      date: '2026-05-19',
+      name: 'Max Velocity',
+      color: '#dc2626',
+      exerciseIds: ['overspeed-40m', 'sprint-50m', 'sprint-60m', 'resisted-sprint-20m', 'sprint-20m', 'accel-30m', 'approach-tech'],
+      supersets: [],
+      setConfigs: {
+        'overspeed-40m': [{}, {}, {}],
+        'sprint-50m': [{}, {}],
+        'sprint-60m': [{}, {}],
+        'resisted-sprint-20m': [{}, {}],
+        'sprint-20m': [{}, {}],
+        'accel-30m': [{}, {}, {}],
+        'approach-tech': [{
+          distance: 20
+        }, {
+          distance: 25
+        }, {
+          distance: 30
+        }]
+      },
+      exNotes: {
+        'overspeed-40m': 'Len 10–10 fly segmenty.',
+        'resisted-sprint-20m': 'Light.',
+        'approach-tech': 'Technika rozbehu.'
+      },
+      notes: ''
+    };
+    setPlanned(p => {
+      const i = p.findIndex(x => x.id === 'pl-maxvel-1');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_overspeed_fly_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !exercises.length) return;
+    setExercises(p => {
+      let changed = false;
+      const n = p.map(e => {
+        if (e.id !== 'overspeed-40m') return e;
+        const want = ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'];
+        const cur = e.metrics || [];
+        if (want.every(m => cur.includes(m)) && cur.length === want.length) return e;
+        changed = true;
+        return {
+          ...e,
+          metrics: want
+        };
+      });
+      return changed ? n : p;
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exSynced, exercises.length]);
+  useEffect(() => {
     if (!exSynced) return;
     const defs = {
       'drop-jump': {
@@ -9877,6 +9978,30 @@ function App() {
       'no-arm-sprint': {
         id: 'no-arm-sprint',
         name: 'No-Arm Sprint',
+        category: 'T&F',
+        metrics: ['distance']
+      },
+      'sprint-20m': {
+        id: 'sprint-20m',
+        name: '20m Sprint',
+        category: 'T&F',
+        metrics: ['tf-time']
+      },
+      'resisted-sprint-20m': {
+        id: 'resisted-sprint-20m',
+        name: '20m Resisted Sprint',
+        category: 'T&F',
+        metrics: ['tf-time']
+      },
+      'sprint-60m': {
+        id: 'sprint-60m',
+        name: 'Sprint 60m',
+        category: 'T&F',
+        metrics: ['tf-time', 'split-10m', 'split-20m', 'split-30m', 'split-40m', 'split-50m', 'split-60m']
+      },
+      'approach-tech': {
+        id: 'approach-tech',
+        name: 'Approach Technique',
         category: 'T&F',
         metrics: ['distance']
       }
