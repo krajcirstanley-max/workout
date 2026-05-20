@@ -1242,8 +1242,12 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
     </div>
     {mg&&(()=>{
       const effOf=(d,t)=>(d>0&&t>0)?(d*100)/(10/t):null;
-      const effs=sets.map((s,i)=>{const v=s.values||{};const e=effOf(Number(v['tf-dist']),Number(v['time-10-1m']));
-        return e!=null?{i,e:Math.round(e*10)/10}:null}).filter(Boolean);
+      // skip warmups + flops; label by working-set position so chips read "set 1, 2, 3"
+      const effs=sets.map((s,i)=>{if(s.warmup||s.flop)return null;
+        const v=s.values||{};const e=effOf(Number(v['tf-dist']),Number(v['time-10-1m']));
+        if(e==null)return null;
+        const workIdx=sets.slice(0,i+1).filter(x=>!x.warmup).length;
+        return{i,workIdx,e:Math.round(e*10)/10}}).filter(Boolean);
       if(!effs.length)return null;
       // best efficiency this athlete has logged for this step count (past sessions)
       let best=0;
@@ -1257,7 +1261,7 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
       return(<div className="eff-strip">
         <span className="eff-strip-l">Efficiency</span>
         {effs.map(x=>{const d=bestR!=null?Math.round((x.e-bestR)*10)/10:null;const beat=d!=null&&d>=0;
-          return(<span key={x.i} className={'eff-chip'+(beat?' eff-chip-best':'')}><b>{x.e}</b> set {x.i+1}
+          return(<span key={x.i} className={'eff-chip'+(beat?' eff-chip-best':'')}><b>{x.e}</b> set {x.workIdx}
             {d!=null&&<i className="eff-d">{(d>=0?'+':'')+d}</i>}</span>)})}
         {bestR!=null&&<span className="eff-chip eff-chip-ref">{stepLbl} best <b>{bestR}</b></span>}
       </div>);

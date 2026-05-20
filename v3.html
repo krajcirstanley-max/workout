@@ -2354,12 +2354,16 @@ function ExerciseCard({
   }, "+ Warmup"))), mg && (() => {
     const effOf = (d, t) => d > 0 && t > 0 ? d * 100 / (10 / t) : null;
     const effs = sets.map((s, i) => {
+      if (s.warmup || s.flop) return null;
       const v = s.values || {};
       const e = effOf(Number(v['tf-dist']), Number(v['time-10-1m']));
-      return e != null ? {
+      if (e == null) return null;
+      const workIdx = sets.slice(0, i + 1).filter(x => !x.warmup).length;
+      return {
         i,
+        workIdx,
         e: Math.round(e * 10) / 10
-      } : null;
+      };
     }).filter(Boolean);
     if (!effs.length) return null;
     let best = 0;
@@ -2389,7 +2393,7 @@ function ExerciseCard({
       return React.createElement("span", {
         key: x.i,
         className: 'eff-chip' + (beat ? ' eff-chip-best' : '')
-      }, React.createElement("b", null, x.e), " set ", x.i + 1, d != null && React.createElement("i", {
+      }, React.createElement("b", null, x.e), " set ", x.workIdx, d != null && React.createElement("i", {
         className: "eff-d"
       }, (d >= 0 ? '+' : '') + d));
     }), bestR != null && React.createElement("span", {
