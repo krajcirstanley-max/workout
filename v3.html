@@ -1380,7 +1380,16 @@ function TodayScreen({
   const [monthOpen, setMonthOpen] = useState(false);
   const today = dateKey(selDate.getTime());
   const dayWk = workouts.filter(w => w.athletes?.[activeAth] && dateKey(w.startTime) === today);
-  const dayPlans = (planned || []).filter(p => p.date === today && !dayWk.some(w => w.name === p.name));
+  const planMatchesWorkout = (p, w) => {
+    if (w.planId && w.planId === p.id) return true;
+    if (w.name && p.name && w.name === p.name) return true;
+    const pIds = (p.exerciseIds || []).map(baseExId);
+    if (!pIds.length) return false;
+    const wkSet = new Set((w.exerciseIds || []).map(baseExId));
+    const overlap = pIds.filter(id => wkSet.has(id)).length;
+    return overlap >= Math.ceil(pIds.length / 2);
+  };
+  const dayPlans = (planned || []).filter(p => p.date === today && !dayWk.some(w => planMatchesWorkout(p, w)));
   const recent = workouts.filter(w => w.athletes?.[activeAth]).slice(-12).reverse();
   const monthName = selDate.toLocaleDateString('en-US', {
     month: 'short'
@@ -2906,6 +2915,7 @@ function ActiveWorkout({
     if (_sv?.workout) return _sv.workout;
     const w = {
       id: 'wk-' + uid(),
+      planId: initialPlan?.id || null,
       name: initialPlan?.name || 'Workout',
       startTime: Date.now(),
       endTime: null,
@@ -8639,11 +8649,23 @@ function App() {
     }) => {
       const v = data?.value || null;
       if (v && Date.now() - (v.updatedAt || 0) > 4 * 3600 * 1000) {
+        sb.from('wk_store').delete().eq('key', 'sharedActiveSession').then(() => {});
         setRemoteSession(null);
         return;
       }
       setRemoteSession(v);
     }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    try {
+      const snap = JSON.parse(localStorage.getItem('wk2_v3_snap') || 'null');
+      const st = snap?.workout?.startTime;
+      if (st && Date.now() - st > 8 * 3600 * 1000) {
+        ['wk2_activeSession', 'wk2_activePlan', 'wk2_activeSnapshot', 'wk2_v3_snap'].forEach(k => localStorage.removeItem(k));
+        setInWorkout(false);
+        setActivePlan(null);
+      }
+    } catch {}
   }, []);
   useEffect(() => {
     let iv = null;

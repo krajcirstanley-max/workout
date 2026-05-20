@@ -862,7 +862,17 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
   const[monthOpen,setMonthOpen]=useState(false);
   const today=dateKey(selDate.getTime());
   const dayWk=workouts.filter(w=>w.athletes?.[activeAth]&&dateKey(w.startTime)===today);
-  const dayPlans=(planned||[]).filter(p=>p.date===today&&!dayWk.some(w=>w.name===p.name));
+  // hide a planned card when a logged workout fulfilled it: matches by planId (new),
+  // by name (legacy), or by >=50% exercise overlap (covers renames)
+  const planMatchesWorkout=(p,w)=>{
+    if(w.planId&&w.planId===p.id)return true;
+    if(w.name&&p.name&&w.name===p.name)return true;
+    const pIds=(p.exerciseIds||[]).map(baseExId);if(!pIds.length)return false;
+    const wkSet=new Set((w.exerciseIds||[]).map(baseExId));
+    const overlap=pIds.filter(id=>wkSet.has(id)).length;
+    return overlap>=Math.ceil(pIds.length/2);
+  };
+  const dayPlans=(planned||[]).filter(p=>p.date===today&&!dayWk.some(w=>planMatchesWorkout(p,w)));
   const recent=workouts.filter(w=>w.athletes?.[activeAth]).slice(-12).reverse();
   const monthName=selDate.toLocaleDateString('en-US',{month:'short'}).toUpperCase()+" '"+selDate.getFullYear().toString().slice(-2);
 
@@ -1510,7 +1520,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const _sv=(()=>{try{const s=localStorage.getItem('wk2_v3_snap');return s?JSON.parse(s):null}catch{return null}})();
   const[workout,setWorkout]=useState(()=>{
     if(_sv?.workout)return _sv.workout;
-    const w={id:'wk-'+uid(),name:initialPlan?.name||'Workout',startTime:Date.now(),endTime:null,started:false,warmupMs:0,conditions:null,
+    const w={id:'wk-'+uid(),planId:initialPlan?.id||null,name:initialPlan?.name||'Workout',startTime:Date.now(),endTime:null,started:false,warmupMs:0,conditions:null,
       color:initialPlan?.color||'#2156f4',tag:initialPlan?.tag||null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},athleteNotes:{}};
     athletes.forEach(a=>{w.athletes[a.id]={sets:{}}});
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
@@ -3367,8 +3377,21 @@ function App(){
   const _pull=useCallback(()=>{if(!sb)return;
     sb.from('wk_store').select('value').eq('key','sharedActiveSession').maybeSingle().then(({data})=>{
       const v=data?.value||null;
-      if(v&&Date.now()-(v.updatedAt||0)>4*3600*1000){setRemoteSession(null);return}
+      // stale (>4h) shared sessions get actively deleted, not just hidden
+      if(v&&Date.now()-(v.updatedAt||0)>4*3600*1000){
+        sb.from('wk_store').delete().eq('key','sharedActiveSession').then(()=>{});
+        setRemoteSession(null);return}
       setRemoteSession(v)}).catch(()=>{})},[]);
+  // Auto-clear a stale local active workout (>8h since startTime). Stale sessions
+  // were keeping a phantom timer running and blocking a fresh empty workout.
+  useEffect(()=>{try{
+    const snap=JSON.parse(localStorage.getItem('wk2_v3_snap')||'null');
+    const st=snap?.workout?.startTime;
+    if(st&&Date.now()-st>8*3600*1000){
+      ['wk2_activeSession','wk2_activePlan','wk2_activeSnapshot','wk2_v3_snap'].forEach(k=>localStorage.removeItem(k));
+      setInWorkout(false);setActivePlan(null);
+    }
+  }catch{}},[]);
   // Poll for a shared session, but pause when the app is backgrounded (battery)
   useEffect(()=>{let iv=null;
     const start=()=>{if(iv)return;_pull();iv=setInterval(_pull,20000)};
