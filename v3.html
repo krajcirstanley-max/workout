@@ -9676,7 +9676,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_maxvel_2';
+    const KEY = 'wk2_v3_seed_maxvel_3';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
@@ -9691,7 +9691,7 @@ function App() {
     if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
     const plan = {
       id: 'pl-maxvel-1',
-      date: '2026-05-19',
+      date: '2026-05-20',
       name: 'Max Velocity',
       color: '#dc2626',
       exerciseIds: ['overspeed-40m', 'start-50m', 'start-60m', 'resisted-sprint', 'start-20m', 'accel-30m', 'approach-tech'],

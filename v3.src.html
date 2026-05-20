@@ -3760,9 +3760,9 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
-  // One-shot seed: 2026-05-19 Max Velocity. Reuses existing exercises in the store
+  // One-shot seed: 2026-05-20 Max Velocity. Reuses existing exercises in the store
   // (start-20m, start-50m, start-60m, resisted-sprint) instead of duplicating them.
-  useEffect(()=>{const KEY='wk2_v3_seed_maxvel_2';
+  useEffect(()=>{const KEY='wk2_v3_seed_maxvel_3';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
     if(!exercises.length)return;
@@ -3772,7 +3772,7 @@ function App(){
     const exIds=new Set(exercises.map(e=>e.id));
     const missing=newExs.filter(e=>!exIds.has(e.id));
     if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
-    const plan={id:'pl-maxvel-1',date:'2026-05-19',name:'Max Velocity',color:'#dc2626',
+    const plan={id:'pl-maxvel-1',date:'2026-05-20',name:'Max Velocity',color:'#dc2626',
       exerciseIds:['overspeed-40m','start-50m','start-60m','resisted-sprint','start-20m','accel-30m','approach-tech'],
       supersets:[],
       setConfigs:{
