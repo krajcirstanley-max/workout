@@ -277,8 +277,9 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 @keyframes prBurst{0%{transform:translate(-50%,-50%) scale(.2);opacity:0}25%{transform:translate(-50%,-50%) scale(1.4);opacity:1}80%{transform:translate(-50%,-80%) scale(1);opacity:1}100%{transform:translate(-50%,-100%) scale(.8);opacity:0}}
 .pr-toast{position:fixed;left:50%;top:36%;transform:translateX(-50%);background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0a0a0b;font-weight:900;font-style:italic;font-size:18px;padding:14px 26px;border-radius:14px;box-shadow:0 12px 40px rgba(251,191,36,.5);text-transform:uppercase;letter-spacing:1px;z-index:1000;pointer-events:none;animation:prToast 1.8s cubic-bezier(.16,1,.3,1) forwards}
 @keyframes prToast{0%{opacity:0;transform:translateX(-50%) translateY(-30px) scale(.8)}15%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}80%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-20px) scale(.9)}}
-.set-controls{display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 0 4px}
+.set-controls{display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 0 4px;flex-wrap:wrap}
 .set-ctrl-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text);font-weight:300;line-height:1}
+.set-ctrl-warmup{margin-left:6px;padding:6px 12px;border-radius:14px;border:1.5px solid var(--orange);background:transparent;color:var(--orange);font-family:var(--display);font-size:11px;font-weight:800;letter-spacing:.3px;cursor:pointer;text-transform:uppercase}
 .set-ctrl-lbl{font-size:13px;color:var(--text);font-weight:600}
 
 /* === BOTTOM ACTIVE NAV === */
@@ -2004,6 +2005,7 @@ function ExerciseCard({
   onToggleWarmup,
   onReopenSet,
   onAddSet,
+  onAddWarmup,
   onDelSet,
   onCheckAll,
   onActions,
@@ -2275,6 +2277,9 @@ function ExerciseCard({
   }))), sets.map((s, i) => {
     const emptyDone = s.completed && mds.every(m => s.values[m.id] === '' || s.values[m.id] == null);
     const pr = s.completed && !s.warmup && isPR(s);
+    const wIdx = sets.slice(0, i + 1).filter(x => x.warmup).length;
+    const workIdx = sets.slice(0, i + 1).filter(x => !x.warmup).length;
+    const numLabel = s.warmup ? 'W' + wIdx : workIdx;
     return React.createElement("div", {
       key: i,
       className: 'set-row' + (s.warmup ? ' warmup' : '') + (s.flop ? ' flop' : ''),
@@ -2284,7 +2289,7 @@ function ExerciseCard({
     }, React.createElement("button", {
       className: 'set-num-btn' + (s.warmup ? ' warmup' : ''),
       onClick: () => onToggleWarmup(eid, i)
-    }, s.warmup ? 'W' : i + 1), emptyDone ? React.createElement("div", {
+    }, numLabel), emptyDone ? React.createElement("div", {
       onClick: () => onReopenSet(eid, i),
       style: {
         gridColumn: '2 / ' + (2 + mds.length),
@@ -2343,7 +2348,10 @@ function ExerciseCard({
   }, "Set"), React.createElement("button", {
     className: "set-ctrl-btn",
     onClick: () => onAddSet(eid)
-  }, "+"))), mg && (() => {
+  }, "+"), onAddWarmup && React.createElement("button", {
+    className: "set-ctrl-warmup",
+    onClick: () => onAddWarmup(eid)
+  }, "+ Warmup"))), mg && (() => {
     const effOf = (d, t) => d > 0 && t > 0 ? d * 100 / (10 / t) : null;
     const effs = sets.map((s, i) => {
       const v = s.values || {};
@@ -3249,6 +3257,40 @@ function ActiveWorkout({
       athletes: na
     };
   });
+  const addWarmupSet = eid => setWorkout(w => {
+    const ex2 = exercises.find(e => e.id === baseExId(eid));
+    const em = w.exerciseMetrics?.[eid] || ex2?.metrics || [];
+    const na = {
+      ...w.athletes
+    };
+    Object.keys(na).forEach(aId => {
+      const ss = na[aId].sets?.[eid];
+      if (!ss) return;
+      const nv = {};
+      em.forEach(m => {
+        nv[m] = '';
+      });
+      const lastWup = ss.reduce((a, s, i) => s.warmup ? i : a, -1);
+      const insertAt = lastWup + 1;
+      const newSet = {
+        values: nv,
+        completed: false,
+        warmup: true
+      };
+      const next = [...ss.slice(0, insertAt), newSet, ...ss.slice(insertAt)];
+      na[aId] = {
+        ...na[aId],
+        sets: {
+          ...na[aId].sets,
+          [eid]: next
+        }
+      };
+    });
+    return {
+      ...w,
+      athletes: na
+    };
+  });
   const delSet = eid => setWorkout(w => {
     if ((w.athletes[activeAth].sets[eid] || []).length <= 1) return w;
     const na = {
@@ -3669,6 +3711,7 @@ function ActiveWorkout({
     onToggleWarmup: toggleWarmup,
     onReopenSet: reopenSet,
     onAddSet: addSet,
+    onAddWarmup: addWarmupSet,
     onDelSet: delSet,
     onCheckAll: checkAll,
     onActions: setActionsEid,
