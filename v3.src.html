@@ -3799,13 +3799,13 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
-  // Migration: Overspeed 40m is now logged via 10m fly segments, not splits
-  useEffect(()=>{const KEY='wk2_v3_overspeed_fly_1';
+  // Migration: Overspeed 40m is logged via two 10m fly segments (10-10), not splits
+  useEffect(()=>{const KEY='wk2_v3_overspeed_fly_2';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!exercises.length)return;
     setExercises(p=>{let changed=false;
       const n=p.map(e=>{if(e.id!=='overspeed-40m')return e;
-        const want=['fly-10m-1','fly-10m-2','fly-10m-3'];
+        const want=['fly-10m-1','fly-10m-2'];
         const cur=e.metrics||[];
         if(want.every(m=>cur.includes(m))&&cur.length===want.length)return e;
         changed=true;return{...e,metrics:want}});

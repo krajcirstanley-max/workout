@@ -9748,14 +9748,14 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_overspeed_fly_1';
+    const KEY = 'wk2_v3_overspeed_fly_2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !exercises.length) return;
     setExercises(p => {
       let changed = false;
       const n = p.map(e => {
         if (e.id !== 'overspeed-40m') return e;
-        const want = ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'];
+        const want = ['fly-10m-1', 'fly-10m-2'];
         const cur = e.metrics || [];
         if (want.every(m => cur.includes(m)) && cur.length === want.length) return e;
         changed = true;
