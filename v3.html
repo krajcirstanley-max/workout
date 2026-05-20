@@ -9676,26 +9676,11 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_maxvel_1';
+    const KEY = 'wk2_v3_seed_maxvel_2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
     const newExs = [{
-      id: 'sprint-20m',
-      name: '20m Sprint',
-      category: 'T&F',
-      metrics: ['tf-time']
-    }, {
-      id: 'resisted-sprint-20m',
-      name: '20m Resisted Sprint',
-      category: 'T&F',
-      metrics: ['tf-time']
-    }, {
-      id: 'sprint-60m',
-      name: 'Sprint 60m',
-      category: 'T&F',
-      metrics: ['tf-time', 'split-10m', 'split-20m', 'split-30m', 'split-40m', 'split-50m', 'split-60m']
-    }, {
       id: 'approach-tech',
       name: 'Approach Technique',
       category: 'T&F',
@@ -9709,14 +9694,18 @@ function App() {
       date: '2026-05-19',
       name: 'Max Velocity',
       color: '#dc2626',
-      exerciseIds: ['overspeed-40m', 'sprint-50m', 'sprint-60m', 'resisted-sprint-20m', 'sprint-20m', 'accel-30m', 'approach-tech'],
+      exerciseIds: ['overspeed-40m', 'start-50m', 'start-60m', 'resisted-sprint', 'start-20m', 'accel-30m', 'approach-tech'],
       supersets: [],
       setConfigs: {
         'overspeed-40m': [{}, {}, {}],
-        'sprint-50m': [{}, {}],
-        'sprint-60m': [{}, {}],
-        'resisted-sprint-20m': [{}, {}],
-        'sprint-20m': [{}, {}],
+        'start-50m': [{}, {}],
+        'start-60m': [{}, {}],
+        'resisted-sprint': [{
+          distance: 20
+        }, {
+          distance: 20
+        }],
+        'start-20m': [{}, {}],
         'accel-30m': [{}, {}, {}],
         'approach-tech': [{
           distance: 20
@@ -9728,7 +9717,7 @@ function App() {
       },
       exNotes: {
         'overspeed-40m': 'Len 10–10 fly segmenty.',
-        'resisted-sprint-20m': 'Light.',
+        'resisted-sprint': 'Light.',
         'approach-tech': 'Technika rozbehu.'
       },
       notes: ''
@@ -9980,24 +9969,6 @@ function App() {
         name: 'No-Arm Sprint',
         category: 'T&F',
         metrics: ['distance']
-      },
-      'sprint-20m': {
-        id: 'sprint-20m',
-        name: '20m Sprint',
-        category: 'T&F',
-        metrics: ['tf-time']
-      },
-      'resisted-sprint-20m': {
-        id: 'resisted-sprint-20m',
-        name: '20m Resisted Sprint',
-        category: 'T&F',
-        metrics: ['tf-time']
-      },
-      'sprint-60m': {
-        id: 'sprint-60m',
-        name: 'Sprint 60m',
-        category: 'T&F',
-        metrics: ['tf-time', 'split-10m', 'split-20m', 'split-30m', 'split-40m', 'split-50m', 'split-60m']
       },
       'approach-tech': {
         id: 'approach-tech',
