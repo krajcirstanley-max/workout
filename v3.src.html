@@ -857,6 +857,35 @@ function Sparkline({values,w=180,h=40}){
     <circle cx={(values.length-1)/(values.length-1)*w} cy={h-((values[values.length-1]-min)/range)*h*.85-h*.07} r="3.5" fill="var(--green)"/>
   </svg>)}
 
+// Lettered-block breakdown of a plan's exercises (with supersets, set counts,
+// dosage and per-exercise notes). Used by Today and the Calendar day view.
+function PlanBlocks({plan,exercises,activeAth}){
+  if(!plan||!plan.exerciseIds||!plan.exerciseIds.length)return null;
+  const blocks=[];const seen=new Set();let bi=0;
+  plan.exerciseIds.forEach(eid=>{if(seen.has(eid))return;
+    const ss=(plan.supersets||[]).find(g=>g.includes(eid));
+    if(ss){const grp=ss.filter(id=>plan.exerciseIds.includes(id));grp.forEach(id=>seen.add(id));
+      blocks.push({letter:String.fromCharCode(65+bi++),type:'ss',eids:grp})}
+    else{seen.add(eid);blocks.push({letter:String.fromCharCode(65+bi++),type:'single',eids:[eid]})}});
+  return(<>{blocks.map((b,bi2)=>(<div key={bi2} className="block">
+    <div className={'block-letter '+b.letter}>{b.letter}</div>
+    <div className="block-body">
+      {b.type==='ss'&&<div className="block-h" style={{fontSize:13,fontStyle:'normal',fontWeight:800,color:'var(--primary)',letterSpacing:'.6px',textTransform:'uppercase',marginBottom:8,fontFamily:'var(--mono)'}}>Superset</div>}
+      {b.eids.map(eid=>{const ex=(exercises||[]).find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?.length||3;
+        const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
+        const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
+        const note=noteFor(plan.exNotes,eid,activeAth);
+        return(<div key={eid} className="block-rep">
+          <b>{detail}</b>
+          <div style={{flex:1,minWidth:0}}>
+            <span>{ex?.name||'?'}</span>
+            {note&&<div style={{fontSize:11,color:'var(--text3)',fontWeight:500,marginTop:2,lineHeight:1.35}}>{note}</div>}
+          </div>
+        </div>)})}
+    </div>
+  </div>))}</>);
+}
+
 // === TODAY SCREEN ===
 function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises,templates,onStartPlan,onStartEmpty,onView,onAddPlan,onEditPlan,remoteSession,onResume,selDate,setSelDate,dayTypes,onSetDayType}){
   const ath=athletes.find(a=>a.id===activeAth);
@@ -926,29 +955,7 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
             <div className="ci-sub">{dayPlans[0].notes}</div>
           </div>
         </div>}
-        {(()=>{const plan=dayPlans[0];const blocks=[];const seen=new Set();let bi=0;
-          plan.exerciseIds.forEach(eid=>{if(seen.has(eid))return;
-            const ss=(plan.supersets||[]).find(g=>g.includes(eid));
-            if(ss){const grp=ss.filter(id=>plan.exerciseIds.includes(id));grp.forEach(id=>seen.add(id));
-              blocks.push({letter:String.fromCharCode(65+bi++),type:'ss',eids:grp})}
-            else{seen.add(eid);blocks.push({letter:String.fromCharCode(65+bi++),type:'single',eids:[eid]})}});
-          return blocks.map((b,bi2)=>(<div key={bi2} className="block">
-            <div className={'block-letter '+b.letter}>{b.letter}</div>
-            <div className="block-body">
-              {b.type==='ss'&&<div className="block-h" style={{fontSize:13,fontStyle:'normal',fontWeight:800,color:'var(--primary)',letterSpacing:'.6px',textTransform:'uppercase',marginBottom:8,fontFamily:'var(--mono)'}}>Superset</div>}
-              {b.eids.map(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?.length||3;
-                const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
-                const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
-                const note=noteFor(plan.exNotes,eid,activeAth);
-                return(<div key={eid} className="block-rep">
-                  <b>{detail}</b>
-                  <div style={{flex:1,minWidth:0}}>
-                    <span>{ex?.name||'?'}</span>
-                    {note&&<div style={{fontSize:11,color:'var(--text3)',fontWeight:500,marginTop:2,lineHeight:1.35}}>{note}</div>}
-                  </div>
-                </div>)})}
-            </div>
-          </div>))})()}
+        <PlanBlocks plan={dayPlans[0]} exercises={exercises} activeAth={activeAth}/>
       </>}
 
       {templates&&templates.length>0&&isToday&&dayPlans.length===0&&dayWk.length===0&&<>
@@ -2693,7 +2700,7 @@ function ProfileScreen({athletes,activeAth,setActiveAth,onEditAthlete,workouts})
   </div>)}
 
 // === CALENDAR ===
-function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAddPlan,onEditPlan,dayTypes,onSetDayType,weekLabels,onSetWeekLabel}){
+function CalScreen({workouts,planned,activeAth,exercises,onView,athletes,setActiveAth,onAddPlan,onEditPlan,onStartPlan,onStartEmpty,dayTypes,onSetDayType,weekLabels,onSetWeekLabel}){
   const[sel,setSel]=useState(new Date());
   const[m,setM]=useState(()=>{const d=new Date();d.setDate(1);return d});
   const[labelWeek,setLabelWeek]=useState(null);
@@ -2750,25 +2757,44 @@ function CalScreen({workouts,planned,activeAth,onView,athletes,setActiveAth,onAd
       </div>
       <div className="s-title">{sel.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase()}</div>
       <DayTypeToggle type={dayTypes?.[selK]} onSet={t=>onSetDayType&&onSetDayType(selK,t)}/>
-      {dayWk.length===0&&dayPlans.length===0&&<div style={{padding:'20px 14px',textAlign:'center'}}>
-        <div className="empty-text" style={{marginBottom:14}}>Nothing scheduled or logged</div>
-        {onAddPlan&&<button className="btn btn-secondary" onClick={()=>onAddPlan(selK)}><Ic n="plus" s={16}/> Plan This Day</button>}
-      </div>}
-      {dayPlans.map(plan=>(<div key={plan.id} className="wcard" style={{margin:'0 14px 10px',cursor:'pointer'}} onClick={()=>onEditPlan&&onEditPlan(plan)}>
-        <div className="wcard-head">
-          <div className="wcard-coach">
-            <div className="wcard-coach-icon" style={{background:plan.color||'var(--primary)'}}>P</div>
-            <div className="wcard-coach-info">
-              <div className="wcard-program">Planned · Tap to edit</div>
-              <div className="wcard-name">{plan.name}</div>
+      {(()=>{const isToday=selK===todayK;const isPast=sel.getTime()<Date.now()-24*3600*1000&&!isToday;
+        const canStart=isToday||isPast;
+        return(<>
+          {dayWk.length===0&&dayPlans.length===0&&<div style={{padding:'20px 14px',textAlign:'center',display:'flex',flexDirection:'column',gap:8}}>
+            <div className="empty-text" style={{marginBottom:6}}>Nothing scheduled or logged</div>
+            {isPast&&onStartEmpty&&<button className="btn btn-secondary" onClick={()=>onStartEmpty(sel)}><Ic n="play" s={16}/> Log Past Session</button>}
+            {isToday&&onStartEmpty&&<button className="btn btn-secondary" onClick={()=>onStartEmpty(sel)}><Ic n="play" s={16}/> Start Empty Workout</button>}
+            {onAddPlan&&<button className="btn btn-secondary" onClick={()=>onAddPlan(selK)}><Ic n="plus" s={16}/> Plan This Day</button>}
+          </div>}
+          {dayPlans.map(plan=>(<div key={plan.id} style={{margin:'0 14px 14px'}}>
+            <div className="wcard" style={{cursor:'pointer',marginBottom:0}} onClick={()=>onEditPlan&&onEditPlan(plan)}>
+              <div className="wcard-head">
+                <div className="wcard-coach">
+                  <div className="wcard-coach-icon" style={{background:plan.color||'var(--primary)'}}>P</div>
+                  <div className="wcard-coach-info">
+                    <div className="wcard-program">Planned · Tap to edit</div>
+                    <div className="wcard-name">{plan.name}</div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>))}
-      {dayPlans.length>0&&onAddPlan&&<div style={{padding:'4px 14px 14px'}}>
-        <button onClick={()=>onAddPlan(selK)} style={{fontFamily:'var(--mono)',fontSize:11,fontWeight:800,letterSpacing:'.8px',textTransform:'uppercase',color:'var(--primary)',padding:'10px 14px',background:'var(--primary-dim)',borderRadius:10,border:'none',width:'100%'}}>+ Add Another Plan</button>
-      </div>}
-      {dayWk.map(wk=><WorkoutLogCard key={wk.id} wk={wk} exercises={[]} onClick={()=>onView(wk)}/>)}
+            {canStart&&onStartPlan&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>onStartPlan(plan)}><Ic n="play" s={16}/> {isPast?'Log This Session':'Start Workout'}</button>}
+            <div style={{marginTop:14}}>
+              <PlanBlocks plan={plan} exercises={exercises} activeAth={activeAth}/>
+            </div>
+            {plan.notes&&<div className="ci-block" style={{marginTop:10}}>
+              <div className="ci-icon"><b style={{fontStyle:'italic'}}>i</b></div>
+              <div className="ci-content">
+                <div className="ci-h">Coach Instructions</div>
+                <div className="ci-sub">{plan.notes}</div>
+              </div>
+            </div>}
+          </div>))}
+          {dayPlans.length>0&&onAddPlan&&<div style={{padding:'4px 14px 14px'}}>
+            <button onClick={()=>onAddPlan(selK)} style={{fontFamily:'var(--mono)',fontSize:11,fontWeight:800,letterSpacing:'.8px',textTransform:'uppercase',color:'var(--primary)',padding:'10px 14px',background:'var(--primary-dim)',borderRadius:10,border:'none',width:'100%'}}>+ Add Another Plan</button>
+          </div>}
+          {dayWk.map(wk=><WorkoutLogCard key={wk.id} wk={wk} exercises={exercises} onClick={()=>onView(wk)}/>)}
+        </>)})()}
     </div>
     {labelWeek&&<div className="over" onClick={e=>e.target===e.currentTarget&&setLabelWeek(null)}>
       <div className="modal">
@@ -3460,9 +3486,10 @@ function App(){
     try{localStorage.setItem('wk2_activeSession','1')}catch{}
     try{if(dateMs)localStorage.setItem('wk2_v3_startTime_override',String(dateMs));else localStorage.removeItem('wk2_v3_startTime_override')}catch{}
     _push(null,null,null);setActivePlan(null);setInWorkout(true)};
-  const startEmptyForSelDate=()=>{const isToday=dateKey(selDate.getTime())===dateKey(Date.now());
-    if(isToday){startEmpty();return}
-    const x=new Date(selDate);x.setHours(12,0,0,0);startEmpty(x.getTime())};
+  const startEmptyForDate=d=>{const x=d instanceof Date?new Date(d):new Date(d);
+    if(dateKey(x.getTime())===dateKey(Date.now())){startEmpty();return}
+    x.setHours(12,0,0,0);startEmpty(x.getTime())};
+  const startEmptyForSelDate=()=>startEmptyForDate(selDate);
   const resumeRemote=()=>{if(!remoteSession)return;
     const plan=remoteSession.planId?(planned.find(p=>p.id===remoteSession.planId)||remoteSession.plan):remoteSession.plan;
     try{localStorage.removeItem('wk2_v3_snap')}catch{}
@@ -4037,9 +4064,10 @@ function App(){
       selDate={selDate} setSelDate={setSelDate}
       dayTypes={dayTypes} onSetDayType={setDayType}/>}
     {tab==='train'&&<CalScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth}
-      workouts={workouts} planned={planned} onView={setViewing}
+      workouts={workouts} planned={planned} exercises={exercises} onView={setViewing}
       onAddPlan={d=>setPlanEdit({date:d||dateKey(Date.now())})}
       onEditPlan={p=>setPlanEdit({plan:p})}
+      onStartPlan={startPlan} onStartEmpty={startEmptyForDate}
       dayTypes={dayTypes} onSetDayType={setDayType}
       weekLabels={weekLabels} onSetWeekLabel={setWeekLabel}/>}
     {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote} athletes={athletes} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete}/>}

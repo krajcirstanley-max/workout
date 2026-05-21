@@ -1363,6 +1363,82 @@ function Sparkline({
     fill: "var(--green)"
   }));
 }
+function PlanBlocks({
+  plan,
+  exercises,
+  activeAth
+}) {
+  if (!plan || !plan.exerciseIds || !plan.exerciseIds.length) return null;
+  const blocks = [];
+  const seen = new Set();
+  let bi = 0;
+  plan.exerciseIds.forEach(eid => {
+    if (seen.has(eid)) return;
+    const ss = (plan.supersets || []).find(g => g.includes(eid));
+    if (ss) {
+      const grp = ss.filter(id => plan.exerciseIds.includes(id));
+      grp.forEach(id => seen.add(id));
+      blocks.push({
+        letter: String.fromCharCode(65 + bi++),
+        type: 'ss',
+        eids: grp
+      });
+    } else {
+      seen.add(eid);
+      blocks.push({
+        letter: String.fromCharCode(65 + bi++),
+        type: 'single',
+        eids: [eid]
+      });
+    }
+  });
+  return React.createElement(React.Fragment, null, blocks.map((b, bi2) => React.createElement("div", {
+    key: bi2,
+    className: "block"
+  }, React.createElement("div", {
+    className: 'block-letter ' + b.letter
+  }, b.letter), React.createElement("div", {
+    className: "block-body"
+  }, b.type === 'ss' && React.createElement("div", {
+    className: "block-h",
+    style: {
+      fontSize: 13,
+      fontStyle: 'normal',
+      fontWeight: 800,
+      color: 'var(--primary)',
+      letterSpacing: '.6px',
+      textTransform: 'uppercase',
+      marginBottom: 8,
+      fontFamily: 'var(--mono)'
+    }
+  }, "Superset"), b.eids.map(eid => {
+    const ex = (exercises || []).find(e => e.id === baseExId(eid));
+    const cfg = plan.setConfigs?.[eid];
+    const sets = cfg?.length || 3;
+    const c = cfg?.[0];
+    const d = c?.distance;
+    const r = c?.reps;
+    const detail = d ? `${sets}×${d}m` : r ? `${sets}×${r}` : `${sets}×`;
+    const note = noteFor(plan.exNotes, eid, activeAth);
+    return React.createElement("div", {
+      key: eid,
+      className: "block-rep"
+    }, React.createElement("b", null, detail), React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, React.createElement("span", null, ex?.name || '?'), note && React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: 'var(--text3)',
+        fontWeight: 500,
+        marginTop: 2,
+        lineHeight: 1.35
+      }
+    }, note)));
+  })))));
+}
 function TodayScreen({
   athletes,
   activeAth,
@@ -1541,78 +1617,11 @@ function TodayScreen({
     className: "ci-h"
   }, "Coach Instructions"), React.createElement("div", {
     className: "ci-sub"
-  }, dayPlans[0].notes))), (() => {
-    const plan = dayPlans[0];
-    const blocks = [];
-    const seen = new Set();
-    let bi = 0;
-    plan.exerciseIds.forEach(eid => {
-      if (seen.has(eid)) return;
-      const ss = (plan.supersets || []).find(g => g.includes(eid));
-      if (ss) {
-        const grp = ss.filter(id => plan.exerciseIds.includes(id));
-        grp.forEach(id => seen.add(id));
-        blocks.push({
-          letter: String.fromCharCode(65 + bi++),
-          type: 'ss',
-          eids: grp
-        });
-      } else {
-        seen.add(eid);
-        blocks.push({
-          letter: String.fromCharCode(65 + bi++),
-          type: 'single',
-          eids: [eid]
-        });
-      }
-    });
-    return blocks.map((b, bi2) => React.createElement("div", {
-      key: bi2,
-      className: "block"
-    }, React.createElement("div", {
-      className: 'block-letter ' + b.letter
-    }, b.letter), React.createElement("div", {
-      className: "block-body"
-    }, b.type === 'ss' && React.createElement("div", {
-      className: "block-h",
-      style: {
-        fontSize: 13,
-        fontStyle: 'normal',
-        fontWeight: 800,
-        color: 'var(--primary)',
-        letterSpacing: '.6px',
-        textTransform: 'uppercase',
-        marginBottom: 8,
-        fontFamily: 'var(--mono)'
-      }
-    }, "Superset"), b.eids.map(eid => {
-      const ex = exercises.find(e => e.id === baseExId(eid));
-      const cfg = plan.setConfigs?.[eid];
-      const sets = cfg?.length || 3;
-      const c = cfg?.[0];
-      const d = c?.distance;
-      const r = c?.reps;
-      const detail = d ? `${sets}×${d}m` : r ? `${sets}×${r}` : `${sets}×`;
-      const note = noteFor(plan.exNotes, eid, activeAth);
-      return React.createElement("div", {
-        key: eid,
-        className: "block-rep"
-      }, React.createElement("b", null, detail), React.createElement("div", {
-        style: {
-          flex: 1,
-          minWidth: 0
-        }
-      }, React.createElement("span", null, ex?.name || '?'), note && React.createElement("div", {
-        style: {
-          fontSize: 11,
-          color: 'var(--text3)',
-          fontWeight: 500,
-          marginTop: 2,
-          lineHeight: 1.35
-        }
-      }, note)));
-    }))));
-  })()), templates && templates.length > 0 && isToday && dayPlans.length === 0 && dayWk.length === 0 && React.createElement(React.Fragment, null, React.createElement("div", {
+  }, dayPlans[0].notes))), React.createElement(PlanBlocks, {
+    plan: dayPlans[0],
+    exercises: exercises,
+    activeAth: activeAth
+  })), templates && templates.length > 0 && isToday && dayPlans.length === 0 && dayWk.length === 0 && React.createElement(React.Fragment, null, React.createElement("div", {
     className: "s-title"
   }, "Templates"), React.createElement("div", {
     className: "recent"
@@ -6647,11 +6656,14 @@ function CalScreen({
   workouts,
   planned,
   activeAth,
+  exercises,
   onView,
   athletes,
   setActiveAth,
   onAddPlan,
   onEditPlan,
+  onStartPlan,
+  onStartEmpty,
   dayTypes,
   onSetDayType,
   weekLabels,
@@ -6831,70 +6843,128 @@ function CalScreen({
   }).toUpperCase()), React.createElement(DayTypeToggle, {
     type: dayTypes?.[selK],
     onSet: t => onSetDayType && onSetDayType(selK, t)
-  }), dayWk.length === 0 && dayPlans.length === 0 && React.createElement("div", {
-    style: {
-      padding: '20px 14px',
-      textAlign: 'center'
-    }
-  }, React.createElement("div", {
-    className: "empty-text",
-    style: {
-      marginBottom: 14
-    }
-  }, "Nothing scheduled or logged"), onAddPlan && React.createElement("button", {
-    className: "btn btn-secondary",
-    onClick: () => onAddPlan(selK)
-  }, React.createElement(Ic, {
-    n: "plus",
-    s: 16
-  }), " Plan This Day")), dayPlans.map(plan => React.createElement("div", {
-    key: plan.id,
-    className: "wcard",
-    style: {
-      margin: '0 14px 10px',
-      cursor: 'pointer'
-    },
-    onClick: () => onEditPlan && onEditPlan(plan)
-  }, React.createElement("div", {
-    className: "wcard-head"
-  }, React.createElement("div", {
-    className: "wcard-coach"
-  }, React.createElement("div", {
-    className: "wcard-coach-icon",
-    style: {
-      background: plan.color || 'var(--primary)'
-    }
-  }, "P"), React.createElement("div", {
-    className: "wcard-coach-info"
-  }, React.createElement("div", {
-    className: "wcard-program"
-  }, "Planned \xB7 Tap to edit"), React.createElement("div", {
-    className: "wcard-name"
-  }, plan.name)))))), dayPlans.length > 0 && onAddPlan && React.createElement("div", {
-    style: {
-      padding: '4px 14px 14px'
-    }
-  }, React.createElement("button", {
-    onClick: () => onAddPlan(selK),
-    style: {
-      fontFamily: 'var(--mono)',
-      fontSize: 11,
-      fontWeight: 800,
-      letterSpacing: '.8px',
-      textTransform: 'uppercase',
-      color: 'var(--primary)',
-      padding: '10px 14px',
-      background: 'var(--primary-dim)',
-      borderRadius: 10,
-      border: 'none',
-      width: '100%'
-    }
-  }, "+ Add Another Plan")), dayWk.map(wk => React.createElement(WorkoutLogCard, {
-    key: wk.id,
-    wk: wk,
-    exercises: [],
-    onClick: () => onView(wk)
-  }))), labelWeek && React.createElement("div", {
+  }), (() => {
+    const isToday = selK === todayK;
+    const isPast = sel.getTime() < Date.now() - 24 * 3600 * 1000 && !isToday;
+    const canStart = isToday || isPast;
+    return React.createElement(React.Fragment, null, dayWk.length === 0 && dayPlans.length === 0 && React.createElement("div", {
+      style: {
+        padding: '20px 14px',
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8
+      }
+    }, React.createElement("div", {
+      className: "empty-text",
+      style: {
+        marginBottom: 6
+      }
+    }, "Nothing scheduled or logged"), isPast && onStartEmpty && React.createElement("button", {
+      className: "btn btn-secondary",
+      onClick: () => onStartEmpty(sel)
+    }, React.createElement(Ic, {
+      n: "play",
+      s: 16
+    }), " Log Past Session"), isToday && onStartEmpty && React.createElement("button", {
+      className: "btn btn-secondary",
+      onClick: () => onStartEmpty(sel)
+    }, React.createElement(Ic, {
+      n: "play",
+      s: 16
+    }), " Start Empty Workout"), onAddPlan && React.createElement("button", {
+      className: "btn btn-secondary",
+      onClick: () => onAddPlan(selK)
+    }, React.createElement(Ic, {
+      n: "plus",
+      s: 16
+    }), " Plan This Day")), dayPlans.map(plan => React.createElement("div", {
+      key: plan.id,
+      style: {
+        margin: '0 14px 14px'
+      }
+    }, React.createElement("div", {
+      className: "wcard",
+      style: {
+        cursor: 'pointer',
+        marginBottom: 0
+      },
+      onClick: () => onEditPlan && onEditPlan(plan)
+    }, React.createElement("div", {
+      className: "wcard-head"
+    }, React.createElement("div", {
+      className: "wcard-coach"
+    }, React.createElement("div", {
+      className: "wcard-coach-icon",
+      style: {
+        background: plan.color || 'var(--primary)'
+      }
+    }, "P"), React.createElement("div", {
+      className: "wcard-coach-info"
+    }, React.createElement("div", {
+      className: "wcard-program"
+    }, "Planned \xB7 Tap to edit"), React.createElement("div", {
+      className: "wcard-name"
+    }, plan.name))))), canStart && onStartPlan && React.createElement("button", {
+      className: "btn btn-secondary",
+      style: {
+        marginTop: 8
+      },
+      onClick: () => onStartPlan(plan)
+    }, React.createElement(Ic, {
+      n: "play",
+      s: 16
+    }), " ", isPast ? 'Log This Session' : 'Start Workout'), React.createElement("div", {
+      style: {
+        marginTop: 14
+      }
+    }, React.createElement(PlanBlocks, {
+      plan: plan,
+      exercises: exercises,
+      activeAth: activeAth
+    })), plan.notes && React.createElement("div", {
+      className: "ci-block",
+      style: {
+        marginTop: 10
+      }
+    }, React.createElement("div", {
+      className: "ci-icon"
+    }, React.createElement("b", {
+      style: {
+        fontStyle: 'italic'
+      }
+    }, "i")), React.createElement("div", {
+      className: "ci-content"
+    }, React.createElement("div", {
+      className: "ci-h"
+    }, "Coach Instructions"), React.createElement("div", {
+      className: "ci-sub"
+    }, plan.notes))))), dayPlans.length > 0 && onAddPlan && React.createElement("div", {
+      style: {
+        padding: '4px 14px 14px'
+      }
+    }, React.createElement("button", {
+      onClick: () => onAddPlan(selK),
+      style: {
+        fontFamily: 'var(--mono)',
+        fontSize: 11,
+        fontWeight: 800,
+        letterSpacing: '.8px',
+        textTransform: 'uppercase',
+        color: 'var(--primary)',
+        padding: '10px 14px',
+        background: 'var(--primary-dim)',
+        borderRadius: 10,
+        border: 'none',
+        width: '100%'
+      }
+    }, "+ Add Another Plan")), dayWk.map(wk => React.createElement(WorkoutLogCard, {
+      key: wk.id,
+      wk: wk,
+      exercises: exercises,
+      onClick: () => onView(wk)
+    })));
+  })()), labelWeek && React.createElement("div", {
     className: "over",
     onClick: e => e.target === e.currentTarget && setLabelWeek(null)
   }, React.createElement("div", {
@@ -8880,16 +8950,16 @@ function App() {
     setActivePlan(null);
     setInWorkout(true);
   };
-  const startEmptyForSelDate = () => {
-    const isToday = dateKey(selDate.getTime()) === dateKey(Date.now());
-    if (isToday) {
+  const startEmptyForDate = d => {
+    const x = d instanceof Date ? new Date(d) : new Date(d);
+    if (dateKey(x.getTime()) === dateKey(Date.now())) {
       startEmpty();
       return;
     }
-    const x = new Date(selDate);
     x.setHours(12, 0, 0, 0);
     startEmpty(x.getTime());
   };
+  const startEmptyForSelDate = () => startEmptyForDate(selDate);
   const resumeRemote = () => {
     if (!remoteSession) return;
     const plan = remoteSession.planId ? planned.find(p => p.id === remoteSession.planId) || remoteSession.plan : remoteSession.plan;
@@ -10396,6 +10466,7 @@ function App() {
     setActiveAth: setActiveAth,
     workouts: workouts,
     planned: planned,
+    exercises: exercises,
     onView: setViewing,
     onAddPlan: d => setPlanEdit({
       date: d || dateKey(Date.now())
@@ -10403,6 +10474,8 @@ function App() {
     onEditPlan: p => setPlanEdit({
       plan: p
     }),
+    onStartPlan: startPlan,
+    onStartEmpty: startEmptyForDate,
     dayTypes: dayTypes,
     onSetDayType: setDayType,
     weekLabels: weekLabels,
