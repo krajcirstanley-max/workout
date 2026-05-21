@@ -907,8 +907,9 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
           {onAddPlan&&<button className="btn btn-secondary" onClick={()=>onAddPlan(today)}><Ic n="plus" s={16}/> Create Plan</button>}
         </div>}
 
-      {dayPlans.length===0&&dayWk.length===0&&!isToday&&<div style={{padding:'30px 14px',textAlign:'center'}}>
-        <div className="empty-text" style={{marginBottom:14}}>No session on this day</div>
+      {dayPlans.length===0&&dayWk.length===0&&!isToday&&<div style={{padding:'30px 14px',textAlign:'center',display:'flex',flexDirection:'column',gap:8}}>
+        <div className="empty-text" style={{marginBottom:6}}>No session on this day</div>
+        {isPast&&<button className="btn btn-secondary" onClick={onStartEmpty}><Ic n="play" s={16}/> Log Past Session</button>}
         {onAddPlan&&<button className="btn btn-secondary" onClick={()=>onAddPlan(today)}><Ic n="plus" s={16}/> Plan Something</button>}
       </div>}
 
@@ -1530,7 +1531,11 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const _sv=(()=>{try{const s=localStorage.getItem('wk2_v3_snap');return s?JSON.parse(s):null}catch{return null}})();
   const[workout,setWorkout]=useState(()=>{
     if(_sv?.workout)return _sv.workout;
-    const w={id:'wk-'+uid(),planId:initialPlan?.id||null,name:initialPlan?.name||'Workout',startTime:Date.now(),endTime:null,started:false,warmupMs:0,conditions:null,
+    // consume a one-shot startTime override for backdated entries
+    let _startTime=Date.now();
+    try{const ov=Number(localStorage.getItem('wk2_v3_startTime_override')||0);
+      if(ov>0){_startTime=ov;localStorage.removeItem('wk2_v3_startTime_override')}}catch{}
+    const w={id:'wk-'+uid(),planId:initialPlan?.id||null,name:initialPlan?.name||'Workout',startTime:_startTime,endTime:null,started:false,warmupMs:0,conditions:null,
       color:initialPlan?.color||'#2156f4',tag:initialPlan?.tag||null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},athleteNotes:{}};
     athletes.forEach(a=>{w.athletes[a.id]={sets:{}}});
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
@@ -3448,10 +3453,16 @@ function App(){
     try{localStorage.setItem('wk2_activeSession','1');localStorage.setItem('wk2_activePlan',JSON.stringify(plan))}catch{}
     _push(plan?.id||null,plan,null);
     setActivePlan(plan);setInWorkout(true)};
-  const startEmpty=()=>{['activeSession','activePlan'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
+  // startEmpty(dateMs?) - dateMs lets you backdate a session to a past day
+  // ("log a past training I forgot to track"). Today = pass null/undefined.
+  const startEmpty=(dateMs)=>{['activeSession','activePlan'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
     try{localStorage.removeItem('wk2_v3_snap')}catch{}
     try{localStorage.setItem('wk2_activeSession','1')}catch{}
+    try{if(dateMs)localStorage.setItem('wk2_v3_startTime_override',String(dateMs));else localStorage.removeItem('wk2_v3_startTime_override')}catch{}
     _push(null,null,null);setActivePlan(null);setInWorkout(true)};
+  const startEmptyForSelDate=()=>{const isToday=dateKey(selDate.getTime())===dateKey(Date.now());
+    if(isToday){startEmpty();return}
+    const x=new Date(selDate);x.setHours(12,0,0,0);startEmpty(x.getTime())};
   const resumeRemote=()=>{if(!remoteSession)return;
     const plan=remoteSession.planId?(planned.find(p=>p.id===remoteSession.planId)||remoteSession.plan):remoteSession.plan;
     try{localStorage.removeItem('wk2_v3_snap')}catch{}
@@ -4019,7 +4030,7 @@ function App(){
     <PullRefresh/>
     {tab==='today'&&<TodayScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth}
       workouts={workouts} planned={planned} exercises={exercises} templates={templates}
-      onStartPlan={startPlan} onStartEmpty={startEmpty} onView={setViewing}
+      onStartPlan={startPlan} onStartEmpty={startEmptyForSelDate} onView={setViewing}
       onAddPlan={d=>setPlanEdit({date:d||dateKey(Date.now())})}
       onEditPlan={p=>setPlanEdit({plan:p})}
       remoteSession={remoteSession} onResume={resumeRemote}
@@ -4051,7 +4062,7 @@ function App(){
       onUpdateMetrics={(id,m)=>{setExercises(p=>p.map(e=>e.id===id?{...e,metrics:m}:e));setViewEx(e=>({...e,metrics:m}))}}/>}
     {editAthlete&&<EditAthleteModal athlete={editAthlete} onSave={a=>setAthletes(p=>p.map(x=>x.id===a.id?a:x))} onClose={()=>setEditAthlete(null)}/>}
 
-    {tab==='today'&&!minimized&&<button className="fab" onClick={startEmpty}><Ic n="plus" s={22}/></button>}
+    {tab==='today'&&!minimized&&<button className="fab" onClick={startEmptyForSelDate}><Ic n="plus" s={22}/></button>}
 
     {minimized&&<div style={{position:'fixed',left:0,right:0,bottom:'calc(var(--tab-h) + var(--safe-b))',zIndex:28,background:'var(--primary)',color:'#fff',display:'flex',alignItems:'stretch',boxShadow:'0 -4px 16px rgba(0,0,0,.12)'}}>
       <button onClick={resumeWorkout} style={{flex:1,background:'transparent',border:'none',color:'#fff',padding:'13px 6px 13px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>

@@ -1485,14 +1485,23 @@ function TodayScreen({
   }), " Create Plan")), dayPlans.length === 0 && dayWk.length === 0 && !isToday && React.createElement("div", {
     style: {
       padding: '30px 14px',
-      textAlign: 'center'
+      textAlign: 'center',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8
     }
   }, React.createElement("div", {
     className: "empty-text",
     style: {
-      marginBottom: 14
+      marginBottom: 6
     }
-  }, "No session on this day"), onAddPlan && React.createElement("button", {
+  }, "No session on this day"), isPast && React.createElement("button", {
+    className: "btn btn-secondary",
+    onClick: onStartEmpty
+  }, React.createElement(Ic, {
+    n: "play",
+    s: 16
+  }), " Log Past Session"), onAddPlan && React.createElement("button", {
     className: "btn btn-secondary",
     onClick: () => onAddPlan(today)
   }, React.createElement(Ic, {
@@ -2967,11 +2976,19 @@ function ActiveWorkout({
   })();
   const [workout, setWorkout] = useState(() => {
     if (_sv?.workout) return _sv.workout;
+    let _startTime = Date.now();
+    try {
+      const ov = Number(localStorage.getItem('wk2_v3_startTime_override') || 0);
+      if (ov > 0) {
+        _startTime = ov;
+        localStorage.removeItem('wk2_v3_startTime_override');
+      }
+    } catch {}
     const w = {
       id: 'wk-' + uid(),
       planId: initialPlan?.id || null,
       name: initialPlan?.name || 'Workout',
-      startTime: Date.now(),
+      startTime: _startTime,
       endTime: null,
       started: false,
       warmupMs: 0,
@@ -8844,7 +8861,7 @@ function App() {
     setActivePlan(plan);
     setInWorkout(true);
   };
-  const startEmpty = () => {
+  const startEmpty = dateMs => {
     ['activeSession', 'activePlan'].forEach(k => {
       try {
         localStorage.removeItem('wk2_' + k);
@@ -8856,9 +8873,22 @@ function App() {
     try {
       localStorage.setItem('wk2_activeSession', '1');
     } catch {}
+    try {
+      if (dateMs) localStorage.setItem('wk2_v3_startTime_override', String(dateMs));else localStorage.removeItem('wk2_v3_startTime_override');
+    } catch {}
     _push(null, null, null);
     setActivePlan(null);
     setInWorkout(true);
+  };
+  const startEmptyForSelDate = () => {
+    const isToday = dateKey(selDate.getTime()) === dateKey(Date.now());
+    if (isToday) {
+      startEmpty();
+      return;
+    }
+    const x = new Date(selDate);
+    x.setHours(12, 0, 0, 0);
+    startEmpty(x.getTime());
   };
   const resumeRemote = () => {
     if (!remoteSession) return;
@@ -10346,7 +10376,7 @@ function App() {
     exercises: exercises,
     templates: templates,
     onStartPlan: startPlan,
-    onStartEmpty: startEmpty,
+    onStartEmpty: startEmptyForSelDate,
     onView: setViewing,
     onAddPlan: d => setPlanEdit({
       date: d || dateKey(Date.now())
@@ -10457,7 +10487,7 @@ function App() {
     onClose: () => setEditAthlete(null)
   }), tab === 'today' && !minimized && React.createElement("button", {
     className: "fab",
-    onClick: startEmpty
+    onClick: startEmptyForSelDate
   }, React.createElement(Ic, {
     n: "plus",
     s: 22
