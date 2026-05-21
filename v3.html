@@ -3376,12 +3376,14 @@ function ActiveWorkout({
   });
   const delSet = eid => setWorkout(w => {
     if ((w.athletes[activeAth].sets[eid] || []).length <= 1) return w;
+    const isUsed = s => s.completed || s.flop || s.values && Object.entries(s.values).some(([m, v]) => m !== 'approach-mark' && m !== 'wicket-spc' && v !== '' && v != null);
     const na = {
       ...w.athletes
     };
     Object.keys(na).forEach(aId => {
       const ss = na[aId].sets?.[eid];
       if (!ss || ss.length <= 1) return;
+      if (aId !== activeAth && isUsed(ss[ss.length - 1])) return;
       na[aId] = {
         ...na[aId],
         sets: {

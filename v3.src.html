@@ -1650,9 +1650,14 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       const next=[...ss.slice(0,insertAt),newSet,...ss.slice(insertAt)];
       na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:next}}});
     return{...w,athletes:na}});
+  // Remove the trailing set. For the active athlete, always remove it (they asked).
+  // For OTHER athletes, only remove if their trailing set is empty - i.e. don't
+  // wipe a set the partner already completed/filled in.
   const delSet=eid=>setWorkout(w=>{if((w.athletes[activeAth].sets[eid]||[]).length<=1)return w;
+    const isUsed=s=>s.completed||s.flop||(s.values&&Object.entries(s.values).some(([m,v])=>m!=='approach-mark'&&m!=='wicket-spc'&&v!==''&&v!=null));
     const na={...w.athletes};
     Object.keys(na).forEach(aId=>{const ss=na[aId].sets?.[eid];if(!ss||ss.length<=1)return;
+      if(aId!==activeAth&&isUsed(ss[ss.length-1]))return;
       na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:ss.slice(0,-1)}}});
     return{...w,athletes:na}});
   const setAthleteNote=(eid,text)=>setWorkout(w=>({...w,athleteNotes:{...(w.athleteNotes||{}),[eid]:{...((w.athleteNotes||{})[eid]||{}),[activeAth]:text}}}));
