@@ -1033,6 +1033,13 @@ const Ic = ({
     })),
     flame: React.createElement(React.Fragment, null, React.createElement("path", {
       d: "M12 2C6 8 6 12 6 14a6 6 0 0012 0c0-2.5-1.5-4-2.5-5C14 8 14 6 12 2z"
+    })),
+    wind: React.createElement(React.Fragment, null, React.createElement("path", {
+      d: "M9.59 4.59A2 2 0 1111 8H2"
+    }), React.createElement("path", {
+      d: "M17.73 17.41A2.5 2.5 0 1119.5 13.5H2"
+    }), React.createElement("path", {
+      d: "M14 12h9"
     }))
   };
   return React.createElement("svg", {
@@ -2647,15 +2654,56 @@ function WorkoutPrelude({
   onCancel
 }) {
   const aths = athletes.filter(a => workoutAthletes[a.id]);
-  const [phase, setPhase] = useState('checkin');
-  const [tag, setTag] = useState(initialTag || null);
+  const loadJ = (k, fb) => {
+    try {
+      const v = localStorage.getItem(k);
+      return v ? JSON.parse(v) : fb;
+    } catch {
+      return fb;
+    }
+  };
+  const [phase, setPhase] = useState(() => loadJ('wk2_v3_prelude_phase', 'checkin'));
+  const [tag, setTag] = useState(() => loadJ('wk2_v3_prelude_tag', initialTag || null));
   const [rdAth, setRdAth] = useState(aths[0]?.id);
-  const [readiness, setReadiness] = useState({});
-  const [warmStart, setWarmStart] = useState(null);
-  const [conditions, setConditions] = useState({
+  const [readiness, setReadiness] = useState(() => loadJ('wk2_v3_prelude_rd', {}));
+  const [warmStart, setWarmStart] = useState(() => {
+    const v = loadJ('wk2_v3_prelude_warmStart', null);
+    return v || null;
+  });
+  const [conditions, setConditions] = useState(() => loadJ('wk2_v3_prelude_cond', {
     venue: null,
     temp: null,
     wind: null
+  }));
+  useEffect(() => {
+    try {
+      localStorage.setItem('wk2_v3_prelude_phase', JSON.stringify(phase));
+    } catch {}
+  }, [phase]);
+  useEffect(() => {
+    try {
+      localStorage.setItem('wk2_v3_prelude_tag', JSON.stringify(tag));
+    } catch {}
+  }, [tag]);
+  useEffect(() => {
+    try {
+      localStorage.setItem('wk2_v3_prelude_rd', JSON.stringify(readiness));
+    } catch {}
+  }, [readiness]);
+  useEffect(() => {
+    try {
+      localStorage.setItem('wk2_v3_prelude_warmStart', JSON.stringify(warmStart));
+    } catch {}
+  }, [warmStart]);
+  useEffect(() => {
+    try {
+      localStorage.setItem('wk2_v3_prelude_cond', JSON.stringify(conditions));
+    } catch {}
+  }, [conditions]);
+  const clearPrelude = () => ['wk2_v3_prelude_phase', 'wk2_v3_prelude_tag', 'wk2_v3_prelude_rd', 'wk2_v3_prelude_warmStart', 'wk2_v3_prelude_cond'].forEach(k => {
+    try {
+      localStorage.removeItem(k);
+    } catch {}
   });
   const [wx, setWx] = useState({
     status: 'loading'
@@ -2714,12 +2762,15 @@ function WorkoutPrelude({
   }));
   const cur = readiness[rdAth] || {};
   const prev = lastTaggedSession(workouts, tag?.id);
-  const finish = ms => onStart({
-    tag,
-    readiness,
-    conditions,
-    warmupMs: ms || 0
-  });
+  const finish = ms => {
+    clearPrelude();
+    onStart({
+      tag,
+      readiness,
+      conditions,
+      warmupMs: ms || 0
+    });
+  };
   if (phase === 'warmup') return React.createElement("div", {
     className: "prelude"
   }, React.createElement("div", {
@@ -2767,7 +2818,10 @@ function WorkoutPrelude({
     className: "prelude-top"
   }, React.createElement("button", {
     className: "lnk",
-    onClick: onCancel
+    onClick: () => {
+      clearPrelude();
+      onCancel && onCancel();
+    }
   }, React.createElement(Ic, {
     n: "x",
     s: 20
@@ -2970,8 +3024,23 @@ function ActiveWorkout({
   const [phase, setPhase] = useState(() => _sv?.workout && _sv.workout.started === false ? 'prelude' : _sv?.workout ? 'active' : 'prelude');
   const [blockIdx, setBlockIdx] = useState(() => _sv?.blockIdx || 0);
   const [showOrganize, setShowOrganize] = useState(false);
+  const [showConditions, setShowConditions] = useState(false);
   const [historyEid, setHistoryEid] = useState(null);
   const [prToast, setPrToast] = useState(null);
+  const setCond = (k, v) => setWorkout(w => {
+    const c = w.conditions || {
+      venue: null,
+      temp: null,
+      wind: null
+    };
+    return {
+      ...w,
+      conditions: {
+        ...c,
+        [k]: c[k] === v ? null : v
+      }
+    };
+  });
   useEffect(() => {
     if (!prToast) return;
     const t = setTimeout(() => setPrToast(null), 3400);
@@ -3631,7 +3700,14 @@ function ActiveWorkout({
     s: 24
   })), React.createElement(WorkoutTimer, {
     startTime: workout.startTime
-  }), React.createElement("div", {
+  }), workout.tag?.id !== 'gym' ? React.createElement("button", {
+    className: "aw-back",
+    onClick: () => setShowConditions(true),
+    title: "Edit conditions"
+  }, React.createElement(Ic, {
+    n: "wind",
+    s: 20
+  })) : React.createElement("div", {
     style: {
       width: 34
     }
@@ -3843,7 +3919,59 @@ function ActiveWorkout({
     current: metricsEff,
     onChange: changeMetrics,
     onClose: () => setMetricsEid(null)
-  }), historyEid && exercises.find(e => e.id === baseExId(historyEid)) && React.createElement(ExerciseDetail, {
+  }), showConditions && React.createElement("div", {
+    className: "over",
+    onClick: e => e.target === e.currentTarget && setShowConditions(false)
+  }, React.createElement("div", {
+    className: "modal",
+    style: {
+      maxWidth: 480
+    }
+  }, React.createElement("div", {
+    className: "modal-h"
+  }, React.createElement("div", {
+    className: "modal-t"
+  }, "Conditions"), React.createElement("button", {
+    className: "modal-x",
+    onClick: () => setShowConditions(false)
+  }, React.createElement(Ic, {
+    n: "x",
+    s: 20
+  }))), React.createElement("div", {
+    className: "modal-b"
+  }, React.createElement("div", {
+    className: "cond-lbl"
+  }, "Venue"), React.createElement("div", {
+    className: "cond-seg"
+  }, [['indoor', 'Indoor'], ['outdoor', 'Outdoor']].map(([v, l]) => React.createElement("button", {
+    key: v,
+    className: 'cond-opt' + (workout.conditions?.venue === v ? ' on' : ''),
+    onClick: () => setCond('venue', v)
+  }, l))), React.createElement("div", {
+    className: "cond-lbl"
+  }, "Temperature"), React.createElement("div", {
+    className: "cond-seg"
+  }, [['cold', 'Cold'], ['mild', 'Mild'], ['warm', 'Warm'], ['hot', 'Hot']].map(([v, l]) => React.createElement("button", {
+    key: v,
+    className: 'cond-opt' + (workout.conditions?.temp === v ? ' on' : ''),
+    onClick: () => setCond('temp', v)
+  }, l))), React.createElement("div", {
+    className: "cond-lbl"
+  }, "Wind"), React.createElement("div", {
+    className: "cond-seg"
+  }, [['calm', 'Bezvetrie'], ['head', 'Protivietor'], ['tail', 'V chrbte'], ['cross', 'Bočný']].map(([v, l]) => React.createElement("button", {
+    key: v,
+    className: 'cond-opt' + (workout.conditions?.wind === v ? ' on' : ''),
+    onClick: () => setCond('wind', v)
+  }, l))), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: 'var(--text3)',
+      fontWeight: 600,
+      marginTop: 14,
+      textAlign: 'center'
+    }
+  }, "Updates apply from now \u2014 change again any time during the workout.")))), historyEid && exercises.find(e => e.id === baseExId(historyEid)) && React.createElement(ExerciseDetail, {
     exercise: exercises.find(e => e.id === baseExId(historyEid)),
     athletes: athletes,
     activeAth: activeAth,
@@ -8648,24 +8776,13 @@ function App() {
       data
     }) => {
       const v = data?.value || null;
-      if (v && Date.now() - (v.updatedAt || 0) > 4 * 3600 * 1000) {
+      if (v && Date.now() - (v.updatedAt || 0) > 24 * 3600 * 1000) {
         sb.from('wk_store').delete().eq('key', 'sharedActiveSession').then(() => {});
         setRemoteSession(null);
         return;
       }
       setRemoteSession(v);
     }).catch(() => {});
-  }, []);
-  useEffect(() => {
-    try {
-      const snap = JSON.parse(localStorage.getItem('wk2_v3_snap') || 'null');
-      const st = snap?.workout?.startTime;
-      if (st && Date.now() - st > 8 * 3600 * 1000) {
-        ['wk2_activeSession', 'wk2_activePlan', 'wk2_activeSnapshot', 'wk2_v3_snap'].forEach(k => localStorage.removeItem(k));
-        setInWorkout(false);
-        setActivePlan(null);
-      }
-    } catch {}
   }, []);
   useEffect(() => {
     let iv = null;
@@ -8758,7 +8875,7 @@ function App() {
     setInWorkout(true);
   };
   const finishWorkout = wk => {
-    ['activeSession', 'activePlan', 'activeSnapshot'].forEach(k => {
+    ['activeSession', 'activePlan', 'activeSnapshot', 'v3_prelude_phase', 'v3_prelude_tag', 'v3_prelude_rd', 'v3_prelude_warmStart', 'v3_prelude_cond'].forEach(k => {
       try {
         localStorage.removeItem('wk2_' + k);
       } catch {}
@@ -8774,7 +8891,7 @@ function App() {
     setActivePlan(null);
   };
   const cancelWorkout = () => {
-    ['activeSession', 'activePlan', 'activeSnapshot'].forEach(k => {
+    ['activeSession', 'activePlan', 'activeSnapshot', 'v3_prelude_phase', 'v3_prelude_tag', 'v3_prelude_rd', 'v3_prelude_warmStart', 'v3_prelude_cond'].forEach(k => {
       try {
         localStorage.removeItem('wk2_' + k);
       } catch {}

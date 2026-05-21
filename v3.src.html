@@ -745,6 +745,7 @@ const Ic=({n,s=20})=>{const d={
   info:<><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></>,
   edit:<><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
   flame:<><path d="M12 2C6 8 6 12 6 14a6 6 0 0012 0c0-2.5-1.5-4-2.5-5C14 8 14 6 12 2z"/></>,
+  wind:<><path d="M9.59 4.59A2 2 0 1111 8H2"/><path d="M17.73 17.41A2.5 2.5 0 1119.5 13.5H2"/><path d="M14 12h9"/></>,
 };return<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d[n]}</svg>};
 
 const DEFAULT_ATHLETES=[{id:'ath-1',name:'Stanley',color:'#2156f4'},{id:'ath-2',name:'Miška',color:'#ec4899'}];
@@ -1397,12 +1398,21 @@ function WarmupTimer({startedAt}){
 // Pre-workout flow: check-in (training type + previous notes + readiness) then warm-up
 function WorkoutPrelude({athletes,workoutAthletes,allTags,initialTag,workouts,onStart,onCancel}){
   const aths=athletes.filter(a=>workoutAthletes[a.id]);
-  const[phase,setPhase]=useState('checkin');
-  const[tag,setTag]=useState(initialTag||null);
+  // restore prelude state from a previous app session so a refresh during warm-up
+  // keeps the timer running and doesn't wipe the check-in answers
+  const loadJ=(k,fb)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}};
+  const[phase,setPhase]=useState(()=>loadJ('wk2_v3_prelude_phase','checkin'));
+  const[tag,setTag]=useState(()=>loadJ('wk2_v3_prelude_tag',initialTag||null));
   const[rdAth,setRdAth]=useState(aths[0]?.id);
-  const[readiness,setReadiness]=useState({});
-  const[warmStart,setWarmStart]=useState(null);
-  const[conditions,setConditions]=useState({venue:null,temp:null,wind:null});
+  const[readiness,setReadiness]=useState(()=>loadJ('wk2_v3_prelude_rd',{}));
+  const[warmStart,setWarmStart]=useState(()=>{const v=loadJ('wk2_v3_prelude_warmStart',null);return v||null});
+  const[conditions,setConditions]=useState(()=>loadJ('wk2_v3_prelude_cond',{venue:null,temp:null,wind:null}));
+  useEffect(()=>{try{localStorage.setItem('wk2_v3_prelude_phase',JSON.stringify(phase))}catch{}},[phase]);
+  useEffect(()=>{try{localStorage.setItem('wk2_v3_prelude_tag',JSON.stringify(tag))}catch{}},[tag]);
+  useEffect(()=>{try{localStorage.setItem('wk2_v3_prelude_rd',JSON.stringify(readiness))}catch{}},[readiness]);
+  useEffect(()=>{try{localStorage.setItem('wk2_v3_prelude_warmStart',JSON.stringify(warmStart))}catch{}},[warmStart]);
+  useEffect(()=>{try{localStorage.setItem('wk2_v3_prelude_cond',JSON.stringify(conditions))}catch{}},[conditions]);
+  const clearPrelude=()=>['wk2_v3_prelude_phase','wk2_v3_prelude_tag','wk2_v3_prelude_rd','wk2_v3_prelude_warmStart','wk2_v3_prelude_cond'].forEach(k=>{try{localStorage.removeItem(k)}catch{}});
   const[wx,setWx]=useState({status:'loading'});
   // auto-fetch temperature from the user's location (Open-Meteo, no key); manual fallback
   useEffect(()=>{
@@ -1425,7 +1435,7 @@ function WorkoutPrelude({athletes,workoutAthletes,allTags,initialTag,workouts,on
   const setRd=(k,n)=>setReadiness(p=>({...p,[rdAth]:{...(p[rdAth]||{}),[k]:n}}));
   const cur=readiness[rdAth]||{};
   const prev=lastTaggedSession(workouts,tag?.id);
-  const finish=ms=>onStart({tag,readiness,conditions,warmupMs:ms||0});
+  const finish=ms=>{clearPrelude();onStart({tag,readiness,conditions,warmupMs:ms||0})};
 
   if(phase==='warmup')return(<div className="prelude">
     <div className="prelude-top">
@@ -1447,7 +1457,7 @@ function WorkoutPrelude({athletes,workoutAthletes,allTags,initialTag,workouts,on
 
   return(<div className="prelude">
     <div className="prelude-top">
-      <button className="lnk" onClick={onCancel}><Ic n="x" s={20}/></button>
+      <button className="lnk" onClick={()=>{clearPrelude();onCancel&&onCancel()}}><Ic n="x" s={20}/></button>
       <span className="prelude-title">Check-in</span>
       <button className="lnk" onClick={()=>setPhase('warmup')}>Skip</button>
     </div>
@@ -1537,8 +1547,11 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const[phase,setPhase]=useState(()=>(_sv?.workout&&_sv.workout.started===false)?'prelude':(_sv?.workout?'active':'prelude'));
   const[blockIdx,setBlockIdx]=useState(()=>_sv?.blockIdx||0);
   const[showOrganize,setShowOrganize]=useState(false);
+  const[showConditions,setShowConditions]=useState(false);
   const[historyEid,setHistoryEid]=useState(null);
   const[prToast,setPrToast]=useState(null);
+  const setCond=(k,v)=>setWorkout(w=>{const c=w.conditions||{venue:null,temp:null,wind:null};
+    return{...w,conditions:{...c,[k]:c[k]===v?null:v}}});
   useEffect(()=>{if(!prToast)return;const t=setTimeout(()=>setPrToast(null),3400);return()=>clearTimeout(t)},[prToast]);
   const stateRef=useRef();
   stateRef.current={workout,blockIdx};
@@ -1723,7 +1736,9 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     <div className="aw-top">
       <button className="aw-back" onClick={()=>onMinimize&&onMinimize()}><Ic n="chevD" s={24}/></button>
       <WorkoutTimer startTime={workout.startTime}/>
-      <div style={{width:34}}/>
+      {workout.tag?.id!=='gym'
+        ?<button className="aw-back" onClick={()=>setShowConditions(true)} title="Edit conditions"><Ic n="wind" s={20}/></button>
+        :<div style={{width:34}}/>}
     </div>
     {(totalReps>0||totalKg>0)&&<div className="aw-totals">
       {totalReps>0&&<div className="aw-tot"><span className="aw-tot-v">{totalReps}</span><span className="aw-tot-l">Reps</span></div>}
@@ -1783,6 +1798,32 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       onMoveToEnd={()=>moveToEnd(actionsEid)}
       onToggleAthlete={toggleAthleteAssignment}/>}
     {metricsEid&&<MetricsEditor current={metricsEff} onChange={changeMetrics} onClose={()=>setMetricsEid(null)}/>}
+    {showConditions&&<div className="over" onClick={e=>e.target===e.currentTarget&&setShowConditions(false)}>
+      <div className="modal" style={{maxWidth:480}}>
+        <div className="modal-h">
+          <div className="modal-t">Conditions</div>
+          <button className="modal-x" onClick={()=>setShowConditions(false)}><Ic n="x" s={20}/></button>
+        </div>
+        <div className="modal-b">
+          <div className="cond-lbl">Venue</div>
+          <div className="cond-seg">
+            {[['indoor','Indoor'],['outdoor','Outdoor']].map(([v,l])=>(
+              <button key={v} className={'cond-opt'+(workout.conditions?.venue===v?' on':'')} onClick={()=>setCond('venue',v)}>{l}</button>))}
+          </div>
+          <div className="cond-lbl">Temperature</div>
+          <div className="cond-seg">
+            {[['cold','Cold'],['mild','Mild'],['warm','Warm'],['hot','Hot']].map(([v,l])=>(
+              <button key={v} className={'cond-opt'+(workout.conditions?.temp===v?' on':'')} onClick={()=>setCond('temp',v)}>{l}</button>))}
+          </div>
+          <div className="cond-lbl">Wind</div>
+          <div className="cond-seg">
+            {[['calm','Bezvetrie'],['head','Protivietor'],['tail','V chrbte'],['cross','Bočný']].map(([v,l])=>(
+              <button key={v} className={'cond-opt'+(workout.conditions?.wind===v?' on':'')} onClick={()=>setCond('wind',v)}>{l}</button>))}
+          </div>
+          <div style={{fontSize:12,color:'var(--text3)',fontWeight:600,marginTop:14,textAlign:'center'}}>Updates apply from now — change again any time during the workout.</div>
+        </div>
+      </div>
+    </div>}
     {historyEid&&exercises.find(e=>e.id===baseExId(historyEid))&&<ExerciseDetail
       exercise={exercises.find(e=>e.id===baseExId(historyEid))} athletes={athletes} activeAth={activeAth}
       workouts={workouts} onClose={()=>setHistoryEid(null)}/>}
@@ -3377,21 +3418,13 @@ function App(){
   const _pull=useCallback(()=>{if(!sb)return;
     sb.from('wk_store').select('value').eq('key','sharedActiveSession').maybeSingle().then(({data})=>{
       const v=data?.value||null;
-      // stale (>4h) shared sessions get actively deleted, not just hidden
-      if(v&&Date.now()-(v.updatedAt||0)>4*3600*1000){
+      // shared session expires after 24h - long enough that an overnight forgotten
+      // session is recoverable on the originating device but a truly dead phantom
+      // doesn't haunt the Resume banner forever
+      if(v&&Date.now()-(v.updatedAt||0)>24*3600*1000){
         sb.from('wk_store').delete().eq('key','sharedActiveSession').then(()=>{});
         setRemoteSession(null);return}
       setRemoteSession(v)}).catch(()=>{})},[]);
-  // Auto-clear a stale local active workout (>8h since startTime). Stale sessions
-  // were keeping a phantom timer running and blocking a fresh empty workout.
-  useEffect(()=>{try{
-    const snap=JSON.parse(localStorage.getItem('wk2_v3_snap')||'null');
-    const st=snap?.workout?.startTime;
-    if(st&&Date.now()-st>8*3600*1000){
-      ['wk2_activeSession','wk2_activePlan','wk2_activeSnapshot','wk2_v3_snap'].forEach(k=>localStorage.removeItem(k));
-      setInWorkout(false);setActivePlan(null);
-    }
-  }catch{}},[]);
   // Poll for a shared session, but pause when the app is backgrounded (battery)
   useEffect(()=>{let iv=null;
     const start=()=>{if(iv)return;_pull();iv=setInterval(_pull,20000)};
@@ -3421,13 +3454,13 @@ function App(){
     try{localStorage.setItem('wk2_activeSession','1');if(plan)localStorage.setItem('wk2_activePlan',JSON.stringify(plan))}catch{}
     setActivePlan(plan||null);setInWorkout(true)};
 
-  const finishWorkout=wk=>{['activeSession','activePlan','activeSnapshot'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
+  const finishWorkout=wk=>{['activeSession','activePlan','activeSnapshot','v3_prelude_phase','v3_prelude_tag','v3_prelude_rd','v3_prelude_warmStart','v3_prelude_cond'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
     try{localStorage.removeItem('wk2_v3_snap')}catch{}
     _clear();
     if(wk.exerciseIds.length>0)setWorkouts(p=>[...p,wk]);
     if(activePlan&&!activePlan.id?.startsWith('tpl-'))setPlanned(p=>p.filter(pl=>pl.id!==activePlan.id));
     setInWorkout(false);setMinimized(false);setActivePlan(null)};
-  const cancelWorkout=()=>{['activeSession','activePlan','activeSnapshot'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
+  const cancelWorkout=()=>{['activeSession','activePlan','activeSnapshot','v3_prelude_phase','v3_prelude_tag','v3_prelude_rd','v3_prelude_warmStart','v3_prelude_cond'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
     try{localStorage.removeItem('wk2_v3_snap')}catch{}
     _clear();setInWorkout(false);setMinimized(false);setActivePlan(null)};
   // Leave the workout running - keeps the session + snapshot so it can be resumed
