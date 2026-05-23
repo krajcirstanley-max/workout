@@ -3859,6 +3859,54 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-05-23 Gym - Power (jumps, drops, step-up jumps, calf power)
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_power_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'drop-jump-60cm',name:'Drop Jump 60cm',category:'Legs',metrics:['height','gct']},
+      {id:'step-up-jump',name:'Step Up Jump',category:'Legs',metrics:['weight','reps']},
+      {id:'rfd-sl-up-down',name:'RFD SL Up & Down',category:'Legs',metrics:['reps']},
+      {id:'hanging-knee-raise',name:'Hanging Knee Raise',category:'Core',metrics:['reps']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    const plan={id:'pl-gym-power-1',date:'2026-05-23',name:'Gym - Power',color:'#3b82f6',
+      exerciseIds:['cstm-mowtp19hc4nv','drop-jump-60cm','step-up','step-up-jump','calf-raise','rfd-sl-up-down','tb-deadlift','hanging-knee-raise','cstm-mowxe3mxc3ui'],
+      supersets:[
+        ['cstm-mowtp19hc4nv','drop-jump-60cm'],
+        ['step-up','step-up-jump'],
+        ['calf-raise','rfd-sl-up-down'],
+        ['hanging-knee-raise','cstm-mowxe3mxc3ui']
+      ],
+      setConfigs:{
+        'cstm-mowtp19hc4nv':[{reps:4},{reps:4},{reps:4}],
+        'drop-jump-60cm':[{reps:3},{reps:3},{reps:3}],
+        'step-up':[{reps:2},{reps:2},{reps:2}],
+        'step-up-jump':[{reps:2},{reps:2},{reps:2}],
+        'calf-raise':[{reps:6},{reps:6},{reps:6}],
+        'rfd-sl-up-down':[{reps:6},{reps:6},{reps:6}],
+        'tb-deadlift':[{reps:3},{reps:3}],
+        'hanging-knee-raise':[{reps:10},{reps:10}],
+        'cstm-mowxe3mxc3ui':[{reps:4},{reps:4}]
+      },
+      exNotes:{
+        'drop-jump-60cm':'60–70 cm box.',
+        'step-up':'Každá noha.',
+        'step-up-jump':'Každá noha.',
+        'calf-raise':'Power - explozívne.',
+        'cstm-mowxe3mxc3ui':'3s iso. Každá noha.'
+      },
+      notes:''
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-gym-power-1');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-05-20 Max Velocity. Reuses existing exercises in the store
   // (start-20m, start-50m, start-60m, resisted-sprint) instead of duplicating them.
   useEffect(()=>{const KEY='wk2_v3_seed_maxvel_3';
@@ -3948,7 +3996,11 @@ function App(){
       'sprint-band-overhead':{id:'sprint-band-overhead',name:'Band Sprint (Overhead)',category:'T&F',metrics:['distance']},
       'sprint-band-front':{id:'sprint-band-front',name:'Band Sprint (In Front)',category:'T&F',metrics:['distance']},
       'no-arm-sprint':{id:'no-arm-sprint',name:'No-Arm Sprint',category:'T&F',metrics:['distance']},
-      'approach-tech':{id:'approach-tech',name:'Approach Technique',category:'T&F',metrics:['distance']}
+      'approach-tech':{id:'approach-tech',name:'Approach Technique',category:'T&F',metrics:['distance']},
+      'drop-jump-60cm':{id:'drop-jump-60cm',name:'Drop Jump 60cm',category:'Legs',metrics:['height','gct']},
+      'step-up-jump':{id:'step-up-jump',name:'Step Up Jump',category:'Legs',metrics:['weight','reps']},
+      'rfd-sl-up-down':{id:'rfd-sl-up-down',name:'RFD SL Up & Down',category:'Legs',metrics:['reps']},
+      'hanging-knee-raise':{id:'hanging-knee-raise',name:'Hanging Knee Raise',category:'Core',metrics:['reps']}
     };
     const have=new Set(exercises.map(e=>e.id));
     const missing=Object.keys(defs).filter(id=>!have.has(id)).map(id=>defs[id]);
