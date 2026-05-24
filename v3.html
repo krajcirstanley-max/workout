@@ -9917,6 +9917,57 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_lj_session_6';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const plan = {
+      id: 'pl-lj-session-6',
+      date: '2026-05-24',
+      name: 'Long Jump Session',
+      color: '#8b5cf6',
+      exerciseIds: ['high-hurdle-jumps', 'full-app-runthrough', 'approach-jump-14', 'approach-jump-14__2', 'approach-jump-16', 'sl-bounds-pr-l', 'sl-bounds-pr-r'],
+      supersets: [],
+      setConfigs: {
+        'high-hurdle-jumps': [{
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'full-app-runthrough': [{}, {}, {}, {}, {}],
+        'approach-jump-14': [{}, {}],
+        'approach-jump-14__2': [{}, {}],
+        'approach-jump-16': [{}, {}, {}, {}],
+        'sl-bounds-pr-l': [{
+          reps: 3
+        }],
+        'sl-bounds-pr-r': [{
+          reps: 3
+        }]
+      },
+      exNotes: {
+        'high-hurdle-jumps': 'Bez doskoku.',
+        'approach-jump-14': 'Mimo dosky.',
+        'approach-jump-14__2': 'Z dosky.',
+        'approach-jump-16': 'Z dosky.'
+      },
+      notes: 'Všetko bez doskoku - vo vzduchu technika áno. Dotlačiť sa v členku, držať pozície, švihovka, ruky.'
+    };
+    setPlanned(p => {
+      const i = p.findIndex(x => x.id === 'pl-lj-session-6');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_gym_power_1';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
