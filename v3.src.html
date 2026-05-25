@@ -3859,6 +3859,60 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-05-25 Gym (iso work, RDL, carries) - per-athlete assignments
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_iso_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'leg-ext-iso',name:'Leg Extension Iso',category:'Legs',metrics:['time']},
+      {id:'leg-curl-iso',name:'Lying Leg Curl Iso',category:'Legs',metrics:['time']},
+      {id:'sl-calf-iso',name:'SL Calf Iso',category:'Legs',metrics:['time']},
+      {id:'iso-on-off',name:'Iso ON/OFF',category:'Legs',metrics:['reps']},
+      {id:'loaded-walk-banded',name:'Loaded Walk (Banded)',category:'Legs',metrics:['weight','distance']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    const plan={id:'pl-gym-iso-1',date:'2026-05-25',name:'Gym',color:'#3b82f6',
+      exerciseIds:['leg-ext-iso','leg-curl-iso','sl-calf-iso','iso-on-off','loaded-walk-banded','half-squat-jump-oh','rdl','rdl__2','suitcase-carry','ab-wheel-rollout','hanging-knee-raise'],
+      supersets:[['suitcase-carry','ab-wheel-rollout','hanging-knee-raise']],
+      setConfigs:{
+        'leg-ext-iso':[{time:20},{time:20}],
+        'leg-curl-iso':[{time:20},{time:20}],
+        'sl-calf-iso':[{time:15},{time:15}],
+        'iso-on-off':[{reps:4},{reps:4}],
+        'loaded-walk-banded':[{distance:20},{distance:20}],
+        'half-squat-jump-oh':[{reps:4},{reps:4}],
+        'rdl':[{reps:6},{reps:6}],
+        'rdl__2':[{reps:2},{reps:2}],
+        'suitcase-carry':[{distance:20},{distance:20}],
+        'ab-wheel-rollout':[{},{}],
+        'hanging-knee-raise':[{},{}]
+      },
+      exerciseAthletes:{
+        'leg-ext-iso':['ath-1'],
+        'leg-curl-iso':['ath-2'],
+        'rdl':['ath-2'],
+        'rdl__2':['ath-1']
+      },
+      exNotes:{
+        'leg-ext-iso':'Yielding. Každá noha.',
+        'leg-curl-iso':'Yielding. Každá noha.',
+        'sl-calf-iso':'Yielding. Každá noha.',
+        'iso-on-off':'Overcoming. 3s ON / 3s OFF. Každá noha.',
+        'loaded-walk-banded':'Barbell + kettlebely, banded.',
+        'half-squat-jump-oh':'BB nad hlavou.',
+        'rdl__2':'1 noha dole / 2 hore (excentrika).'
+      },
+      notes:''
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-gym-iso-1');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-05-24 Long Jump Session (hurdle jumps, approaches, bounds - no landings)
   useEffect(()=>{const KEY='wk2_v3_seed_lj_session_6';
     if(localStorage.getItem(KEY)==='1')return;
@@ -4031,7 +4085,12 @@ function App(){
       'drop-jump-60cm':{id:'drop-jump-60cm',name:'Drop Jump 60cm',category:'Legs',metrics:['height','gct']},
       'step-up-jump':{id:'step-up-jump',name:'Step Up Jump',category:'Legs',metrics:['weight','reps']},
       'rfd-sl-up-down':{id:'rfd-sl-up-down',name:'RFD SL Up & Down',category:'Legs',metrics:['reps']},
-      'hanging-knee-raise':{id:'hanging-knee-raise',name:'Hanging Knee Raise',category:'Core',metrics:['reps']}
+      'hanging-knee-raise':{id:'hanging-knee-raise',name:'Hanging Knee Raise',category:'Core',metrics:['reps']},
+      'leg-ext-iso':{id:'leg-ext-iso',name:'Leg Extension Iso',category:'Legs',metrics:['time']},
+      'leg-curl-iso':{id:'leg-curl-iso',name:'Lying Leg Curl Iso',category:'Legs',metrics:['time']},
+      'sl-calf-iso':{id:'sl-calf-iso',name:'SL Calf Iso',category:'Legs',metrics:['time']},
+      'iso-on-off':{id:'iso-on-off',name:'Iso ON/OFF',category:'Legs',metrics:['reps']},
+      'loaded-walk-banded':{id:'loaded-walk-banded',name:'Loaded Walk (Banded)',category:'Legs',metrics:['weight','distance']}
     };
     const have=new Set(exercises.map(e=>e.id));
     const missing=Object.keys(defs).filter(id=>!have.has(id)).map(id=>defs[id]);
