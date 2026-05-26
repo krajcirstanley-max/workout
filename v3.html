@@ -54,7 +54,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 
 /* === SHELL === */
 .shell{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--tab-h) + var(--safe-b) + 86px)}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--tab-h) + var(--safe-b) + 86px)}
 .scroll.no-tab{padding-bottom:calc(var(--safe-b) + 24px)}
 
 /* === TOP BAR === */
@@ -388,7 +388,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 
 /* === FINISH FORM === */
 .finish-h{padding:calc(var(--safe-t) + 14px) 22px 6px;display:flex;align-items:center;justify-content:space-between}
-.finish-screen{position:fixed;inset:0;background:var(--surface2);z-index:55;display:flex;flex-direction:column;overflow-y:auto}
+.finish-screen{position:fixed;inset:0;background:var(--surface2);z-index:55;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
 .finish-title{font-size:18px;font-weight:900;font-style:italic;letter-spacing:-.4px;text-transform:uppercase;text-align:center;flex:1}
 .finish-x{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text2)}
 .fs-card{background:var(--bg);margin:0 0 12px;padding:22px 22px 26px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -10130,7 +10130,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_gym_vbt_1';
+    const KEY = 'wk2_v3_seed_gym_vbt_2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
@@ -10139,8 +10139,8 @@ function App() {
       date: '2026-05-26',
       name: 'Gym',
       color: '#3b82f6',
-      exerciseIds: ['high-pull', 'bosu-afsm', 'landmine-back-lunge', 'hip-thrust-staggered', 'nordics', 'seated-calf-raise'],
-      supersets: [['high-pull', 'bosu-afsm'], ['nordics', 'seated-calf-raise']],
+      exerciseIds: ['high-pull', 'bosu-afsm', 'landmine-back-lunge', 'hip-thrust-staggered', 'nordics', 'calf-raise', 'hip-flexor', 'sprint-arms', 'seated-low-row'],
+      supersets: [['high-pull', 'bosu-afsm'], ['nordics', 'calf-raise'], ['hip-flexor', 'sprint-arms', 'seated-low-row']],
       setConfigs: {
         'high-pull': [{
           reps: 3
@@ -10173,7 +10173,22 @@ function App() {
         }, {
           reps: 4
         }],
-        'seated-calf-raise': [{
+        'calf-raise': [{
+          reps: 8
+        }, {
+          reps: 8
+        }],
+        'hip-flexor': [{
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'sprint-arms': [{
+          time: 6
+        }, {
+          time: 6
+        }],
+        'seated-low-row': [{
           reps: 8
         }, {
           reps: 8
@@ -10200,7 +10215,8 @@ function App() {
         }
       },
       exNotes: {
-        'landmine-back-lunge': 'Každá noha. Sleduj L vs R (max 10% rozdiel).'
+        'landmine-back-lunge': 'Každá noha. Sleduj L vs R (max 10% rozdiel).',
+        'hip-flexor': 'Každá noha.'
       },
       notes: ''
     };
