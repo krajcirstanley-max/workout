@@ -3485,7 +3485,7 @@ class ErrorBoundary extends React.Component{
 function App(){
   const[athletes,setAthletes]=useStore('athletes',DEFAULT_ATHLETES);
   const[exercises,setExercises,exSynced]=useStore('exercises',[]);
-  const[workouts,setWorkouts]=useStore('workouts2',[]);
+  const[workouts,setWorkouts,wkSynced]=useStore('workouts2',[]);
   const[planned,setPlanned,plannedSynced]=useStore('planned2',[]);
   const[dayTypes,setDayTypes]=useStore('dayTypes',{});
   const setDayType=(k,t)=>setDayTypes(p=>{const n={...p};if(p[k]===t)delete n[k];else n[k]=t;return n});
@@ -3625,10 +3625,7 @@ function App(){
     if(!exSynced||!plannedSynced)return; // wait for Supabase pull
     if(!exercises.length)return; // wait for exercises to load
     const newExs=[
-      {id:'accel-30m',name:'Accel 30m',category:'T&F',metrics:['tf-time','split-10m','split-20m','split-30m']},
-      {id:'overspeed-40m',name:'Overspeed 40m',category:'T&F',metrics:['tf-time','split-10m','split-20m','split-30m','split-40m']},
-      {id:'sprint-50m',name:'Sprint 50m',category:'T&F',metrics:['tf-time','split-10m','split-20m','split-30m','split-40m','split-50m']},
-      {id:'wickets-8',name:'8 Wickets',category:'T&F',metrics:['tf-time','reps','steps']},
+      {id:'overspeed-40m',name:'Overspeed 40m',category:'T&F',metrics:['fly-10m-1','fly-10m-2','distance','tf-time']},
       {id:'high-hurdle-jumps',name:'High Hurdle Jumps',category:'Legs',metrics:['reps','height']},
       {id:'side-throw-med-ball',name:'Side Throw Med Ball',category:'Core',metrics:['weight','reps','distance']},
     ];
@@ -3637,13 +3634,13 @@ function App(){
     if(missing.length)setExercises(p=>[...p,...missing]);
     setPlanned(p=>{if(p.find(x=>x.id==='pl-speed-1'))return p;
       return[...p,{id:'pl-speed-1',date:'2026-05-11',name:'Speed Session',color:'#06b6d4',
-        exerciseIds:['accel-30m','overspeed-40m','sprint-50m','wickets-8','high-hurdle-jumps','side-throw-med-ball'],
+        exerciseIds:['start-30m','overspeed-40m','start-50m','wickets','high-hurdle-jumps','side-throw-med-ball'],
         supersets:[],
         setConfigs:{
-          'accel-30m':[{},{},{}],
+          'start-30m':[{},{},{}],
           'overspeed-40m':[{},{},{}],
-          'sprint-50m':[{},{},{}],
-          'wickets-8':[{reps:8},{reps:8},{reps:8}],
+          'start-50m':[{},{},{}],
+          'wickets':[{reps:8},{reps:8},{reps:8}],
           'high-hurdle-jumps':[{},{},{}],
           'side-throw-med-ball':[{},{},{}]},
         notes:'3×30m accel · 3×40m overspeed · 3×50m sprint · 3×8 wickets · High Hurdle Jumps · Side Throw Med Ball'
@@ -3962,24 +3959,24 @@ function App(){
     if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
     if(!exercises.length)return;
     const plan={id:'pl-maxvel-2',date:'2026-05-26',name:'Max Velocity',color:'#dc2626',
-      exerciseIds:['overspeed-40m','start-50m','start-60m','resisted-sprint','start-20m','accel-30m','approach-tech'],
+      exerciseIds:['overspeed-40m','start-50m','start-60m','resisted-20m','start-20m','start-30m','approach-tech'],
       supersets:[],
       setConfigs:{
         'overspeed-40m':[{},{},{}],
         'start-50m':[{},{},{}],
         'start-60m':[{},{}],
-        'resisted-sprint':[{distance:20},{distance:20}],
+        'resisted-20m':[{distance:20},{distance:20}],
         'start-20m':[{},{}],
-        'accel-30m':[{},{},{}],
+        'start-30m':[{},{},{}],
         'approach-tech':[{distance:20},{distance:25},{distance:30}]
       },
       exerciseAthletes:{
-        'overspeed-40m':['ath-1'],'start-50m':['ath-1'],'start-60m':['ath-1'],'resisted-sprint':['ath-1'],
-        'start-20m':['ath-1'],'accel-30m':['ath-1'],'approach-tech':['ath-1']
+        'overspeed-40m':['ath-1'],'start-50m':['ath-1'],'start-60m':['ath-1'],'resisted-20m':['ath-1'],
+        'start-20m':['ath-1'],'start-30m':['ath-1'],'approach-tech':['ath-1']
       },
       exNotes:{
         'overspeed-40m':'Len 10–10 fly segmenty.',
-        'resisted-sprint':'Light.',
+        'resisted-20m':'Light.',
         'approach-tech':'Technika rozbehu.'
       },
       notes:''
@@ -4136,20 +4133,20 @@ function App(){
     const missing=newExs.filter(e=>!exIds.has(e.id));
     if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
     const plan={id:'pl-maxvel-1',date:'2026-05-20',name:'Max Velocity',color:'#dc2626',
-      exerciseIds:['overspeed-40m','start-50m','start-60m','resisted-sprint','start-20m','accel-30m','approach-tech'],
+      exerciseIds:['overspeed-40m','start-50m','start-60m','resisted-20m','start-20m','start-30m','approach-tech'],
       supersets:[],
       setConfigs:{
         'overspeed-40m':[{},{},{}],
         'start-50m':[{},{}],
         'start-60m':[{},{}],
-        'resisted-sprint':[{distance:20},{distance:20}],
+        'resisted-20m':[{distance:20},{distance:20}],
         'start-20m':[{},{}],
-        'accel-30m':[{},{},{}],
+        'start-30m':[{},{},{}],
         'approach-tech':[{distance:20},{distance:25},{distance:30}]
       },
       exNotes:{
         'overspeed-40m':'Len 10–10 fly segmenty.',
-        'resisted-sprint':'Light.',
+        'resisted-20m':'Light.',
         'approach-tech':'Technika rozbehu.'
       },
       notes:''
@@ -4160,16 +4157,19 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
-  // Migration: Overspeed 40m is logged via two 10m fly segments (10-10), not splits
-  useEffect(()=>{const KEY='wk2_v3_overspeed_fly_2';
+  // Migration: Overspeed 40m drops the old cumulative splits in favour of two 10m
+  // fly segments. Additive-safe: keeps any other columns (e.g. distance/tf-time
+  // carried over from the merged legacy Overspeed) instead of resetting.
+  useEffect(()=>{const KEY='wk2_v3_overspeed_fly_3';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!exercises.length)return;
     setExercises(p=>{let changed=false;
       const n=p.map(e=>{if(e.id!=='overspeed-40m')return e;
-        const want=['fly-10m-1','fly-10m-2'];
-        const cur=e.metrics||[];
-        if(want.every(m=>cur.includes(m))&&cur.length===want.length)return e;
-        changed=true;return{...e,metrics:want}});
+        const drop=['split-10m','split-20m','split-30m','split-40m'];
+        let m=(e.metrics||[]).filter(x=>!drop.includes(x));
+        ['fly-10m-2','fly-10m-1'].forEach(f=>{if(!m.includes(f))m.unshift(f)});
+        if(m.length!==(e.metrics||[]).length||m.some((x,i)=>x!==(e.metrics||[])[i])){changed=true;return{...e,metrics:m}}
+        return e});
       return changed?n:p});
     localStorage.setItem(KEY,'1')
   },[exSynced,exercises.length]);
@@ -4277,15 +4277,73 @@ function App(){
   },[exSynced,exercises.length]);
 
   // Migration: 8 Wickets gets a per-set spacing (m) metric for tracking the gap
-  useEffect(()=>{const KEY='wk2_v3_wicket_spc_1';
+  useEffect(()=>{const KEY='wk2_v3_wicket_spc_2';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!exercises.length)return;
     setExercises(p=>{let changed=false;
-      const n=p.map(e=>{if(e.id==='wickets-8'&&!(e.metrics||[]).includes('wicket-spc')){
-        changed=true;return{...e,metrics:[...(e.metrics||[]),'wicket-spc']}}return e});
+      const n=p.map(e=>{if(e.id==='wickets'&&!(e.metrics||[]).includes('wicket-spc')){
+        changed=true;return{...e,metrics:['tf-time','reps','steps','wicket-spc']}}return e});
       return changed?n:p});
     localStorage.setItem(KEY,'1')
   },[exSynced,exercises.length]);
+
+  // One-shot: merge duplicate exercises into a single canonical one so history
+  // lives in one place. REMAPS set keys (never deletes), unions metric columns,
+  // routes resisted-sprint per-set by distance, repoints plans. Idempotent: once
+  // the source ids are gone it's a no-op, so it's safe across devices.
+  useEffect(()=>{const KEY='wk2_v3_merge_dupes_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced||!wkSynced||!exercises.length)return;
+    const REMAP={'accel-30m':'start-30m','ex-moudu0q4ys5n':'suitcase-carry','sprint-50m':'start-50m','sprint-60m':'start-60m','wickets-8':'wickets','overspeed':'overspeed-40m'};
+    const RESISTED_SRC='resisted-sprint';
+    const resTgt=d=>{const n=Number(d);return n<=10?'resisted-10m':n>=30?'resisted-30m':'resisted-20m'};
+    const isSrc=b=>!!REMAP[b]||b===RESISTED_SRC;
+    // exercises: drop sources, union metrics on survivors
+    setExercises(prev=>{
+      let ex=prev.filter(e=>!isSrc(e.id));
+      const ensure=(id,mets)=>{const i=ex.findIndex(e=>e.id===id);if(i<0)return;
+        const cur=ex[i].metrics||[];const add=mets.filter(m=>!cur.includes(m));
+        if(add.length)ex=ex.map((e,j)=>j===i?{...e,metrics:[...cur,...add]}:e)};
+      ensure('start-30m',['tf-time','split-10m','split-20m','split-30m']);
+      ensure('overspeed-40m',['fly-10m-1','fly-10m-2','distance','tf-time']);
+      ensure('wickets',['tf-time','reps','steps','wicket-spc']);
+      ensure('resisted-10m',['tf-time','eg-setting']);
+      ensure('resisted-20m',['tf-time','eg-setting']);
+      ensure('resisted-30m',['tf-time','eg-setting']);
+      return ex;
+    });
+    // workouts: remap each athlete's set keys, preserving instance suffixes for
+    // exercises that aren't being merged
+    setWorkouts(prev=>prev.map(w=>{
+      const na={};
+      Object.entries(w.athletes||{}).forEach(([aid,ad])=>{
+        const ns={};
+        Object.entries(ad.sets||{}).forEach(([eid,sets])=>{
+          const b=baseExId(eid);const suf=eid.slice(b.length);
+          if(b===RESISTED_SRC){sets.forEach(s=>{const t=resTgt(s.values&&s.values.distance);(ns[t]=ns[t]||[]).push(s)})}
+          else if(REMAP[b]){const k=REMAP[b]+suf;(ns[k]=ns[k]||[]).push(...sets)}
+          else{(ns[eid]=ns[eid]||[]).push(...sets)}
+        });
+        na[aid]={...ad,sets:ns};
+      });
+      const ids=[];const seen=new Set();const pushId=t=>{if(!seen.has(t)){seen.add(t);ids.push(t)}};
+      (w.exerciseIds||[]).forEach(eid=>{const b=baseExId(eid);const suf=eid.slice(b.length);
+        if(b===RESISTED_SRC){['resisted-10m','resisted-20m','resisted-30m'].forEach(t=>{if(Object.values(na).some(ad=>ad.sets[t]&&ad.sets[t].length))pushId(t)})}
+        else pushId((REMAP[b]||b)+suf);
+      });
+      return {...w,athletes:na,exerciseIds:ids};
+    }));
+    // plans: remap exerciseIds, setConfigs, supersets, exNotes, velocityZones, exerciseAthletes
+    setPlanned(prev=>prev.map(p=>{
+      const remapEid=eid=>{const b=baseExId(eid);const suf=eid.slice(b.length);return b===RESISTED_SRC?'resisted-20m':(REMAP[b]||b)+suf};
+      const ids=[];const seen=new Set();
+      (p.exerciseIds||[]).forEach(eid=>{const t=remapEid(eid);if(!seen.has(t)){seen.add(t);ids.push(t)}});
+      const remapMap=obj=>{if(!obj)return obj;const n={};Object.entries(obj).forEach(([k,v])=>{n[remapEid(k)]=v});return n};
+      const ss=(p.supersets||[]).map(g=>[...new Set(g.map(remapEid))]).filter(g=>g.length>1);
+      return {...p,exerciseIds:ids,setConfigs:remapMap(p.setConfigs),exNotes:remapMap(p.exNotes),velocityZones:remapMap(p.velocityZones),exerciseAthletes:remapMap(p.exerciseAthletes),supersets:ss};
+    }));
+    localStorage.setItem(KEY,'1')
+  },[exSynced,plannedSynced,wkSynced,exercises.length]);
 
   // Migration: add exercises the Performance Factors need
   useEffect(()=>{const KEY='wk2_v3_perf_ex_1';
