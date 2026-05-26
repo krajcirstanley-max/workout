@@ -1543,7 +1543,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     try{const ov=Number(localStorage.getItem('wk2_v3_startTime_override')||0);
       if(ov>0){_startTime=ov;localStorage.removeItem('wk2_v3_startTime_override')}}catch{}
     const w={id:'wk-'+uid(),planId:initialPlan?.id||null,name:initialPlan?.name||'Workout',startTime:_startTime,endTime:null,started:false,warmupMs:0,conditions:null,
-      color:initialPlan?.color||'#2156f4',tag:initialPlan?.tag||null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},athleteNotes:{}};
+      color:initialPlan?.color||'#2156f4',tag:initialPlan?.tag||null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},exerciseAthletes:initialPlan?.exerciseAthletes?{...initialPlan.exerciseAthletes}:{},athleteNotes:{}};
     athletes.forEach(a=>{w.athletes[a.id]={sets:{}}});
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
       const cfgs=initialPlan.setConfigs||{};
@@ -1706,13 +1706,16 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     if(next.length===0)next=athletes.map(a=>a.id);
     return{...w,exerciseAthletes:{...(w.exerciseAthletes||{}),[t]:next}}})};
 
-  // Build blocks - supersets grouped under one letter
+  // Build blocks - supersets grouped under one letter. Exercises assigned to a
+  // specific athlete (exerciseAthletes) only show for that athlete.
+  const exForAth=eid=>{const a=workout.exerciseAthletes?.[eid];return !a||a.length===0||a.includes(activeAth)};
   const blocks=[];const seen=new Set();let bi=0;
   workout.exerciseIds.forEach(eid=>{if(seen.has(eid))return;
     const grp=(workout.supersets||[]).find(g=>g.includes(eid));
-    if(grp){const g=workout.exerciseIds.filter(id=>grp.includes(id));g.forEach(id=>seen.add(id));
-      blocks.push({letter:String.fromCharCode(65+bi++),eids:g,superset:true})}
-    else{seen.add(eid);blocks.push({letter:String.fromCharCode(65+bi++),eids:[eid],superset:false})}});
+    if(grp){const all=workout.exerciseIds.filter(id=>grp.includes(id));all.forEach(id=>seen.add(id));
+      const g=all.filter(exForAth);
+      if(g.length)blocks.push({letter:String.fromCharCode(65+bi++),eids:g,superset:g.length>1})}
+    else{seen.add(eid);if(exForAth(eid))blocks.push({letter:String.fromCharCode(65+bi++),eids:[eid],superset:false})}});
 
   // Whole-workout totals for the active athlete
   let totalReps=0,totalKg=0;

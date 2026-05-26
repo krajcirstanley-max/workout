@@ -3011,6 +3011,9 @@ function ActiveWorkout({
       exNotes: initialPlan?.exNotes ? {
         ...initialPlan.exNotes
       } : {},
+      exerciseAthletes: initialPlan?.exerciseAthletes ? {
+        ...initialPlan.exerciseAthletes
+      } : {},
       athleteNotes: {}
     };
     athletes.forEach(a => {
@@ -3600,6 +3603,10 @@ function ActiveWorkout({
       };
     });
   };
+  const exForAth = eid => {
+    const a = workout.exerciseAthletes?.[eid];
+    return !a || a.length === 0 || a.includes(activeAth);
+  };
   const blocks = [];
   const seen = new Set();
   let bi = 0;
@@ -3607,16 +3614,17 @@ function ActiveWorkout({
     if (seen.has(eid)) return;
     const grp = (workout.supersets || []).find(g => g.includes(eid));
     if (grp) {
-      const g = workout.exerciseIds.filter(id => grp.includes(id));
-      g.forEach(id => seen.add(id));
-      blocks.push({
+      const all = workout.exerciseIds.filter(id => grp.includes(id));
+      all.forEach(id => seen.add(id));
+      const g = all.filter(exForAth);
+      if (g.length) blocks.push({
         letter: String.fromCharCode(65 + bi++),
         eids: g,
-        superset: true
+        superset: g.length > 1
       });
     } else {
       seen.add(eid);
-      blocks.push({
+      if (exForAth(eid)) blocks.push({
         letter: String.fromCharCode(65 + bi++),
         eids: [eid],
         superset: false
