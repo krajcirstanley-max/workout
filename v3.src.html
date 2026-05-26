@@ -1084,8 +1084,9 @@ function RecentRow({wk,onClick}){
 // === ACTIVE WORKOUT ===
 // Self-ticking workout timer so the whole screen does not re-render every second
 // Drag-to-reorder list (touch + mouse, animated)
-function ReorderList({ids,exercises,onReorder,onDelete}){
+function ReorderList({ids,exercises,onReorder,onDelete,supersets,onToggleLink}){
   const ROW=58;
+  const linked=(a,b)=>(supersets||[]).some(s=>s.includes(a)&&s.includes(b));
   const[drag,setDrag]=useState(null);
   const st=useRef({});
   useEffect(()=>{if(!drag)return;const s=st.current;
@@ -1120,7 +1121,8 @@ function ReorderList({ids,exercises,onReorder,onDelete}){
         if(drag.fromIdx<targetIdx&&i>drag.fromIdx&&i<=targetIdx)ty=-ROW;
         else if(drag.fromIdx>targetIdx&&i<drag.fromIdx&&i>=targetIdx)ty=ROW;
       }
-      return(<div key={id} style={{display:'flex',alignItems:'center',gap:6,height:ROW,boxSizing:'border-box',padding:'0 4px',
+      return(<React.Fragment key={id}>
+        <div style={{display:'flex',alignItems:'center',gap:6,height:ROW,boxSizing:'border-box',padding:'0 4px',
         transform:`translateY(${ty}px)`,transition:dragged?'none':'transform .18s cubic-bezier(.2,0,0,1)',
         position:'relative',zIndex:dragged?5:1,background:dragged?'var(--surface)':'transparent',
         borderRadius:dragged?12:0,boxShadow:dragged?'0 10px 28px rgba(0,0,0,.18)':'none'}}>
@@ -1128,7 +1130,13 @@ function ReorderList({ids,exercises,onReorder,onDelete}){
           style={{padding:'10px 8px',background:'transparent',border:'none',color:'var(--text3)',touchAction:'none',cursor:'grab',display:'flex'}}><Ic n="more" s={18}/></button>
         <div style={{flex:1,minWidth:0,fontSize:15,fontWeight:700,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ex?.name||'?'}</div>
         <button onClick={()=>onDelete(id)} style={{padding:8,background:'transparent',border:'none',color:'var(--red)',display:'flex'}}><Ic n="x" s={16}/></button>
-      </div>)})}
+      </div>
+      {onToggleLink&&i<ids.length-1&&!drag&&<div style={{display:'flex',justifyContent:'center',margin:'-3px 0 1px'}}>
+        <button onClick={()=>onToggleLink(id,ids[i+1])} style={{fontFamily:'var(--mono)',fontSize:9,fontWeight:800,letterSpacing:'.7px',textTransform:'uppercase',
+          color:linked(id,ids[i+1])?'#fff':'var(--primary)',background:linked(id,ids[i+1])?'var(--primary)':'var(--primary-dim)',borderRadius:7,border:'none',padding:'4px 11px',cursor:'pointer'}}>
+          {linked(id,ids[i+1])?'⚷ Superset':'+ Link'}</button>
+      </div>}
+      </React.Fragment>)})}
   </div>);
 }
 
@@ -1715,6 +1723,17 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     return{...w,athletes:na}});
   const setAthleteNote=(eid,text)=>setWorkout(w=>({...w,athleteNotes:{...(w.athleteNotes||{}),[eid]:{...((w.athleteNotes||{})[eid]||{}),[activeAth]:text}}}));
   const setVZ=(eid,vz)=>setWorkout(w=>{const m={...(w.vzMap||{})};if(vz)m[eid]=vz;else delete m[eid];return{...w,vzMap:m}});
+  // link/unlink two adjacent exercises into a superset, live during the workout
+  const toggleSupersetLive=(eid1,eid2)=>setWorkout(w=>{const prev=w.supersets||[];
+    const ex=prev.findIndex(ss=>ss.includes(eid1)&&ss.includes(eid2));
+    let next;
+    if(ex>=0)next=prev.filter((_,i)=>i!==ex);
+    else{const g1=prev.findIndex(ss=>ss.includes(eid1));const g2=prev.findIndex(ss=>ss.includes(eid2));
+      if(g1>=0&&g2>=0)next=prev;
+      else if(g1>=0)next=prev.map((ss,i)=>i===g1?[...ss,eid2]:ss);
+      else if(g2>=0)next=prev.map((ss,i)=>i===g2?[eid1,...ss]:ss);
+      else next=[...prev,[eid1,eid2]]}
+    return{...w,supersets:next}});
   const addExercise=newEx=>{setWorkout(w=>{const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id).length;
     const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
     const nw={...w,exerciseIds:[...w.exerciseIds,newEid],athletes:{...w.athletes}};
@@ -1897,8 +1916,8 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
           <button className="modal-x" onClick={()=>setShowOrganize(false)}><Ic n="x" s={20}/></button>
         </div>
         <div className="modal-b">
-          <div style={{fontSize:12,color:'var(--text3)',fontWeight:600,marginBottom:8}}>Drag the handle to reorder.</div>
-          <ReorderList ids={workout.exerciseIds} exercises={exercises} onReorder={reorderExercise} onDelete={deleteExercise}/>
+          <div style={{fontSize:12,color:'var(--text3)',fontWeight:600,marginBottom:8}}>Drag the handle to reorder. Tap <b style={{color:'var(--primary)'}}>+ Link</b> between two exercises to make them a superset.</div>
+          <ReorderList ids={workout.exerciseIds} exercises={exercises} onReorder={reorderExercise} onDelete={deleteExercise} supersets={workout.supersets} onToggleLink={toggleSupersetLive}/>
           {!workout.exerciseIds.length&&<div style={{padding:'20px 0',textAlign:'center',color:'var(--text3)',fontSize:14}}>No exercises yet.</div>}
           <button className="btn btn-secondary" style={{marginTop:14,width:'100%'}} onClick={()=>{setShowOrganize(false);setReplacingEid(null);setShowPicker(true)}}>+ Add Exercise</button>
         </div>
@@ -3900,6 +3919,38 @@ function App(){
       notes:''
     };
     setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-speed-2');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
+  // One-shot seed: 2026-05-26 Gym (VBT) - 2nd phase after speed
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_vbt_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
+    if(!exercises.length)return;
+    const plan={id:'pl-gym-vbt-1',date:'2026-05-26',name:'Gym',color:'#3b82f6',
+      exerciseIds:['high-pull','bosu-afsm','landmine-back-lunge','hip-thrust-staggered','nordics','seated-calf-raise'],
+      supersets:[['high-pull','bosu-afsm'],['nordics','seated-calf-raise']],
+      setConfigs:{
+        'high-pull':[{reps:3},{reps:3},{reps:3}],
+        'bosu-afsm':[{time:6},{time:6},{time:6}],
+        'landmine-back-lunge':[{reps:4},{reps:4},{reps:4}],
+        'hip-thrust-staggered':[{reps:6},{reps:6}],
+        'nordics':[{reps:4},{reps:4}],
+        'seated-calf-raise':[{reps:8},{reps:8}]
+      },
+      velocityZones:{
+        'high-pull':{id:'vz-hp',name:'Spd-Strength',range:'peak 1.7–2.0 m/s',color:'#22c55e'},
+        'landmine-back-lunge':{id:'vz-rl',name:'Acc-Strength',range:'mean 0.5–0.7 m/s',color:'#f97316'},
+        'hip-thrust-staggered':{id:'vz-ht',name:'Str-Speed',range:'mean 0.6–0.8 m/s',color:'#eab308'}
+      },
+      exNotes:{
+        'landmine-back-lunge':'Každá noha. Sleduj L vs R (max 10% rozdiel).'
+      },
+      notes:''
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-gym-vbt-1');
       if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
       return[...p,plan]});
     localStorage.setItem(KEY,'1')
