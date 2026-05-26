@@ -251,6 +251,12 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .eff-chip-best b,.eff-chip-best .eff-d{color:#22c55e}
 .eff-chip-ref{padding-left:9px;border-left:1.5px solid var(--border)}
 .eff-chip-ref b{color:var(--text2)}
+.vz-bar{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:9px;padding:9px 11px;background:var(--surface2);border-radius:11px}
+.vz-bar-l{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--text3)}
+.vz-chip{padding:5px 11px;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:.2px;border:2px solid transparent;cursor:pointer}
+.vz-add{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);background:transparent;border:1.5px dashed var(--border);border-radius:10px;padding:8px 11px;margin-top:9px;cursor:pointer}
+.vz-picker{margin-top:8px;padding:10px 11px;background:var(--surface2);border-radius:11px}
+.vz-picker-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .sets-h{display:grid;align-items:center;gap:8px;padding:0 4px 8px;font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.2px}
 .sets-h .l{text-align:left}
 .sets-h span{text-align:center}
@@ -717,6 +723,14 @@ const MARK_GROUP={
   'short-app-popup':'app-short',
 };
 const markGroupOf=eid=>MARK_GROUP[baseExId(eid)]||null;
+// Velocity-based-training target zones (mean concentric m/s). Assigned per exercise.
+const VELOCITY_ZONES=[
+  {id:'max-str',name:'Max Strength',range:'0.15–0.35 m/s',color:'#ef4444'},
+  {id:'acc-str',name:'Acc. Strength',range:'0.35–0.60 m/s',color:'#f97316'},
+  {id:'str-spd',name:'Str-Speed',range:'0.60–0.75 m/s',color:'#eab308'},
+  {id:'spd-str',name:'Spd-Strength',range:'0.75–1.00 m/s',color:'#22c55e'},
+  {id:'start-str',name:'Starting Str',range:'1.00–1.30 m/s',color:'#3b82f6'},
+];
 const tempBand=c=>c==null||isNaN(c)?null:c<10?'cold':c<19?'mild':c<27?'warm':'hot';
 const COND_LABEL={indoor:'Indoor',outdoor:'Outdoor',cold:'Cold',mild:'Mild',warm:'Warm',hot:'Hot',
   calm:'Bezvetrie',head:'Protivietor',tail:'Vietor v chrbte',cross:'Bočný vietor'};
@@ -1139,8 +1153,10 @@ function RestBar({startedAt,target,onStop}){
 }
 
 // One exercise card in the scrolling workout
-function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,workouts,allTags,onUpdateSet,onToggleSet,onToggleWarmup,onReopenSet,onAddSet,onAddWarmup,onDelSet,onCheckAll,onActions,onSetAthleteNote,onHistory,onUseMark}){
+function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,workouts,allTags,onUpdateSet,onToggleSet,onToggleWarmup,onReopenSet,onAddSet,onAddWarmup,onDelSet,onCheckAll,onActions,onSetAthleteNote,onHistory,onUseMark,vz,onSetVZ}){
   const[showCands,setShowCands]=useState(false);
+  const[showVZ,setShowVZ]=useState(false);
+  const[vzLo,setVzLo]=useState('');const[vzHi,setVzHi]=useState('');
   const ex=exercises.find(e=>e.id===baseExId(eid));
   const sets=workout.athletes[activeAth]?.sets?.[eid]||[];
   const effMetrics=workout.exerciseMetrics?.[eid]||ex?.metrics||[];
@@ -1228,6 +1244,31 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
         <span className="amk-field-u">m</span>
       </div>
     </div>}
+    {(vz||hasW)&&<>
+      {vz
+        ?<div className="vz-bar">
+          <span className="vz-bar-l">⚡ Velocity</span>
+          <span className="vz-chip" style={{background:vz.color+'22',color:vz.color}}>{vz.name}</span>
+          <span style={{fontSize:11,fontWeight:600,color:'var(--text3)'}}>{vz.range}</span>
+          <button onClick={()=>setShowVZ(s=>!s)} style={{marginLeft:'auto',background:'transparent',border:'none',color:'var(--text3)',fontSize:11,fontWeight:800,cursor:'pointer',fontFamily:'var(--mono)',letterSpacing:'.4px',textTransform:'uppercase'}}>Change</button>
+        </div>
+        :<button className="vz-add" onClick={()=>setShowVZ(s=>!s)}>⚡ Velocity zone</button>}
+      {showVZ&&<div className="vz-picker">
+        <div className="vz-picker-row">
+          {VELOCITY_ZONES.map(z=>(<button key={z.id} className="vz-chip" style={{background:z.color+'22',color:z.color,border:vz?.id===z.id?'2px solid '+z.color:'2px solid transparent'}}
+            onClick={()=>{onSetVZ&&onSetVZ(eid,z);setShowVZ(false)}}>{z.name}</button>))}
+          {vz&&<button className="vz-chip" style={{background:'var(--surface3)',color:'var(--text2)'}} onClick={()=>{onSetVZ&&onSetVZ(eid,null);setShowVZ(false)}}>Clear</button>}
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:6}}>
+          <input type="number" inputMode="decimal" step={0.05} className="set-input" style={{width:58,padding:'7px 6px'}} placeholder="lo" value={vzLo} onChange={e=>setVzLo(e.target.value)}/>
+          <span style={{color:'var(--text3)'}}>–</span>
+          <input type="number" inputMode="decimal" step={0.05} className="set-input" style={{width:58,padding:'7px 6px'}} placeholder="hi" value={vzHi} onChange={e=>setVzHi(e.target.value)}/>
+          <span style={{fontSize:11,color:'var(--text3)'}}>m/s</span>
+          <button onClick={()=>{if(vzLo||vzHi){onSetVZ&&onSetVZ(eid,{id:'custom',name:'Custom',range:(vzLo||'?')+'–'+(vzHi||'?')+' m/s',color:'#8b5cf6'});setVzLo('');setVzHi('');setShowVZ(false)}}}
+            style={{marginLeft:'auto',padding:'7px 13px',borderRadius:9,border:'none',background:'var(--primary)',color:'#fff',fontSize:12,fontWeight:800,cursor:'pointer'}}>Add</button>
+        </div>
+      </div>}
+    </>}
     <div className="sets-tbl">
       <div className="sets-h" style={{gridTemplateColumns:gridCols}}>
         <span className="l">Set</span>
@@ -1543,7 +1584,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     try{const ov=Number(localStorage.getItem('wk2_v3_startTime_override')||0);
       if(ov>0){_startTime=ov;localStorage.removeItem('wk2_v3_startTime_override')}}catch{}
     const w={id:'wk-'+uid(),planId:initialPlan?.id||null,name:initialPlan?.name||'Workout',startTime:_startTime,endTime:null,started:false,warmupMs:0,conditions:null,
-      color:initialPlan?.color||'#2156f4',tag:initialPlan?.tag||null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},exerciseAthletes:initialPlan?.exerciseAthletes?{...initialPlan.exerciseAthletes}:{},athleteNotes:{}};
+      color:initialPlan?.color||'#2156f4',tag:initialPlan?.tag||null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},exerciseAthletes:initialPlan?.exerciseAthletes?{...initialPlan.exerciseAthletes}:{},vzMap:initialPlan?.velocityZones?{...initialPlan.velocityZones}:{},athleteNotes:{}};
     athletes.forEach(a=>{w.athletes[a.id]={sets:{}}});
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
       const cfgs=initialPlan.setConfigs||{};
@@ -1673,6 +1714,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:ss.slice(0,-1)}}});
     return{...w,athletes:na}});
   const setAthleteNote=(eid,text)=>setWorkout(w=>({...w,athleteNotes:{...(w.athleteNotes||{}),[eid]:{...((w.athleteNotes||{})[eid]||{}),[activeAth]:text}}}));
+  const setVZ=(eid,vz)=>setWorkout(w=>{const m={...(w.vzMap||{})};if(vz)m[eid]=vz;else delete m[eid];return{...w,vzMap:m}});
   const addExercise=newEx=>{setWorkout(w=>{const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id).length;
     const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
     const nw={...w,exerciseIds:[...w.exerciseIds,newEid],athletes:{...w.athletes}};
@@ -1781,7 +1823,8 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       {curBlock&&curBlock.eids.map(eid=><ExerciseCard key={eid} eid={eid} blockLabel={curBlock.letter} isSuperset={curBlock.superset}
         workout={workout} activeAth={activeAth} exercises={exercises} workouts={workouts} allTags={allTags}
         onUpdateSet={updateSet} onToggleSet={toggleSet} onToggleWarmup={toggleWarmup} onReopenSet={reopenSet} onAddSet={addSet} onAddWarmup={addWarmupSet} onDelSet={delSet}
-        onCheckAll={checkAll} onActions={setActionsEid} onSetAthleteNote={setAthleteNote} onHistory={setHistoryEid} onUseMark={setMarkAll}/>)}
+        onCheckAll={checkAll} onActions={setActionsEid} onSetAthleteNote={setAthleteNote} onHistory={setHistoryEid} onUseMark={setMarkAll}
+        vz={workout.vzMap?.[eid]||null} onSetVZ={setVZ}/>)}
       {isLastBlock&&workout.exerciseIds.length>0&&<div style={{padding:'12px 14px 0'}}>
         <button className="btn btn-primary" style={{width:'100%',padding:'17px',fontSize:17}} onClick={()=>setShowFinish(true)}>End Workout</button>
         <button onClick={()=>setConfirmCancel(true)} style={{display:'block',margin:'14px auto 4px',background:'transparent',border:'none',color:'var(--text3)',fontSize:13,fontWeight:700,padding:8}}>Discard workout</button>
