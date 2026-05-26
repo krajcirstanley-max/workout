@@ -9925,6 +9925,67 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_maxvel_st_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const plan = {
+      id: 'pl-maxvel-2',
+      date: '2026-05-26',
+      name: 'Max Velocity',
+      color: '#dc2626',
+      exerciseIds: ['overspeed-40m', 'start-50m', 'start-60m', 'resisted-sprint', 'start-20m', 'accel-30m', 'approach-tech'],
+      supersets: [],
+      setConfigs: {
+        'overspeed-40m': [{}, {}, {}],
+        'start-50m': [{}, {}, {}],
+        'start-60m': [{}, {}],
+        'resisted-sprint': [{
+          distance: 20
+        }, {
+          distance: 20
+        }],
+        'start-20m': [{}, {}],
+        'accel-30m': [{}, {}, {}],
+        'approach-tech': [{
+          distance: 20
+        }, {
+          distance: 25
+        }, {
+          distance: 30
+        }]
+      },
+      exerciseAthletes: {
+        'overspeed-40m': ['ath-1'],
+        'start-50m': ['ath-1'],
+        'start-60m': ['ath-1'],
+        'resisted-sprint': ['ath-1'],
+        'start-20m': ['ath-1'],
+        'accel-30m': ['ath-1'],
+        'approach-tech': ['ath-1']
+      },
+      exNotes: {
+        'overspeed-40m': 'Len 10–10 fly segmenty.',
+        'resisted-sprint': 'Light.',
+        'approach-tech': 'Technika rozbehu.'
+      },
+      notes: ''
+    };
+    setPlanned(p => {
+      const i = p.findIndex(x => x.id === 'pl-maxvel-2');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_gym_iso_1';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
