@@ -11207,6 +11207,57 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, plannedSynced, wkSynced, exercises.length]);
   useEffect(() => {
+    const KEY = 'wk2_v3_split_20m_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !wkSynced || !exercises.length) return;
+    setExercises(prev => prev.map(e => e.id === 'start-20m' && !(e.metrics || []).includes('split-20m') ? {
+      ...e,
+      metrics: [...(e.metrics || []), 'split-20m']
+    } : e));
+    setWorkouts(prev => prev.map(w => {
+      let moved = false;
+      const na = {};
+      Object.entries(w.athletes || {}).forEach(([aid, ad]) => {
+        const ns = {
+          ...(ad.sets || {})
+        };
+        Object.keys(ns).forEach(key => {
+          if (baseExId(key) !== 'start-30m') return;
+          const keep = [],
+            mv = [];
+          ns[key].forEach(s => {
+            const d = Number((s.values || {}).distance);
+            (d && d < 30 ? mv : keep).push(s);
+          });
+          if (mv.length) {
+            moved = true;
+            const tgt = key.replace('start-30m', 'start-20m');
+            ns[tgt] = [...(ns[tgt] || []), ...mv];
+            if (keep.length) ns[key] = keep;else delete ns[key];
+          }
+        });
+        na[aid] = {
+          ...ad,
+          sets: ns
+        };
+      });
+      if (!moved) return w;
+      let ids = [...(w.exerciseIds || [])];
+      const has = id => Object.values(na).some(ad => ad.sets[id] && ad.sets[id].length);
+      if (has('start-20m') && !ids.some(e => baseExId(e) === 'start-20m')) {
+        const i = ids.findIndex(e => baseExId(e) === 'start-30m');
+        ids = i >= 0 ? [...ids.slice(0, i), 'start-20m', ...ids.slice(i)] : [...ids, 'start-20m'];
+      }
+      if (!has('start-30m')) ids = ids.filter(e => baseExId(e) !== 'start-30m');
+      return {
+        ...w,
+        athletes: na,
+        exerciseIds: ids
+      };
+    }));
+    localStorage.setItem(KEY, '1');
+  }, [exSynced, wkSynced, exercises.length]);
+  useEffect(() => {
     const KEY = 'wk2_v3_perf_ex_1';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !exercises.length) return;
