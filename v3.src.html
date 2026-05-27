@@ -3922,17 +3922,18 @@ function App(){
   },[exercises.length,exSynced,plannedSynced]);
 
   // One-shot seed: 2026-05-26 Gym (VBT) - 2nd phase after speed
-  useEffect(()=>{const KEY='wk2_v3_seed_gym_vbt_2';
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_vbt_3';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
     if(!exercises.length)return;
+    if(!exercises.some(e=>e.id==='rear-lunge'))setExercises(p=>p.find(x=>x.id==='rear-lunge')?p:[...p,{id:'rear-lunge',name:'Rear Lunge',category:'Legs',metrics:['weight','reps']}]);
     const plan={id:'pl-gym-vbt-1',date:'2026-05-26',name:'Gym',color:'#3b82f6',
-      exerciseIds:['high-pull','bosu-afsm','landmine-back-lunge','hip-thrust-staggered','nordics','calf-raise','hip-flexor','sprint-arms','seated-low-row'],
+      exerciseIds:['high-pull','bosu-afsm','rear-lunge','hip-thrust-staggered','nordics','calf-raise','hip-flexor','sprint-arms','seated-low-row'],
       supersets:[['high-pull','bosu-afsm'],['nordics','calf-raise'],['hip-flexor','sprint-arms','seated-low-row']],
       setConfigs:{
         'high-pull':[{reps:3},{reps:3},{reps:3}],
         'bosu-afsm':[{time:6},{time:6},{time:6}],
-        'landmine-back-lunge':[{reps:4},{reps:4},{reps:4}],
+        'rear-lunge':[{reps:4},{reps:4},{reps:4}],
         'hip-thrust-staggered':[{reps:6},{reps:6}],
         'nordics':[{reps:4},{reps:4}],
         'calf-raise':[{reps:8},{reps:8}],
@@ -3942,11 +3943,11 @@ function App(){
       },
       velocityZones:{
         'high-pull':{id:'vz-hp',name:'Spd-Strength',range:'peak 1.7–2.0 m/s',color:'#22c55e'},
-        'landmine-back-lunge':{id:'vz-rl',name:'Acc-Strength',range:'mean 0.5–0.7 m/s',color:'#f97316'},
+        'rear-lunge':{id:'vz-rl',name:'Acc-Strength',range:'mean 0.5–0.7 m/s',color:'#f97316'},
         'hip-thrust-staggered':{id:'vz-ht',name:'Str-Speed',range:'mean 0.6–0.8 m/s',color:'#eab308'}
       },
       exNotes:{
-        'landmine-back-lunge':'Každá noha. Sleduj L vs R (max 10% rozdiel).',
+        'rear-lunge':'Každá noha. Sleduj L vs R (max 10% rozdiel).',
         'hip-flexor':'Každá noha.'
       },
       notes:''
@@ -4225,7 +4226,8 @@ function App(){
       'leg-curl-iso':{id:'leg-curl-iso',name:'Lying Leg Curl Iso',category:'Legs',metrics:['time']},
       'sl-calf-iso':{id:'sl-calf-iso',name:'SL Calf Iso',category:'Legs',metrics:['time']},
       'iso-on-off':{id:'iso-on-off',name:'Iso ON/OFF',category:'Legs',metrics:['reps']},
-      'loaded-walk-banded':{id:'loaded-walk-banded',name:'Loaded Walk (Banded)',category:'Legs',metrics:['weight','distance']}
+      'loaded-walk-banded':{id:'loaded-walk-banded',name:'Loaded Walk (Banded)',category:'Legs',metrics:['weight','distance']},
+      'rear-lunge':{id:'rear-lunge',name:'Rear Lunge',category:'Legs',metrics:['weight','reps']}
     };
     const have=new Set(exercises.map(e=>e.id));
     const missing=Object.keys(defs).filter(id=>!have.has(id)).map(id=>defs[id]);

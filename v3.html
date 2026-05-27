@@ -10130,16 +10130,22 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_gym_vbt_2';
+    const KEY = 'wk2_v3_seed_gym_vbt_3';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
+    if (!exercises.some(e => e.id === 'rear-lunge')) setExercises(p => p.find(x => x.id === 'rear-lunge') ? p : [...p, {
+      id: 'rear-lunge',
+      name: 'Rear Lunge',
+      category: 'Legs',
+      metrics: ['weight', 'reps']
+    }]);
     const plan = {
       id: 'pl-gym-vbt-1',
       date: '2026-05-26',
       name: 'Gym',
       color: '#3b82f6',
-      exerciseIds: ['high-pull', 'bosu-afsm', 'landmine-back-lunge', 'hip-thrust-staggered', 'nordics', 'calf-raise', 'hip-flexor', 'sprint-arms', 'seated-low-row'],
+      exerciseIds: ['high-pull', 'bosu-afsm', 'rear-lunge', 'hip-thrust-staggered', 'nordics', 'calf-raise', 'hip-flexor', 'sprint-arms', 'seated-low-row'],
       supersets: [['high-pull', 'bosu-afsm'], ['nordics', 'calf-raise'], ['hip-flexor', 'sprint-arms', 'seated-low-row']],
       setConfigs: {
         'high-pull': [{
@@ -10156,7 +10162,7 @@ function App() {
         }, {
           time: 6
         }],
-        'landmine-back-lunge': [{
+        'rear-lunge': [{
           reps: 4
         }, {
           reps: 4
@@ -10201,7 +10207,7 @@ function App() {
           range: 'peak 1.7–2.0 m/s',
           color: '#22c55e'
         },
-        'landmine-back-lunge': {
+        'rear-lunge': {
           id: 'vz-rl',
           name: 'Acc-Strength',
           range: 'mean 0.5–0.7 m/s',
@@ -10215,7 +10221,7 @@ function App() {
         }
       },
       exNotes: {
-        'landmine-back-lunge': 'Každá noha. Sleduj L vs R (max 10% rozdiel).',
+        'rear-lunge': 'Každá noha. Sleduj L vs R (max 10% rozdiel).',
         'hip-flexor': 'Každá noha.'
       },
       notes: ''
@@ -10944,6 +10950,12 @@ function App() {
         name: 'Loaded Walk (Banded)',
         category: 'Legs',
         metrics: ['weight', 'distance']
+      },
+      'rear-lunge': {
+        id: 'rear-lunge',
+        name: 'Rear Lunge',
+        category: 'Legs',
+        metrics: ['weight', 'reps']
       }
     };
     const have = new Set(exercises.map(e => e.id));
