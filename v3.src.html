@@ -4047,7 +4047,7 @@ function App(){
   },[exercises.length,exSynced,plannedSynced]);
 
   // One-shot seed: 2026-05-28 Long Jump Session (pop-ups, run-throughs, 16-step jumps)
-  useEffect(()=>{const KEY='wk2_v3_seed_lj_session_7';
+  useEffect(()=>{const KEY='wk2_v3_seed_lj_session_7b';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
     if(!exercises.length)return;
@@ -4059,16 +4059,14 @@ function App(){
     const missing=newExs.filter(e=>!exIds.has(e.id));
     if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
     const plan={id:'pl-lj-session-7',date:'2026-05-28',name:'Long Jump Session',color:'#8b5cf6',
-      exerciseIds:['high-hurdle-jumps','short-app-popup','full-app-runthrough','full-app-popup','approach-runthrough-16','approach-popup-16','approach-jump-16','sl-bounds-pr-l','sl-bounds-pr-r'],
+      exerciseIds:['high-hurdle-jumps','short-app-popup','approach-runthrough-16','approach-popup-16','approach-jump-16','sl-bounds-pr-l','sl-bounds-pr-r'],
       supersets:[],
       setConfigs:{
         'high-hurdle-jumps':[{reps:5},{reps:5},{reps:5}],
         'short-app-popup':[{},{},{},{},{},{}],
-        'full-app-runthrough':[{},{}],
-        'full-app-popup':[{},{},{},{}],
         'approach-runthrough-16':[{}],
-        'approach-popup-16':[{},{}],
-        'approach-jump-16':[{},{},{},{}],
+        'approach-popup-16':[{},{},{},{}],
+        'approach-jump-16':[{},{},{},{},{},{}],
         'sl-bounds-pr-l':[{reps:2}],
         'sl-bounds-pr-r':[{reps:2}]
       },

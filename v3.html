@@ -10425,7 +10425,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_lj_session_7';
+    const KEY = 'wk2_v3_seed_lj_session_7b';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
@@ -10448,7 +10448,7 @@ function App() {
       date: '2026-05-28',
       name: 'Long Jump Session',
       color: '#8b5cf6',
-      exerciseIds: ['high-hurdle-jumps', 'short-app-popup', 'full-app-runthrough', 'full-app-popup', 'approach-runthrough-16', 'approach-popup-16', 'approach-jump-16', 'sl-bounds-pr-l', 'sl-bounds-pr-r'],
+      exerciseIds: ['high-hurdle-jumps', 'short-app-popup', 'approach-runthrough-16', 'approach-popup-16', 'approach-jump-16', 'sl-bounds-pr-l', 'sl-bounds-pr-r'],
       supersets: [],
       setConfigs: {
         'high-hurdle-jumps': [{
@@ -10459,11 +10459,9 @@ function App() {
           reps: 5
         }],
         'short-app-popup': [{}, {}, {}, {}, {}, {}],
-        'full-app-runthrough': [{}, {}],
-        'full-app-popup': [{}, {}, {}, {}],
         'approach-runthrough-16': [{}],
-        'approach-popup-16': [{}, {}],
-        'approach-jump-16': [{}, {}, {}, {}],
+        'approach-popup-16': [{}, {}, {}, {}],
+        'approach-jump-16': [{}, {}, {}, {}, {}, {}],
         'sl-bounds-pr-l': [{
           reps: 2
         }],
