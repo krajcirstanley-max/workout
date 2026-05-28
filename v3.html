@@ -920,6 +920,8 @@ const MARK_GROUP = {
   'approach-jump-16': 'app-16',
   'full-app-runthrough': 'app-16',
   'full-app-popup': 'app-16',
+  'approach-runthrough-16': 'app-16',
+  'approach-popup-16': 'app-16',
   'approach-jump-18': 'app-18',
   'short-app-popup': 'app-short'
 };
@@ -10423,6 +10425,70 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_lj_session_7';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'approach-runthrough-16',
+      name: '16-Step Run-through',
+      category: 'T&F',
+      metrics: ['approach-mark', 'reps']
+    }, {
+      id: 'approach-popup-16',
+      name: '16-Step Pop-up',
+      category: 'T&F',
+      metrics: ['approach-mark', 'reps']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const plan = {
+      id: 'pl-lj-session-7',
+      date: '2026-05-28',
+      name: 'Long Jump Session',
+      color: '#8b5cf6',
+      exerciseIds: ['high-hurdle-jumps', 'short-app-popup', 'full-app-runthrough', 'full-app-popup', 'approach-runthrough-16', 'approach-popup-16', 'approach-jump-16', 'sl-bounds-pr-l', 'sl-bounds-pr-r'],
+      supersets: [],
+      setConfigs: {
+        'high-hurdle-jumps': [{
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'short-app-popup': [{}, {}, {}, {}, {}, {}],
+        'full-app-runthrough': [{}, {}],
+        'full-app-popup': [{}, {}, {}, {}],
+        'approach-runthrough-16': [{}],
+        'approach-popup-16': [{}, {}],
+        'approach-jump-16': [{}, {}, {}, {}],
+        'sl-bounds-pr-l': [{
+          reps: 2
+        }],
+        'sl-bounds-pr-r': [{
+          reps: 2
+        }]
+      },
+      exNotes: {},
+      notes: ''
+    };
+    setPlanned(p => {
+      const i = p.findIndex(x => x.id === 'pl-lj-session-7');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_lj_session_6';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
@@ -10956,6 +11022,18 @@ function App() {
         name: 'Rear Lunge',
         category: 'Legs',
         metrics: ['weight', 'reps']
+      },
+      'approach-runthrough-16': {
+        id: 'approach-runthrough-16',
+        name: '16-Step Run-through',
+        category: 'T&F',
+        metrics: ['approach-mark', 'reps']
+      },
+      'approach-popup-16': {
+        id: 'approach-popup-16',
+        name: '16-Step Pop-up',
+        category: 'T&F',
+        metrics: ['approach-mark', 'reps']
       }
     };
     const have = new Set(exercises.map(e => e.id));
