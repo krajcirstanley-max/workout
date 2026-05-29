@@ -10425,16 +10425,35 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_low_day_1';
+    const KEY = 'wk2_v3_seed_low_day_2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
+    const newExs = [{
+      id: 'pogos',
+      name: 'Pogos',
+      category: 'Legs',
+      metrics: ['reps']
+    }, {
+      id: 'waterbag-front',
+      name: 'Waterbag Sprint (In Front)',
+      category: 'T&F',
+      metrics: ['distance']
+    }, {
+      id: 'waterbag-shoulders',
+      name: 'Waterbag Sprint (Shoulders)',
+      category: 'T&F',
+      metrics: ['distance']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
     const plan = {
       id: 'pl-low-day-1',
       date: '2026-05-29',
       name: 'Low Day',
       color: '#22c55e',
-      exerciseIds: ['pogos', 'sl-bounds-pr-l', 'sl-bounds-pr-r', 'med-ball-throw'],
+      exerciseIds: ['pogos', 'sl-bounds-pr-l', 'waterbag-front', 'waterbag-shoulders', 'sprint-band-overhead', 'no-arm-sprint', 'sprint-band-front', 'med-ball-throw'],
       supersets: [],
       setConfigs: {
         'pogos': [{
@@ -10445,7 +10464,31 @@ function App() {
           reps: 10
         }],
         'sl-bounds-pr-l': [{}, {}, {}],
-        'sl-bounds-pr-r': [{}, {}, {}],
+        'waterbag-front': [{
+          distance: 30
+        }, {
+          distance: 30
+        }],
+        'waterbag-shoulders': [{
+          distance: 30
+        }, {
+          distance: 30
+        }],
+        'sprint-band-overhead': [{
+          distance: 30
+        }, {
+          distance: 30
+        }],
+        'no-arm-sprint': [{
+          distance: 30
+        }, {
+          distance: 30
+        }],
+        'sprint-band-front': [{
+          distance: 30
+        }, {
+          distance: 30
+        }],
         'med-ball-throw': [{
           reps: 6
         }, {
@@ -10456,7 +10499,7 @@ function App() {
       },
       exNotes: {
         'sl-bounds-pr-l': 'Dopadnúť na celú nohu, aktívne zahrabnúť. Posledné dva kontakty na celú nohu.',
-        'sl-bounds-pr-r': 'Dopadnúť na celú nohu, aktívne zahrabnúť. Posledné dva kontakty na celú nohu.'
+        'sprint-band-front': 'Cez klobúčiky.'
       },
       notes: ''
     };
@@ -11082,6 +11125,24 @@ function App() {
         name: '16-Step Pop-up',
         category: 'T&F',
         metrics: ['approach-mark', 'reps']
+      },
+      'pogos': {
+        id: 'pogos',
+        name: 'Pogos',
+        category: 'Legs',
+        metrics: ['reps']
+      },
+      'waterbag-front': {
+        id: 'waterbag-front',
+        name: 'Waterbag Sprint (In Front)',
+        category: 'T&F',
+        metrics: ['distance']
+      },
+      'waterbag-shoulders': {
+        id: 'waterbag-shoulders',
+        name: 'Waterbag Sprint (Shoulders)',
+        category: 'T&F',
+        metrics: ['distance']
       }
     };
     const have = new Set(exercises.map(e => e.id));
