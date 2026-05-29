@@ -10425,6 +10425,56 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_low_day_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const plan = {
+      id: 'pl-low-day-1',
+      date: '2026-05-29',
+      name: 'Low Day',
+      color: '#22c55e',
+      exerciseIds: ['pogos', 'sl-bounds-pr-l', 'sl-bounds-pr-r', 'med-ball-throw'],
+      supersets: [],
+      setConfigs: {
+        'pogos': [{
+          reps: 10
+        }, {
+          reps: 10
+        }, {
+          reps: 10
+        }],
+        'sl-bounds-pr-l': [{}, {}, {}],
+        'sl-bounds-pr-r': [{}, {}, {}],
+        'med-ball-throw': [{
+          reps: 6
+        }, {
+          reps: 6
+        }, {
+          reps: 6
+        }]
+      },
+      exNotes: {
+        'sl-bounds-pr-l': 'Dopadnúť na celú nohu, aktívne zahrabnúť. Posledné dva kontakty na celú nohu.',
+        'sl-bounds-pr-r': 'Dopadnúť na celú nohu, aktívne zahrabnúť. Posledné dva kontakty na celú nohu.'
+      },
+      notes: ''
+    };
+    setPlanned(p => {
+      const i = p.findIndex(x => x.id === 'pl-low-day-1');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_lj_session_7b';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
