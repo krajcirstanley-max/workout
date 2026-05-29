@@ -1,4 +1,4 @@
-const CACHE='workout-v152';
+const CACHE='workout-v153';
 
 const PRECACHE=[
   './v3.html',

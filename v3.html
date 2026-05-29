@@ -11346,6 +11346,28 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, wkSynced, exercises.length]);
   useEffect(() => {
+    const KEY = 'wk2_v3_dedupe_ex_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !exercises.length) return;
+    const byId = {};
+    const order = [];
+    exercises.forEach(e => {
+      if (!byId[e.id]) {
+        byId[e.id] = {
+          ...e,
+          metrics: [...(e.metrics || [])]
+        };
+        order.push(e.id);
+      } else {
+        (e.metrics || []).forEach(m => {
+          if (!byId[e.id].metrics.includes(m)) byId[e.id].metrics.push(m);
+        });
+      }
+    });
+    if (order.length !== exercises.length) setExercises(() => order.map(id => byId[id]));
+    localStorage.setItem(KEY, '1');
+  }, [exSynced, exercises.length]);
+  useEffect(() => {
     const KEY = 'wk2_v3_perf_ex_1';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !exercises.length) return;
