@@ -4515,12 +4515,11 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exSynced,wkSynced,exercises.length]);
 
-  // One-shot v2: import Stanley's TrainHeroic history (27 workouts, 372 sets,
-  // Mar-Apr 2026) from th_import.json. v2 adds the split-times and fly-segments
-  // and approach-times that were parsed out of the per-set notes (v1 only had
-  // tf-time). REPLACES wk-th-* workouts if they already exist (so devices that
-  // ran v1 upgrade to the rich version); otherwise appends.
-  useEffect(()=>{const KEY='wk2_v3_th_import_2';
+  // One-shot v3: import Stanley's TrainHeroic history (27 workouts, ~370 sets,
+  // Mar-Apr 2026) from th_import.json. v3 fixes the resisted-sprint parser: TH
+  // values labelled "kg" are eg-settings, values labelled "s" are tf-time
+  // (v2 wrote both into eg-setting). REPLACES wk-th-* on upgrade.
+  useEffect(()=>{const KEY='wk2_v3_th_import_3';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{

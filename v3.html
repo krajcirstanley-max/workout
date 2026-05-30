@@ -11606,7 +11606,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, wkSynced, exercises.length]);
   useEffect(() => {
-    const KEY = 'wk2_v3_th_import_2';
+    const KEY = 'wk2_v3_th_import_3';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !wkSynced || !exercises.length) return;
     fetch('th_import.json', {

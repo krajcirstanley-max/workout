@@ -116,19 +116,19 @@
       "resisted-20m": [
        {
         "values": {
-         "eg-setting": 3.65
+         "tf-time": 3.65
         },
         "completed": true
        },
        {
         "values": {
-         "eg-setting": 3.53
+         "tf-time": 3.53
         },
         "completed": true
        },
        {
         "values": {
-         "eg-setting": 3.52
+         "tf-time": 3.52
         },
         "completed": true
        }
@@ -600,21 +600,21 @@
        {
         "values": {
          "eg-setting": 12.0,
-         "tf-time": 1.0
+         "tf-time": 2.11
         },
         "completed": true
        },
        {
         "values": {
          "eg-setting": 1.0,
-         "tf-time": 2.0
+         "tf-time": 2.61
         },
         "completed": true
        },
        {
         "values": {
          "eg-setting": 1.0,
-         "tf-time": 3.0
+         "tf-time": 2.28
         },
         "completed": true
        }
@@ -646,19 +646,19 @@
       "resisted-20m": [
        {
         "values": {
-         "eg-setting": 3.28
+         "tf-time": 3.28
         },
         "completed": true
        },
        {
         "values": {
-         "eg-setting": 3.56
+         "tf-time": 3.56
         },
         "completed": true
        },
        {
         "values": {
-         "eg-setting": 3.5
+         "tf-time": 3.5
         },
         "completed": true
        }
@@ -1443,7 +1443,6 @@
       "resisted-20m": [
        {
         "values": {
-         "eg-setting": 3.65,
          "tf-time": 3.65,
          "split-10m": 2.09
         },
@@ -1451,15 +1450,13 @@
        },
        {
         "values": {
-         "eg-setting": 3.62,
-         "tf-time": 3.61,
+         "tf-time": 3.62,
          "split-10m": 2.09
         },
         "completed": true
        },
        {
         "values": {
-         "eg-setting": 3.62,
          "tf-time": 3.62,
          "split-10m": 2.09
         },
@@ -2270,7 +2267,6 @@
       "resisted-20m": [
        {
         "values": {
-         "eg-setting": 3.79,
          "tf-time": 3.79,
          "split-10m": 2.18
         },
@@ -2278,7 +2274,6 @@
        },
        {
         "values": {
-         "eg-setting": 3.63,
          "tf-time": 3.63,
          "split-10m": 2.04
         },
@@ -2286,7 +2281,6 @@
        },
        {
         "values": {
-         "eg-setting": 3.75,
          "tf-time": 3.75,
          "split-10m": 2.1
         },
@@ -2294,8 +2288,7 @@
        },
        {
         "values": {
-         "eg-setting": 3.61,
-         "tf-time": 3.62,
+         "tf-time": 3.61,
          "split-10m": 2.06
         },
         "completed": true
@@ -3115,7 +3108,7 @@
       "resisted-20m": [
        {
         "values": {
-         "eg-setting": 3.53,
+         "eg-setting": 10,
          "tf-time": 3.53,
          "split-10m": 2.02
         },
@@ -3123,7 +3116,7 @@
        },
        {
         "values": {
-         "eg-setting": 3.47,
+         "eg-setting": 10,
          "tf-time": 3.47,
          "split-10m": 2.06
         },
@@ -3131,7 +3124,7 @@
        },
        {
         "values": {
-         "eg-setting": 3.38,
+         "eg-setting": 10,
          "tf-time": 3.38,
          "split-10m": 1.99
         },
@@ -3164,7 +3157,7 @@
       "resisted-30m": [
        {
         "values": {
-         "eg-setting": 4.38,
+         "eg-setting": 5.0,
          "tf-time": 4.38,
          "split-10m": 1.83,
          "split-20m": 3.15
@@ -3173,8 +3166,8 @@
        },
        {
         "values": {
-         "eg-setting": 4.26,
-         "tf-time": 4.25,
+         "eg-setting": 5.0,
+         "tf-time": 4.26,
          "split-10m": 1.79,
          "split-20m": 3.07
         },
@@ -3182,7 +3175,7 @@
        },
        {
         "values": {
-         "eg-setting": 4.3,
+         "eg-setting": 5.0,
          "tf-time": 4.3,
          "split-10m": 1.85,
          "split-20m": 3.13
