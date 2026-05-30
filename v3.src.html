@@ -4148,6 +4148,52 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-05-30 Gym - Power (Podrep + Výpon variant, drop jumps, step-up jumps, TB DL)
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_power_2';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return; // wait for Supabase pull so we don't get overwritten
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'podrep-vypon',name:'Podrep Výpon',category:'Legs',metrics:['reps','weight']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    const plan={id:'pl-gym-power-2',date:'2026-05-30',name:'Gym - Power',color:'#3b82f6',
+      exerciseIds:['cstm-mowtp19hc4nv','podrep-vypon','drop-jump-60cm','step-up','step-up-jump','calf-raise','rfd-sl-up-down','tb-deadlift','hanging-knee-raise','cstm-mowxe3mxc3ui'],
+      supersets:[
+        ['cstm-mowtp19hc4nv','podrep-vypon','drop-jump-60cm'],
+        ['step-up','step-up-jump'],
+        ['calf-raise','rfd-sl-up-down'],
+        ['hanging-knee-raise','cstm-mowxe3mxc3ui']
+      ],
+      setConfigs:{
+        'cstm-mowtp19hc4nv':[{reps:4},{reps:4}],
+        'podrep-vypon':[{reps:5}],
+        'drop-jump-60cm':[{reps:3},{reps:3},{reps:3}],
+        'step-up':[{reps:2},{reps:2},{reps:2}],
+        'step-up-jump':[{reps:2},{reps:2},{reps:2}],
+        'calf-raise':[{reps:6},{reps:6},{reps:6}],
+        'rfd-sl-up-down':[{reps:6},{reps:6},{reps:6}],
+        'tb-deadlift':[{reps:3},{reps:3}],
+        'hanging-knee-raise':[{reps:10},{reps:10}],
+        'cstm-mowxe3mxc3ui':[{reps:4},{reps:4}]
+      },
+      exNotes:{
+        'drop-jump-60cm':'60–70 cm box.',
+        'step-up':'Každá noha.',
+        'step-up-jump':'Každá noha.',
+        'calf-raise':'Power - explozívne.',
+        'cstm-mowxe3mxc3ui':'3s iso. Každá noha.'
+      },
+      notes:''
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-gym-power-2');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-05-23 Gym - Power (jumps, drops, step-up jumps, calf power)
   useEffect(()=>{const KEY='wk2_v3_seed_gym_power_1';
     if(localStorage.getItem(KEY)==='1')return;
@@ -4303,7 +4349,8 @@ function App(){
       'approach-popup-16':{id:'approach-popup-16',name:'16-Step Pop-up',category:'T&F',metrics:['approach-mark','reps']},
       'pogos':{id:'pogos',name:'Pogos',category:'Legs',metrics:['reps']},
       'waterbag-front':{id:'waterbag-front',name:'Waterbag Sprint (In Front)',category:'T&F',metrics:['distance']},
-      'waterbag-shoulders':{id:'waterbag-shoulders',name:'Waterbag Sprint (Shoulders)',category:'T&F',metrics:['distance']}
+      'waterbag-shoulders':{id:'waterbag-shoulders',name:'Waterbag Sprint (Shoulders)',category:'T&F',metrics:['distance']},
+      'podrep-vypon':{id:'podrep-vypon',name:'Podrep Výpon',category:'Legs',metrics:['reps','weight']}
     };
     const have=new Set(exercises.map(e=>e.id));
     const missing=Object.keys(defs).filter(id=>!have.has(id)).map(id=>defs[id]);
