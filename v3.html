@@ -11606,7 +11606,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, wkSynced, exercises.length]);
   useEffect(() => {
-    const KEY = 'wk2_v3_th_metric_extend_1';
+    const KEY = 'wk2_v3_th_metric_extend_2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !exercises.length) return;
     const ADD = {
@@ -11615,7 +11615,8 @@ function App() {
       'resisted-30m': ['split-10m', 'split-20m'],
       'bounds-10-pr': ['reps'],
       'triple-broad-jump': ['reps'],
-      'hurdle-jumps': ['height']
+      'hurdle-jumps': ['height'],
+      'approach-jump-18': ['tf-time']
     };
     setExercises(prev => {
       let changed = false;
@@ -11636,7 +11637,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, exercises.length]);
   useEffect(() => {
-    const KEY = 'wk2_v3_th_import_5';
+    const KEY = 'wk2_v3_th_import_6';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !wkSynced || !exercises.length) return;
     fetch('th_import.json', {

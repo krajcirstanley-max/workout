@@ -3981,6 +3981,3883 @@
     }
    },
    "athleteNotes": {}
+  },
+  {
+   "id": "wk-th-m-20260304",
+   "planId": null,
+   "name": "Imported · Mar 04 (Miška)",
+   "startTime": 1772622000000,
+   "endTime": 1772625600000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "standing-lj"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.3
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.35
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.4
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "standing-lj": {
+     "ath-2": "Na Tartan"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260305",
+   "planId": null,
+   "name": "Imported · Mar 05 (Miška)",
+   "startTime": 1772708400000,
+   "endTime": 1772712000000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "resisted-10m",
+    "start-10m",
+    "start-20m",
+    "start-30m"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "resisted-10m": [
+       {
+        "values": {
+         "eg-setting": 8.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "eg-setting": 10.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "eg-setting": 12.0
+        },
+        "completed": true
+       }
+      ],
+      "start-10m": [
+       {
+        "values": {
+         "tf-time": 1.73
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 1.87
+        },
+        "completed": true
+       }
+      ],
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 3.76
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.71
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.66
+        },
+        "completed": true
+       }
+      ],
+      "start-30m": [
+       {
+        "values": {
+         "tf-time": 4.27,
+         "split-10m": 1.85,
+         "split-20m": 3.09
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.3,
+         "split-10m": 1.83,
+         "split-20m": 3.07
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "8kg"
+    },
+    "start-30m": {
+     "ath-2": "1-1.85/1.24/1.19\n2-1.83/1.24/1.24"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260306",
+   "planId": null,
+   "name": "Imported · Mar 06 (Miška)",
+   "startTime": 1772794800000,
+   "endTime": 1772798400000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "hang-power-clean"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "hang-power-clean": [
+       {
+        "values": {
+         "weight": 48.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 49.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 51.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 52.0,
+         "reps": 2
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {}
+  },
+  {
+   "id": "wk-th-m-20260310",
+   "planId": null,
+   "name": "Imported · Mar 10 (Miška)",
+   "startTime": 1773140400000,
+   "endTime": 1773144000000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "hip-thrust",
+    "bulgarian-split-squat",
+    "calf-raise",
+    "podrep-vypon"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "hip-thrust": [
+       {
+        "values": {
+         "weight": 30.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 70.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 70.0,
+         "reps": 6
+        },
+        "completed": true
+       }
+      ],
+      "bulgarian-split-squat": [
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 55.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 60.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "calf-raise": [
+       {
+        "values": {
+         "weight": 104.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 112.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 144.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "podrep-vypon": [
+       {
+        "values": {
+         "weight": 103.0,
+         "reps": 4
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 113.0,
+         "reps": 4
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "hip-thrust": {
+     "ath-2": "Najprv na jednu nohu ostatne dve"
+    },
+    "calf-raise": {
+     "ath-2": "S jednou nohou dole"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260311",
+   "planId": null,
+   "name": "Imported · Mar 11 (Miška)",
+   "startTime": 1773226800000,
+   "endTime": 1773230400000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "start-50m"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.19,
+         "split-30m": 3.93,
+         "fly-10m-1": 1.1,
+         "fly-10m-2": 1.15
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.16,
+         "split-30m": 3.87,
+         "fly-10m-1": 1.13,
+         "fly-10m-2": 1.13
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.13
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-50m": {
+     "ath-2": "3.93/1.10/1.15\nNezmerany split\n3.87/1.13/1.13"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260312",
+   "planId": null,
+   "name": "Imported · Mar 12 (Miška)",
+   "startTime": 1773313200000,
+   "endTime": 1773316800000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "step-up",
+    "leg-press-sl-ecc"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "step-up": [
+       {
+        "values": {
+         "weight": 40.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "leg-press-sl-ecc": [
+       {
+        "values": {
+         "weight": 120.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 140.0,
+         "reps": 6
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "step-up": {
+     "ath-2": "Na 20cm"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260315",
+   "planId": null,
+   "name": "Imported · Mar 15 (Miška)",
+   "startTime": 1773572400000,
+   "endTime": 1773576000000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "resisted-10m",
+    "start-10m",
+    "start-20m",
+    "start-30m",
+    "start-40m",
+    "start-50m",
+    "approach-jump-18"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "resisted-10m": [
+       {
+        "values": {
+         "eg-setting": 10.0,
+         "tf-time": 2.39
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "eg-setting": 10.0,
+         "tf-time": 2.15
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "eg-setting": 12.0,
+         "tf-time": 2.45
+        },
+        "completed": true
+       }
+      ],
+      "start-10m": [
+       {
+        "values": {
+         "tf-time": 1.66
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 1.67
+        },
+        "completed": true
+       }
+      ],
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 3.0,
+         "split-10m": 1.72
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.99
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.65
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.46
+        },
+        "completed": true
+       }
+      ],
+      "start-30m": [
+       {
+        "values": {
+         "tf-time": 4.31,
+         "split-10m": 1.87,
+         "split-20m": 3.1
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.34,
+         "split-10m": 1.85,
+         "split-20m": 3.12
+        },
+        "completed": true
+       }
+      ],
+      "start-40m": [
+       {
+        "values": {
+         "tf-time": 5.35,
+         "split-20m": 3.12,
+         "split-30m": 4.36
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 5.47
+        },
+        "completed": true
+       }
+      ],
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.6,
+         "split-30m": 4.29,
+         "fly-10m-1": 1.15,
+         "fly-10m-2": 1.16
+        },
+        "completed": true
+       }
+      ],
+      "approach-jump-18": [
+       {
+        "values": {
+         "tf-time": 2.97,
+         "time-20-11m": 1.6,
+         "time-10-1m": 1.36
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.84,
+         "time-20-11m": 1.56,
+         "time-10-1m": 1.28
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.86
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.72/1.27"
+    },
+    "start-30m": {
+     "ath-2": "1.87/1.23/1.21\n1.85/1.27/1.23"
+    },
+    "start-40m": {
+     "ath-2": "Nezmeralo split\n3.12/1.24/1.11"
+    },
+    "start-50m": {
+     "ath-2": "4.29/1.15/1.16\n- accel merané 1.50 od štartu druhý freelap na 20m a potom po 10m"
+    },
+    "approach-jump-18": {
+     "ath-2": "3.30m naskočenie\n1-1.60/1.36\n2-1.56/1.28"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260316",
+   "planId": null,
+   "name": "Imported · Mar 16 (Miška)",
+   "startTime": 1773658800000,
+   "endTime": 1773662400000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "alt-bounds-jump",
+    "sl-bounds-pr-l",
+    "sl-bounds-pr-r",
+    "standing-lj"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "alt-bounds-jump": [
+       {
+        "values": {
+         "tf-dist": 14.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.4,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.05,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-l": [
+       {
+        "values": {
+         "tf-dist": 12.7,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.37,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.65,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-r": [
+       {
+        "values": {
+         "tf-dist": 13.25,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.15,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.6,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.7
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.65
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.67
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "alt-bounds-jump": {
+     "ath-2": "Išla som z 12 m dosky\nZ 2 krokov"
+    },
+    "sl-bounds-pr-l": {
+     "ath-2": "1- z 2 krokov\n2- z nacupkania asi 3 kroky\nIšla som z 11 m dosky"
+    },
+    "sl-bounds-pr-r": {
+     "ath-2": "Išla som z 11 m dosky\nZ nacupkania"
+    },
+    "standing-lj": {
+     "ath-2": "-15cm lebo sýpky piesok bol"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260317",
+   "planId": null,
+   "name": "Imported · Mar 17 (Miška)",
+   "startTime": 1773745200000,
+   "endTime": 1773748800000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "hip-thrust",
+    "bulgarian-split-squat",
+    "calf-raise",
+    "podrep-vypon"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "hip-thrust": [
+       {
+        "values": {
+         "weight": 50.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 80.0
+        },
+        "completed": true
+       }
+      ],
+      "bulgarian-split-squat": [
+       {
+        "values": {
+         "weight": 53.5,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 63.5,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 66.5,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "calf-raise": [
+       {
+        "values": {
+         "weight": 160.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 170.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 200.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "podrep-vypon": [
+       {
+        "values": {
+         "weight": 110.0,
+         "reps": 4
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 120.0,
+         "reps": 4
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "hip-thrust": {
+     "ath-2": "Na stroji"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260319",
+   "planId": null,
+   "name": "Imported · Mar 19 (Miška)",
+   "startTime": 1773918000000,
+   "endTime": 1773921600000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "bounds-10-pr",
+    "approach-jump-12",
+    "approach-jump-14",
+    "alt-bounds-jump",
+    "sl-bounds-pr-l",
+    "standing-lj"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "bounds-10-pr": [
+       {
+        "values": {
+         "tf-dist": 27.6,
+         "reps": 10
+        },
+        "completed": true
+       }
+      ],
+      "approach-jump-12": [
+       {
+        "values": {
+         "tf-dist": 5.35,
+         "time-10-1m": 1.31
+        },
+        "completed": true
+       }
+      ],
+      "approach-jump-14": [
+       {
+        "values": {
+         "tf-dist": 5.2,
+         "time-10-1m": 1.27
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 5.2,
+         "time-10-1m": 1.24
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 5.35,
+         "time-10-1m": 1.22
+        },
+        "completed": true
+       }
+      ],
+      "alt-bounds-jump": [
+       {
+        "values": {
+         "tf-dist": 14.1,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.1,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-l": [
+       {
+        "values": {
+         "tf-dist": 0.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.15,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.7
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.7
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "bounds-10-pr": {
+     "ath-2": "Z 25.50m"
+    },
+    "approach-jump-12": {
+     "ath-2": "1.31"
+    },
+    "approach-jump-14": {
+     "ath-2": "1.27\n1.24\n1.22\nVsetko sme v piesku dali iba -15cm\nRozbeh - 27.60 a 30.60"
+    },
+    "alt-bounds-jump": {
+     "ath-2": "Zo 4 krokov\nIsla som asi z 12m"
+    },
+    "sl-bounds-pr-l": {
+     "ath-2": "Prvy som nedoskocila\nDruhy -\nZ nacupkania z 11m"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260320",
+   "planId": null,
+   "name": "Imported · Mar 20 (Miška)",
+   "startTime": 1774004400000,
+   "endTime": 1774008000000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "start-20m",
+    "overspeed-40m",
+    "start-50m",
+    "start-60m",
+    "approach-jump-18"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 3.17,
+         "split-10m": 1.87
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.14,
+         "split-10m": 1.85
+        },
+        "completed": true
+       }
+      ],
+      "overspeed-40m": [
+       {
+        "values": {
+         "tf-time": 4.13
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.87
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.93
+        },
+        "completed": true
+       }
+      ],
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.66,
+         "split-30m": 4.33,
+         "fly-10m-1": 1.15,
+         "fly-10m-2": 1.18
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.54,
+         "split-30m": 4.27,
+         "fly-10m-1": 1.12,
+         "fly-10m-2": 1.15
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.59,
+         "split-30m": 4.31,
+         "fly-10m-1": 1.12,
+         "fly-10m-2": 1.16
+        },
+        "completed": true
+       }
+      ],
+      "start-60m": [
+       {
+        "values": {
+         "tf-time": 7.67,
+         "split-40m": 4.28,
+         "fly-10m-1": 2.31,
+         "fly-10m-2": 1.08
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 7.69
+        },
+        "completed": true
+       }
+      ],
+      "approach-jump-18": [
+       {
+        "values": {
+         "tf-time": 3.77,
+         "time-20-11m": 1.37,
+         "time-10-1m": 1.21
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.7,
+         "time-20-11m": 1.34,
+         "time-10-1m": 1.17
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.73,
+         "time-20-11m": 1.34,
+         "time-10-1m": 1.2
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.87/1.31\n1.85/1.29"
+    },
+    "overspeed-40m": {
+     "ath-2": "2.94/1.19\n2.79/1.08\n2.84/1.08"
+    },
+    "start-50m": {
+     "ath-2": "4.33/1.15/1.18\n4.27/1.12/1.15\n4.31/1.12/1.16"
+    },
+    "start-60m": {
+     "ath-2": "4.28/2.31/1.08\n2.26/1.09-nezmerany ale asi"
+    },
+    "approach-jump-18": {
+     "ath-2": "1.37/1.21/1.19\n1.34/1.17/1.19\n1.34/1.20/1.20\n\n37.30/40.50"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260321",
+   "planId": null,
+   "name": "Imported · Mar 21 (Miška)",
+   "startTime": 1774090800000,
+   "endTime": 1774094400000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "hang-power-clean"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "hang-power-clean": [
+       {
+        "values": {
+         "weight": 51.0,
+         "reps": 2
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {}
+  },
+  {
+   "id": "wk-th-m-20260323",
+   "planId": null,
+   "name": "Imported · Mar 23 (Miška)",
+   "startTime": 1774263600000,
+   "endTime": 1774267200000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "start-10m",
+    "start-20m",
+    "start-30m",
+    "start-40m",
+    "start-50m"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "start-10m": [
+       {
+        "values": {
+         "tf-time": 1.87
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 1.82
+        },
+        "completed": true
+       }
+      ],
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 2.95,
+         "split-10m": 1.67
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.05,
+         "split-10m": 1.81
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.8,
+         "split-10m": 2.18
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.77,
+         "split-10m": 2.2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.98,
+         "split-10m": 2.25
+        },
+        "completed": true
+       }
+      ],
+      "start-30m": [
+       {
+        "values": {
+         "tf-time": 4.16,
+         "split-10m": 1.72,
+         "split-20m": 2.98
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.19,
+         "split-10m": 1.77,
+         "split-20m": 2.99
+        },
+        "completed": true
+       }
+      ],
+      "start-40m": [
+       {
+        "values": {
+         "tf-time": 5.32,
+         "split-20m": 2.98,
+         "split-30m": 4.17
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 5.24,
+         "split-20m": 2.95,
+         "split-30m": 4.14
+        },
+        "completed": true
+       }
+      ],
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.4,
+         "split-30m": 4.13,
+         "fly-10m-1": 1.15,
+         "fly-10m-2": 1.13
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.46,
+         "split-30m": 4.18,
+         "fly-10m-1": 1.15,
+         "fly-10m-2": 1.13
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.67/1.28\n1.81/1.24\n2.18/1.62\n2.20/1.57\n2.25/1.73"
+    },
+    "start-30m": {
+     "ath-2": "1.72/1.26/1.18\n1.77/1.22/1.21"
+    },
+    "start-40m": {
+     "ath-2": "2.98/1.19/1.15\n2.95/1.19/1.10"
+    },
+    "start-50m": {
+     "ath-2": "4.13/1.15/1.13\n4.18/1.15/1.13"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260324",
+   "planId": null,
+   "name": "Imported · Mar 24 (Miška)",
+   "startTime": 1774350000000,
+   "endTime": 1774353600000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "bounds-10-pr",
+    "approach-jump-12",
+    "alt-bounds-jump",
+    "step-up",
+    "leg-press-sl-ecc",
+    "sl-bounds-pr-l",
+    "sl-bounds-pr-r",
+    "standing-lj",
+    "tb-deadlift"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "bounds-10-pr": [
+       {
+        "values": {
+         "tf-dist": 27.4,
+         "reps": 10
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 27.2,
+         "reps": 10
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 27.6,
+         "reps": 10
+        },
+        "completed": true
+       }
+      ],
+      "approach-jump-12": [
+       {
+        "values": {
+         "tf-dist": 0.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 5.3,
+         "time-10-1m": 1.3
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 0.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 5.4,
+         "time-10-1m": 1.27
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 5.35,
+         "time-10-1m": 1.28
+        },
+        "completed": true
+       }
+      ],
+      "alt-bounds-jump": [
+       {
+        "values": {
+         "tf-dist": 15.2,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.3,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.65,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "step-up": [
+       {
+        "values": {
+         "weight": 40.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 60.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "leg-press-sl-ecc": [
+       {
+        "values": {
+         "weight": 160.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 180.0,
+         "reps": 6
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-l": [
+       {
+        "values": {
+         "tf-dist": 13.3,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 12.65,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-r": [
+       {
+        "values": {
+         "tf-dist": 14.1
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 0.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 0.0
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.7
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.68
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.75
+        },
+        "completed": true
+       }
+      ],
+      "tb-deadlift": [
+       {
+        "values": {
+         "weight": 105.0,
+         "reps": 3
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 115.0,
+         "reps": 3
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 120.0,
+         "reps": 3
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "bounds-10-pr": {
+     "ath-2": "Z 25.50m"
+    },
+    "approach-jump-12": {
+     "ath-2": "1.30\n1.27\n1.28\n1.28"
+    },
+    "alt-bounds-jump": {
+     "ath-2": "Zo 4 krokov\n1- z 12.20\n2- 13m\n3-z 13"
+    },
+    "sl-bounds-pr-l": {
+     "ath-2": "Z 11.50 z ľahkých 4 krokov\n2- z nacupkaniw"
+    },
+    "sl-bounds-pr-r": {
+     "ath-2": "Zo 4 krokov z 12m\nOstatné som nedoskocila"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260330",
+   "planId": null,
+   "name": "Imported · Mar 30 (Miška)",
+   "startTime": 1774864800000,
+   "endTime": 1774868400000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "start-20m",
+    "start-50m",
+    "approach-jump-18"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 3.15,
+         "split-10m": 1.78
+        },
+        "completed": true
+       }
+      ],
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.7,
+         "split-30m": 4.33,
+         "fly-10m-1": 1.16,
+         "fly-10m-2": 1.22
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.92,
+         "split-30m": 4.31,
+         "fly-10m-1": 1.19,
+         "fly-10m-2": 1.21
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.72
+        },
+        "completed": true
+       }
+      ],
+      "approach-jump-18": [
+       {
+        "values": {
+         "tf-time": 3.93,
+         "time-20-11m": 1.43,
+         "time-10-1m": 1.25
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.85,
+         "time-20-11m": 1.38,
+         "time-10-1m": 1.25
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.83,
+         "time-20-11m": 1.35,
+         "time-10-1m": 1.27
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.79
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.78/1.38\n1.78/1.37\nStrasne ma boleli zakolenia sla som na 80%"
+    },
+    "start-50m": {
+     "ath-2": "4.33/1.16/1.22\n6.92 bol zadrzany iba 40m\n4.31/1.19/1.21\nBoleli ma zakolenia\nKlobuciky na 2.20"
+    },
+    "approach-jump-18": {
+     "ath-2": "1.43/1.25/1.25\n1.38/1.25/1.22\n1.35/1.27/1.21"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260331",
+   "planId": null,
+   "name": "Imported · Mar 31 (Miška)",
+   "startTime": 1774951200000,
+   "endTime": 1774954800000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "approach-jump-12",
+    "alt-bounds-jump",
+    "hip-thrust",
+    "calf-raise",
+    "sl-bounds-pr-l",
+    "sl-bounds-pr-r",
+    "standing-lj"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "approach-jump-12": [
+       {
+        "values": {
+         "tf-dist": 5.5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 0.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 0.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 0.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 5.65
+        },
+        "completed": true
+       }
+      ],
+      "alt-bounds-jump": [
+       {
+        "values": {
+         "tf-dist": 14.7,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.85,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.8,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.7,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "hip-thrust": [
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 80.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 90.0,
+         "reps": 6
+        },
+        "completed": true
+       }
+      ],
+      "calf-raise": [
+       {
+        "values": {
+         "weight": 160.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 205.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 220.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-l": [
+       {
+        "values": {
+         "tf-dist": 13.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.9,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.4,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.1,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-r": [
+       {
+        "values": {
+         "tf-dist": 13.5,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 0.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.3,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.2,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.52
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.52
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.65
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.73
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.7
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "alt-bounds-jump": {
+     "ath-2": "1- z 2 krokov z12m\n2- nedoskocila , zo 4\n3- zo 4 z 12,5\n4- zo 6\n5- zo 6\n6- zo 6 z 13m"
+    },
+    "sl-bounds-pr-l": {
+     "ath-2": "1- z 2 krokov - z 11m\n2 - zo 4 krokov - z 11 m\n3- zo 4 krokov z 11.50\n4- zo 4 krokov z 12m"
+    },
+    "sl-bounds-pr-r": {
+     "ath-2": "1- z 2 krokov z 11.5\n2 z 2 nedoskocila\n3 z 2 krokov z 12 m\n4 zo 4 krokov z 12m"
+    },
+    "standing-lj": {
+     "ath-2": "3- rit na 270 ale nohy na 2.88"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260402",
+   "planId": null,
+   "name": "Imported · Apr 02 (Miška)",
+   "startTime": 1775124000000,
+   "endTime": 1775127600000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "resisted-10m",
+    "start-10m",
+    "start-20m",
+    "start-30m",
+    "start-40m",
+    "approach-jump-18"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "resisted-10m": [
+       {
+        "values": {
+         "eg-setting": 12.0,
+         "tf-time": 2.58
+        },
+        "completed": true
+       }
+      ],
+      "start-10m": [
+       {
+        "values": {
+         "tf-time": 1.74
+        },
+        "completed": true
+       }
+      ],
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 3.01,
+         "split-10m": 1.72
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.92,
+         "split-10m": 1.67
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.97,
+         "split-10m": 1.7
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.01,
+         "split-10m": 1.72
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.84,
+         "split-10m": 2.17
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.82,
+         "split-10m": 2.16
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.83,
+         "split-10m": 2.19
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.77,
+         "split-10m": 2.11
+        },
+        "completed": true
+       }
+      ],
+      "start-30m": [
+       {
+        "values": {
+         "tf-time": 4.3,
+         "split-10m": 1.76,
+         "split-20m": 3.05
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.25,
+         "split-10m": 1.73,
+         "split-20m": 3.05
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.23,
+         "split-10m": 1.71,
+         "split-20m": 3.01
+        },
+        "completed": true
+       }
+      ],
+      "start-40m": [
+       {
+        "values": {
+         "tf-time": 5.46,
+         "split-20m": 3.03,
+         "split-30m": 4.26
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 5.4,
+         "split-20m": 3.02,
+         "split-30m": 4.22
+        },
+        "completed": true
+       }
+      ],
+      "approach-jump-18": [
+       {
+        "values": {
+         "tf-time": 3.96,
+         "time-20-11m": 1.41,
+         "time-10-1m": 1.29
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.82,
+         "time-20-11m": 1.4,
+         "time-10-1m": 1.23
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.72/1.29\n1.67/1.26\n1.70/1.27\n1.72/1.29\n8\n2.17/1.67\n2.16/1.66\n2.19/1.64\n2.11/1.66\nPrvych 10m - ako piest za seba\nDruhych 10m tlačiť a ťahať za seba"
+    },
+    "start-30m": {
+     "ath-2": "1.76/1.29/1.26\n1.73/1.32/1.21\n1.71/1.30/1.22"
+    },
+    "start-40m": {
+     "ath-2": "3.03/1.23/1.20\n3.02/1.20/1.18"
+    },
+    "approach-jump-18": {
+     "ath-2": "1.41/1.29/1.27\n1.40/1.23/1.19\n37,15/40,45"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260403",
+   "planId": null,
+   "name": "Imported · Apr 03 (Miška)",
+   "startTime": 1775210400000,
+   "endTime": 1775214000000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "bounds-10-pr",
+    "alt-bounds-jump",
+    "high-pull",
+    "sl-bounds-pr-l",
+    "sl-bounds-pr-r",
+    "standing-lj"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "bounds-10-pr": [
+       {
+        "values": {
+         "tf-dist": 27.3,
+         "reps": 10
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 26.54,
+         "reps": 10
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 27.2,
+         "reps": 10
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 27.3,
+         "reps": 10
+        },
+        "completed": true
+       }
+      ],
+      "alt-bounds-jump": [
+       {
+        "values": {
+         "tf-dist": 14.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.15,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "high-pull": [
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 51.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 52.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 53.0,
+         "reps": 2
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-l": [
+       {
+        "values": {
+         "tf-dist": 13.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.35,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.65,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-r": [
+       {
+        "values": {
+         "tf-dist": 12.85,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.2,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.5,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.65
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.75
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 260.0
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "bounds-10-pr": {
+     "ath-2": "Druhy som nedoskocila"
+    },
+    "alt-bounds-jump": {
+     "ath-2": "Z miesta 1\n2 - zo 4\n3 zo 4 z 13"
+    },
+    "sl-bounds-pr-l": {
+     "ath-2": "1 Z miesta\n2 zo 4 krokov\n3 zo 4 krokov\nZ 11.5"
+    },
+    "sl-bounds-pr-r": {
+     "ath-2": "Z miesta 1\n2 - zo 4 krokov\n3 zo 4 krokov"
+    },
+    "standing-lj": {
+     "ath-2": "Rit 265 nohy 280"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260405",
+   "planId": null,
+   "name": "Imported · Apr 05 (Miška)",
+   "startTime": 1775383200000,
+   "endTime": 1775386800000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "start-20m",
+    "overspeed-40m",
+    "start-50m",
+    "start-60m"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 2.92,
+         "split-10m": 1.65
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.02,
+         "split-10m": 1.73
+        },
+        "completed": true
+       }
+      ],
+      "overspeed-40m": [
+       {
+        "values": {
+         "tf-time": 2.19
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 5.02,
+         "distance": 40,
+         "fly-10m-1": 1.07,
+         "fly-10m-2": 1.1
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.92,
+         "distance": 40,
+         "fly-10m-1": 1.04,
+         "fly-10m-2": 1.04
+        },
+        "completed": true
+       }
+      ],
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.42,
+         "split-30m": 4.11,
+         "fly-10m-1": 1.13,
+         "fly-10m-2": 1.18
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.37,
+         "split-30m": 4.09,
+         "fly-10m-1": 1.13,
+         "fly-10m-2": 1.15
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.37,
+         "split-30m": 4.09,
+         "fly-10m-1": 1.13,
+         "fly-10m-2": 1.15
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.39,
+         "split-30m": 4.11,
+         "fly-10m-1": 1.16,
+         "fly-10m-2": 1.12
+        },
+        "completed": true
+       }
+      ],
+      "start-60m": [
+       {
+        "values": {
+         "tf-time": 7.53,
+         "split-40m": 5.28,
+         "fly-10m-1": 1.11,
+         "fly-10m-2": 1.15
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 7.47,
+         "split-40m": 5.24,
+         "fly-10m-1": 1.13,
+         "fly-10m-2": 1.09
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 7.41,
+         "split-40m": 5.21,
+         "fly-10m-1": 1.1,
+         "fly-10m-2": 1.1
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.65/1.28\n1.73/1.28"
+    },
+    "overspeed-40m": {
+     "ath-2": "1.08/1.11\n2.86/1.07/1.10\n20m nabeh a 20m merame po 10m\n2.83/1.04/1.04"
+    },
+    "start-50m": {
+     "ath-2": "4.11/1.13/1.18\n4.09/1.13/1.15\n4.09/1.13/1.15\n4.11/1.16/1.12"
+    },
+    "start-60m": {
+     "ath-2": "5.28/1.11/1.15\n5.24/1.13/1.09\n5.21/1.10/1.10\nMerali sme 40m fly a 20m po 10m frelap"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260406",
+   "planId": null,
+   "name": "Imported · Apr 06 (Miška)",
+   "startTime": 1775469600000,
+   "endTime": 1775473200000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "alt-bounds-jump",
+    "step-up",
+    "leg-press-sl-ecc",
+    "sl-bounds-pr-l",
+    "sl-bounds-pr-r",
+    "standing-lj",
+    "tb-deadlift"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "alt-bounds-jump": [
+       {
+        "values": {
+         "tf-dist": 14.7,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.25,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "step-up": [
+       {
+        "values": {
+         "weight": 55.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 60.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 55.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "leg-press-sl-ecc": [
+       {
+        "values": {
+         "weight": 180.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 200.0,
+         "reps": 6
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-l": [
+       {
+        "values": {
+         "tf-dist": 13.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.3,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.8,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-r": [
+       {
+        "values": {
+         "tf-dist": 13.75,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 13.7,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.4,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.65
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.72
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 255.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 260.0
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 260.0
+        },
+        "completed": true
+       }
+      ],
+      "tb-deadlift": [
+       {
+        "values": {
+         "weight": 105.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 115.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 120.0,
+         "reps": 2
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "alt-bounds-jump": {
+     "ath-2": "1- z 12.5 z nacupkania\n2- zo 4 z 12.5\n3 - zo 4 z 12.5"
+    },
+    "sl-bounds-pr-l": {
+     "ath-2": "1 - z 11 z nacupkania\n2- 11.40 zo 4 krokov\n3 - 11.60 zo 4 krokov"
+    },
+    "sl-bounds-pr-r": {
+     "ath-2": "Z 11.60 z nacupkania - 1\nZ 10.70 zo 4\nZ 12.5 zo 4"
+    },
+    "standing-lj": {
+     "ath-2": "Rit na 280 posledny"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260407",
+   "planId": null,
+   "name": "Imported · Apr 07 (Miška)",
+   "startTime": 1775556000000,
+   "endTime": 1775559600000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "resisted-10m",
+    "start-10m",
+    "start-20m",
+    "resisted-30m",
+    "start-30m"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "resisted-10m": [
+       {
+        "values": {
+         "eg-setting": 12.0,
+         "tf-time": 2.41
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.43
+        },
+        "completed": true
+       }
+      ],
+      "start-10m": [
+       {
+        "values": {
+         "tf-time": 1.72
+        },
+        "completed": true
+       }
+      ],
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 3.0,
+         "split-10m": 1.73
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.99,
+         "split-10m": 1.71
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.0,
+         "split-10m": 1.72
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.68,
+         "split-10m": 2.1
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.61,
+         "split-10m": 2.05
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.55,
+         "split-10m": 2.01
+        },
+        "completed": true
+       }
+      ],
+      "resisted-30m": [
+       {
+        "values": {
+         "eg-setting": 3.0,
+         "tf-time": 4.76,
+         "split-10m": 1.93,
+         "split-20m": 3.4
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 0.0,
+         "split-10m": 1.94,
+         "split-20m": 3.36
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.64
+        },
+        "completed": true
+       }
+      ],
+      "start-30m": [
+       {
+        "values": {
+         "tf-time": 4.22,
+         "split-10m": 1.7,
+         "split-20m": 3.03
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.24,
+         "split-10m": 1.73,
+         "split-20m": 3.05
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.17,
+         "split-10m": 1.7,
+         "split-20m": 3.02
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.73/1.27\n1.71/1.28\n1.72/1.28\n8\n2.10/1.59\n2.05/1.56\n2.01/1.53"
+    },
+    "resisted-30m": {
+     "ath-2": "3\n1.93/1.47/1.36\nNezmeralo\n1.94/1.42/1.28"
+    },
+    "start-30m": {
+     "ath-2": "1.70/1.33/1.18\n1.73/1.32/1.17\n1.70/1.32/1.16"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260409",
+   "planId": null,
+   "name": "Imported · Apr 09 (Miška)",
+   "startTime": 1775728800000,
+   "endTime": 1775732400000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "hip-thrust",
+    "bulgarian-split-squat",
+    "calf-raise"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "hip-thrust": [
+       {
+        "values": {
+         "weight": 100.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 120.0,
+         "reps": 6
+        },
+        "completed": true
+       }
+      ],
+      "bulgarian-split-squat": [
+       {
+        "values": {
+         "weight": 60.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 70.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 75.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "calf-raise": [
+       {
+        "values": {
+         "weight": 75.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "bulgarian-split-squat": {
+     "ath-2": "15tky kotúče\n20tky kotúče\n20tky kotúče + 2,5 na každú stranu"
+    },
+    "calf-raise": {
+     "ath-2": "Jednou nohou"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260410",
+   "planId": null,
+   "name": "Imported · Apr 10 (Miška)",
+   "startTime": 1775815200000,
+   "endTime": 1775818800000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "alt-bounds-jump",
+    "sl-bounds-pr-l",
+    "sl-bounds-pr-r",
+    "standing-lj"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "alt-bounds-jump": [
+       {
+        "values": {
+         "tf-dist": 15.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.6,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 16.1,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.9,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 16.1,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-l": [
+       {
+        "values": {
+         "tf-dist": 13.8,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.1,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-r": [
+       {
+        "values": {
+         "tf-dist": 0.0,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.6,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.8,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.67
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.55
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "alt-bounds-jump": {
+     "ath-2": "Z 13m zo 4 krokov\nZ 13m zo 6 krokov\nZ 13m zo 6 krokov\nZ 13.3 zo 6 krokov\nZ 13.3 zo 6 krokov"
+    },
+    "sl-bounds-pr-l": {
+     "ath-2": "Z 12m zo 4 krokov\nZ 12.7 zo 4 krokov\nZ 12.7 zo 4 krokov"
+    },
+    "sl-bounds-pr-r": {
+     "ath-2": "Z 12,6 zo 4 krokov\nZ 12.7 zo 4 krokov"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260413",
+   "planId": null,
+   "name": "Imported · Apr 13 (Miška)",
+   "startTime": 1776074400000,
+   "endTime": 1776078000000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "start-20m",
+    "start-50m"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 2.99,
+         "split-10m": 1.69
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.01,
+         "split-10m": 1.7
+        },
+        "completed": true
+       }
+      ],
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.45,
+         "split-30m": 4.17,
+         "fly-10m-1": 1.15,
+         "fly-10m-2": 1.15
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.48,
+         "split-30m": 4.18,
+         "fly-10m-1": 1.12,
+         "fly-10m-2": 1.16
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.46
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.47
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.69/1.30\n1.70/1.31"
+    },
+    "start-50m": {
+     "ath-2": "Prvé dva nezmerano Splity\n4.17/1.15/1.15\n4.18/1.12/1.16\nFúkal protak v Za na štadióne"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260414",
+   "planId": null,
+   "name": "Imported · Apr 14 (Miška)",
+   "startTime": 1776160800000,
+   "endTime": 1776164400000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "step-up",
+    "leg-press-sl-ecc",
+    "standing-lj",
+    "tb-deadlift"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "step-up": [
+       {
+        "values": {
+         "weight": 60.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 65.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 70.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "leg-press-sl-ecc": [
+       {
+        "values": {
+         "weight": 210.0,
+         "reps": 6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 220.0,
+         "reps": 6
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.6
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.7
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.65
+        },
+        "completed": true
+       }
+      ],
+      "tb-deadlift": [
+       {
+        "values": {
+         "weight": 115.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 120.0,
+         "reps": 2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 125.0,
+         "reps": 2
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "step-up": {
+     "ath-2": "Bez švihovky"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260416",
+   "planId": null,
+   "name": "Imported · Apr 16 (Miška)",
+   "startTime": 1776333600000,
+   "endTime": 1776337200000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "start-20m",
+    "start-50m",
+    "approach-jump-18"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "start-20m": [
+       {
+        "values": {
+         "tf-time": 3.07,
+         "split-10m": 1.74
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.08,
+         "split-10m": 1.73
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 0.0
+        },
+        "completed": true
+       }
+      ],
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.58,
+         "split-30m": 4.15,
+         "fly-10m-1": 1.12,
+         "fly-10m-2": 1.17
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.43,
+         "split-30m": 4.21,
+         "fly-10m-1": 1.13,
+         "fly-10m-2": 1.15
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.8
+        },
+        "completed": true
+       }
+      ],
+      "approach-jump-18": [
+       {
+        "values": {
+         "tf-time": 3.91,
+         "time-20-11m": 37.3,
+         "time-10-1m": 40.5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.72,
+         "time-20-11m": 1.39,
+         "time-10-1m": 1.27
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.8,
+         "time-20-11m": 1.35,
+         "time-10-1m": 1.2
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.85,
+         "time-20-11m": 1.37,
+         "time-10-1m": 1.23
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.86,
+         "time-20-11m": 1.4,
+         "time-10-1m": 1.22
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 3.86,
+         "time-20-11m": 1.41,
+         "time-10-1m": 1.22
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "start-20m": {
+     "ath-2": "1.74/1.33\n1.73/1.35\nZas ma slachy boleli"
+    },
+    "start-50m": {
+     "ath-2": "4.15/1.12/1.17\n4.21/1.13/1.15\nHrozna rychlost strasne fukal protak na stadione tak sme sli cez klobuciky"
+    },
+    "approach-jump-18": {
+     "ath-2": "37.3/40.5\n\n1.39/1.27/1.25\n1.35/1.20/1.18\n1.37/1.23/1.20\n1.40/1.22/1.23\n1.41/1.22/1.23\n1.41/1.25/1.20"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260417",
+   "planId": null,
+   "name": "Imported · Apr 17 (Miška)",
+   "startTime": 1776420000000,
+   "endTime": 1776423600000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "alt-bounds-jump",
+    "sl-bounds-pr-l",
+    "sl-bounds-pr-r",
+    "standing-lj"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "alt-bounds-jump": [
+       {
+        "values": {
+         "tf-dist": 14.8,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.6,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 16.1,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 16.4,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-l": [
+       {
+        "values": {
+         "tf-dist": 13.7,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.5,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 14.6,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "sl-bounds-pr-r": [
+       {
+        "values": {
+         "tf-dist": 14.4,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 15.2,
+         "reps": 5
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 0.0,
+         "reps": 5
+        },
+        "completed": true
+       }
+      ],
+      "standing-lj": [
+       {
+        "values": {
+         "tf-dist": 2.65
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.75
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.65
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.67
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-dist": 2.67
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "alt-bounds-jump": {
+     "ath-2": "Zo 4 krokov z 12\nZo 6 krokov z 13\nZo 6 z 13.30"
+    },
+    "sl-bounds-pr-l": {
+     "ath-2": "Z 12.7 zo 4 krokov"
+    },
+    "sl-bounds-pr-r": {
+     "ath-2": "Zo 4 krokov z 12,6\nZ 12.60/70\nPosledný nedoskocila"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260421",
+   "planId": null,
+   "name": "Imported · Apr 21 (Miška)",
+   "startTime": 1776765600000,
+   "endTime": 1776769200000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "fly-10m",
+    "overspeed-40m",
+    "start-50m"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "fly-10m": [
+       {
+        "values": {
+         "tf-time": 1.12
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 1.05
+        },
+        "completed": true
+       }
+      ],
+      "overspeed-40m": [
+       {
+        "values": {
+         "tf-time": 5.53,
+         "distance": 40,
+         "fly-10m-1": 1.19,
+         "fly-10m-2": 1.19
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.01,
+         "distance": 40,
+         "fly-10m-1": 1.21,
+         "fly-10m-2": 1.1
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.01,
+         "distance": 40,
+         "fly-10m-1": 1.22,
+         "fly-10m-2": 1.13
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 4.42,
+         "distance": 40,
+         "fly-10m-1": 1.14,
+         "fly-10m-2": 1.05
+        },
+        "completed": true
+       }
+      ],
+      "start-50m": [
+       {
+        "values": {
+         "tf-time": 6.52,
+         "split-30m": 4.19,
+         "fly-10m-1": 1.18,
+         "fly-10m-2": 1.14
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.61,
+         "split-30m": 4.28,
+         "fly-10m-1": 1.2,
+         "fly-10m-2": 1.14
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 6.55,
+         "split-30m": 4.22,
+         "fly-10m-1": 1.2,
+         "fly-10m-2": 1.13
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "overspeed-40m": {
+     "ath-2": "2.71/1.19/1.19\n1.70/1.21/1.10\n1.67/1.22/1.13\n2.23/1.14/1.05"
+    },
+    "start-50m": {
+     "ath-2": "4.19/1.18/1.14\n4.28/1.20/1.14\n4.22/1.20/1.13"
+    }
+   }
+  },
+  {
+   "id": "wk-th-m-20260424",
+   "planId": null,
+   "name": "Imported · Apr 24 (Miška)",
+   "startTime": 1777024800000,
+   "endTime": 1777028400000,
+   "started": true,
+   "warmupMs": 0,
+   "conditions": null,
+   "color": "#ec4899",
+   "tag": null,
+   "exerciseIds": [
+    "bulgarian-split-squat",
+    "high-pull"
+   ],
+   "supersets": [],
+   "setConfigs": {},
+   "exNotes": {},
+   "exerciseAthletes": {},
+   "vzMap": {},
+   "athletes": {
+    "ath-2": {
+     "sets": {
+      "bulgarian-split-squat": [
+       {
+        "values": {
+         "weight": 65.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 65.0,
+         "reps": 8
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 70.0,
+         "reps": 8
+        },
+        "completed": true
+       }
+      ],
+      "high-pull": [
+       {
+        "values": {
+         "weight": 50.0,
+         "reps": 3
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 55.0,
+         "reps": 3
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "weight": 60.0,
+         "reps": 3
+        },
+        "completed": true
+       }
+      ]
+     },
+     "rpe": null,
+     "notes": ""
+    }
+   },
+   "athleteNotes": {
+    "bulgarian-split-squat": {
+     "ath-2": "15 + 2.5 kotuce\nRovnako\n15 + 5 kg kotúče"
+    }
+   }
   }
  ],
  "newExercises": [
@@ -4033,6 +7910,15 @@
   {
    "id": "pogos-weighted",
    "name": "Weighted Pogos",
+   "category": "Legs",
+   "metrics": [
+    "weight",
+    "reps"
+   ]
+  },
+  {
+   "id": "hang-power-clean",
+   "name": "Hang Power Clean",
    "category": "Legs",
    "metrics": [
     "weight",

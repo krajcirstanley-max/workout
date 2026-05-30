@@ -4519,7 +4519,7 @@ function App(){
   // import populates - so weight on alt-bounds, split-10m on 20m resisted,
   // split-10m/20m on 30m resisted, reps on bounds-10/triple-broad, and weight
   // on alt-bounds-jump all display. Additive only - never removes a metric.
-  useEffect(()=>{const KEY='wk2_v3_th_metric_extend_1';
+  useEffect(()=>{const KEY='wk2_v3_th_metric_extend_2';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!exercises.length)return;
     const ADD={
@@ -4529,6 +4529,7 @@ function App(){
       'bounds-10-pr':['reps'],
       'triple-broad-jump':['reps'],
       'hurdle-jumps':['height'],
+      'approach-jump-18':['tf-time'],
     };
     setExercises(prev=>{let changed=false;
       const n=prev.map(e=>{const adds=ADD[e.id];if(!adds)return e;
@@ -4538,12 +4539,12 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exSynced,exercises.length]);
 
-  // One-shot v5: import Stanley's TrainHeroic history from th_import.json. v5
-  // remaps LJ APPROACH -> approach-jump-18 (was start-30m) so the slash pairs
-  // in notes land in the proper time-20-11m / time-10-1m segment columns. Also
-  // keeps suitcase distance fix + reps columns on triple-broad/bounds-10.
-  // REPLACES wk-th-* on upgrade.
-  useEffect(()=>{const KEY='wk2_v3_th_import_5';
+  // One-shot v6: import TrainHeroic history for BOTH athletes. Stanley's
+  // workouts have ids wk-th-YYYYMMDD on ath-1; Miska's are wk-th-m-YYYYMMDD on
+  // ath-2. Migration replaces existing imported workouts by id, then appends
+  // any missing - so v6 brings in Miska's 29 new workouts while keeping
+  // Stanley's 27 corrected ones.
+  useEffect(()=>{const KEY='wk2_v3_th_import_6';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{
