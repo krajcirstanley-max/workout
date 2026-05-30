@@ -4515,24 +4515,28 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exSynced,wkSynced,exercises.length]);
 
-  // One-shot: import Stanley's TrainHeroic history (27 workouts, 370 sets,
-  // Mar-Apr 2026) from th_import.json. Idempotent: skip workouts/exercises whose
-  // ids are already present, so re-running on a synced device is a no-op.
-  useEffect(()=>{const KEY='wk2_v3_th_import_1';
+  // One-shot v2: import Stanley's TrainHeroic history (27 workouts, 372 sets,
+  // Mar-Apr 2026) from th_import.json. v2 adds the split-times and fly-segments
+  // and approach-times that were parsed out of the per-set notes (v1 only had
+  // tf-time). REPLACES wk-th-* workouts if they already exist (so devices that
+  // ran v1 upgrade to the rich version); otherwise appends.
+  useEffect(()=>{const KEY='wk2_v3_th_import_2';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{
       if(!DATA||!Array.isArray(DATA.workouts))return;
-      // append any new exercises (id-based dedupe)
       if(Array.isArray(DATA.newExercises)&&DATA.newExercises.length){
         setExercises(prev=>{const have=new Set(prev.map(e=>e.id));
           const add=DATA.newExercises.filter(e=>!have.has(e.id));
           return add.length?[...prev,...add]:prev});
       }
-      // append imported workouts (id-based dedupe to never duplicate)
-      setWorkouts(prev=>{const have=new Set(prev.map(w=>w.id));
-        const add=DATA.workouts.filter(w=>w&&w.id&&!have.has(w.id));
-        return add.length?[...prev,...add]:prev});
+      setWorkouts(prev=>{
+        const incoming=new Map(DATA.workouts.map(w=>[w.id,w]));
+        const out=prev.map(w=>incoming.has(w.id)?incoming.get(w.id):w);
+        const have=new Set(out.map(w=>w.id));
+        const added=DATA.workouts.filter(w=>w&&w.id&&!have.has(w.id));
+        return added.length?[...out,...added]:out;
+      });
       localStorage.setItem(KEY,'1')
     }).catch(()=>{})
   },[exSynced,wkSynced,exercises.length]);
