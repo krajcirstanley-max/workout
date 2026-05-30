@@ -5974,8 +5974,9 @@ function StatScreen({
 }) {
   const myWk = workouts.filter(w => w.athletes?.[activeAth]);
   const [q, setQ] = useState('');
-  const RESERVED_M = new Set(['approach-mark', 'wicket-spc']);
-  const isMeaningful = ex => (ex.metrics || []).some(m => !RESERVED_M.has(m) && m !== 'reps');
+  const PERF_METRIC = m => m === 'tf-time' || m === 'tf-dist' || m === 'weight' || m === 'height' || m === 'gct' || m.startsWith('time-') || m.startsWith('split-') || m.startsWith('fly-') || m.startsWith('seg-');
+  const HIDE_FROM_INSIGHTS = new Set(['start-40m']);
+  const isMeaningful = ex => !HIDE_FROM_INSIGHTS.has(ex.id) && (ex.metrics || []).some(PERF_METRIC);
   const prMap = {};
   myWk.forEach(w => {
     const ad = w.athletes?.[activeAth];
@@ -11640,7 +11641,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, exercises.length]);
   useEffect(() => {
-    const KEY = 'wk2_v3_th_import_11';
+    const KEY = 'wk2_v3_th_import_12';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !wkSynced || !exercises.length) return;
     fetch('th_import.json', {
@@ -11664,6 +11665,16 @@ function App() {
       localStorage.setItem(KEY, '1');
     }).catch(() => {});
   }, [exSynced, wkSynced, exercises.length]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_rename_10skok_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced) return;
+    setExercises(prev => prev.map(e => e.id === 'bounds-10-pr' ? {
+      ...e,
+      name: '10 SKOK'
+    } : e));
+    localStorage.setItem(KEY, '1');
+  }, [exSynced]);
   useEffect(() => {
     const KEY = 'wk2_v3_fix_miska_seated_calf_1';
     if (localStorage.getItem(KEY) === '1') return;

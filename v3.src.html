@@ -2419,10 +2419,13 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
   const myWk=workouts.filter(w=>w.athletes?.[activeAth]);
   const[q,setQ]=useState('');
   // Build per-exercise PRs (across all metrics: best per metric)
-  // Hide reps-only exercises from Insights - rep count alone isn't a meaningful PR
-  // (you could always do more reps), and they clutter the list.
-  const RESERVED_M=new Set(['approach-mark','wicket-spc']);
-  const isMeaningful=ex=>(ex.metrics||[]).some(m=>!RESERVED_M.has(m)&&m!=='reps');
+  // Hide exercises from Insights when there's no meaningful PR metric — rep-only,
+  // distance-only drills (dribbles, marches, band sprints) get clipped.
+  // Explicit exclusions: 40m sprint (no longer trained).
+  const PERF_METRIC=m=>m==='tf-time'||m==='tf-dist'||m==='weight'||m==='height'||m==='gct'
+    ||m.startsWith('time-')||m.startsWith('split-')||m.startsWith('fly-')||m.startsWith('seg-');
+  const HIDE_FROM_INSIGHTS=new Set(['start-40m']);
+  const isMeaningful=ex=>!HIDE_FROM_INSIGHTS.has(ex.id)&&(ex.metrics||[]).some(PERF_METRIC);
   const prMap={};
   myWk.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;
     Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);
@@ -4554,7 +4557,7 @@ function App(){
   // ath-2. Migration replaces existing imported workouts by id, then appends
   // any missing - so v6 brings in Miska's 29 new workouts while keeping
   // Stanley's 27 corrected ones.
-  useEffect(()=>{const KEY='wk2_v3_th_import_11';
+  useEffect(()=>{const KEY='wk2_v3_th_import_12';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{
@@ -4574,6 +4577,15 @@ function App(){
       localStorage.setItem(KEY,'1')
     }).catch(()=>{})
   },[exSynced,wkSynced,exercises.length]);
+
+  // One-shot: rename bounds-10-pr to "10 SKOK" (user's preferred name; it's
+  // not the same as a 10-bound w/ pre-run drill).
+  useEffect(()=>{const KEY='wk2_v3_rename_10skok_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced)return;
+    setExercises(prev=>prev.map(e=>e.id==='bounds-10-pr'?{...e,name:'10 SKOK'}:e));
+    localStorage.setItem(KEY,'1')
+  },[exSynced]);
 
   // One-shot: the 120kg/150kg seated calf raise on the 2026-05-18 Gym workout
   // (id wk-mpb0fqbmf4b6) was logged under Miska but belongs to Stanley. Drop
