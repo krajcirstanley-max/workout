@@ -716,6 +716,7 @@ const METRIC_MAP={
 
 // approach exercises that share a pooled start-mark history, keyed by step count
 const MARK_GROUP={
+  'approach-jump-10':'app-10',
   'approach-jump-12':'app-12',
   'approach-jump-14':'app-14',
   'approach-jump-16':'app-16','full-app-runthrough':'app-16','full-app-popup':'app-16','approach-runthrough-16':'app-16','approach-popup-16':'app-16',
@@ -1401,8 +1402,8 @@ function suggestApproachMark({eid,athleteId,workouts,conditions,leadIn,nowMs,exc
   cands.sort((a,b)=>b.score-a.score||b.date-a.date);
   return cands;
 }
-const MARK_GROUP_LABEL={'app-12':'12-step','app-14':'14-step','app-16':'16-step','app-18':'18-step','app-short':'short-approach'};
-const MARK_GROUP_STEPS={'app-short':6,'app-12':12,'app-14':14,'app-16':16,'app-18':18};
+const MARK_GROUP_LABEL={'app-10':'10-step','app-12':'12-step','app-14':'14-step','app-16':'16-step','app-18':'18-step','app-short':'short-approach'};
+const MARK_GROUP_STEPS={'app-short':6,'app-10':10,'app-12':12,'app-14':14,'app-16':16,'app-18':18};
 // short human description of a session's conditions + lead-in
 function condDesc(c,leadIn,allTags){
   const parts=[c?.venue,c?.temp,c?.wind].filter(Boolean).map(v=>COND_LABEL[v]||v);
@@ -4350,7 +4351,13 @@ function App(){
       'pogos':{id:'pogos',name:'Pogos',category:'Legs',metrics:['reps']},
       'waterbag-front':{id:'waterbag-front',name:'Waterbag Sprint (In Front)',category:'T&F',metrics:['distance']},
       'waterbag-shoulders':{id:'waterbag-shoulders',name:'Waterbag Sprint (Shoulders)',category:'T&F',metrics:['distance']},
-      'podrep-vypon':{id:'podrep-vypon',name:'Podrep Výpon',category:'Legs',metrics:['reps','weight']}
+      'podrep-vypon':{id:'podrep-vypon',name:'Podrep Výpon',category:'Legs',metrics:['reps','weight']},
+      'approach-jump-10':{id:'approach-jump-10',name:'10-step Approach Jump',category:'T&F',metrics:['approach-mark','tf-dist','time-10-1m']},
+      'bounds-10-pr':{id:'bounds-10-pr',name:'10 Bounds w Pre-Run',category:'T&F',metrics:['tf-dist']},
+      'box-jump':{id:'box-jump',name:'Box Jump',category:'Legs',metrics:['height','reps']},
+      'bulgarian-split-squat':{id:'bulgarian-split-squat',name:'Bulgarian Split Squat',category:'Legs',metrics:['weight','reps']},
+      'triple-broad-jump':{id:'triple-broad-jump',name:'Triple Broad Jump',category:'T&F',metrics:['tf-dist']},
+      'pogos-weighted':{id:'pogos-weighted',name:'Weighted Pogos',category:'Legs',metrics:['weight','reps']}
     };
     const have=new Set(exercises.map(e=>e.id));
     const missing=Object.keys(defs).filter(id=>!have.has(id)).map(id=>defs[id]);
@@ -4506,6 +4513,28 @@ function App(){
       return {...w,athletes:na,exerciseIds:ids};
     }));
     localStorage.setItem(KEY,'1')
+  },[exSynced,wkSynced,exercises.length]);
+
+  // One-shot: import Stanley's TrainHeroic history (27 workouts, 370 sets,
+  // Mar-Apr 2026) from th_import.json. Idempotent: skip workouts/exercises whose
+  // ids are already present, so re-running on a synced device is a no-op.
+  useEffect(()=>{const KEY='wk2_v3_th_import_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!wkSynced||!exercises.length)return;
+    fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{
+      if(!DATA||!Array.isArray(DATA.workouts))return;
+      // append any new exercises (id-based dedupe)
+      if(Array.isArray(DATA.newExercises)&&DATA.newExercises.length){
+        setExercises(prev=>{const have=new Set(prev.map(e=>e.id));
+          const add=DATA.newExercises.filter(e=>!have.has(e.id));
+          return add.length?[...prev,...add]:prev});
+      }
+      // append imported workouts (id-based dedupe to never duplicate)
+      setWorkouts(prev=>{const have=new Set(prev.map(w=>w.id));
+        const add=DATA.workouts.filter(w=>w&&w.id&&!have.has(w.id));
+        return add.length?[...prev,...add]:prev});
+      localStorage.setItem(KEY,'1')
+    }).catch(()=>{})
   },[exSynced,wkSynced,exercises.length]);
 
   // One-shot: collapse duplicate exercise entries (same id stored multiple times

@@ -915,6 +915,7 @@ const METRIC_MAP = {
   }
 };
 const MARK_GROUP = {
+  'approach-jump-10': 'app-10',
   'approach-jump-12': 'app-12',
   'approach-jump-14': 'app-14',
   'approach-jump-16': 'app-16',
@@ -2743,6 +2744,7 @@ function suggestApproachMark({
   return cands;
 }
 const MARK_GROUP_LABEL = {
+  'app-10': '10-step',
   'app-12': '12-step',
   'app-14': '14-step',
   'app-16': '16-step',
@@ -2751,6 +2753,7 @@ const MARK_GROUP_LABEL = {
 };
 const MARK_GROUP_STEPS = {
   'app-short': 6,
+  'app-10': 10,
   'app-12': 12,
   'app-14': 14,
   'app-16': 16,
@@ -11253,6 +11256,42 @@ function App() {
         name: 'Podrep Výpon',
         category: 'Legs',
         metrics: ['reps', 'weight']
+      },
+      'approach-jump-10': {
+        id: 'approach-jump-10',
+        name: '10-step Approach Jump',
+        category: 'T&F',
+        metrics: ['approach-mark', 'tf-dist', 'time-10-1m']
+      },
+      'bounds-10-pr': {
+        id: 'bounds-10-pr',
+        name: '10 Bounds w Pre-Run',
+        category: 'T&F',
+        metrics: ['tf-dist']
+      },
+      'box-jump': {
+        id: 'box-jump',
+        name: 'Box Jump',
+        category: 'Legs',
+        metrics: ['height', 'reps']
+      },
+      'bulgarian-split-squat': {
+        id: 'bulgarian-split-squat',
+        name: 'Bulgarian Split Squat',
+        category: 'Legs',
+        metrics: ['weight', 'reps']
+      },
+      'triple-broad-jump': {
+        id: 'triple-broad-jump',
+        name: 'Triple Broad Jump',
+        category: 'T&F',
+        metrics: ['tf-dist']
+      },
+      'pogos-weighted': {
+        id: 'pogos-weighted',
+        name: 'Weighted Pogos',
+        category: 'Legs',
+        metrics: ['weight', 'reps']
       }
     };
     const have = new Set(exercises.map(e => e.id));
@@ -11565,6 +11604,29 @@ function App() {
       };
     }));
     localStorage.setItem(KEY, '1');
+  }, [exSynced, wkSynced, exercises.length]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_th_import_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !wkSynced || !exercises.length) return;
+    fetch('th_import.json', {
+      cache: 'no-cache'
+    }).then(r => r.ok ? r.json() : null).then(DATA => {
+      if (!DATA || !Array.isArray(DATA.workouts)) return;
+      if (Array.isArray(DATA.newExercises) && DATA.newExercises.length) {
+        setExercises(prev => {
+          const have = new Set(prev.map(e => e.id));
+          const add = DATA.newExercises.filter(e => !have.has(e.id));
+          return add.length ? [...prev, ...add] : prev;
+        });
+      }
+      setWorkouts(prev => {
+        const have = new Set(prev.map(w => w.id));
+        const add = DATA.workouts.filter(w => w && w.id && !have.has(w.id));
+        return add.length ? [...prev, ...add] : prev;
+      });
+      localStorage.setItem(KEY, '1');
+    }).catch(() => {});
   }, [exSynced, wkSynced, exercises.length]);
   useEffect(() => {
     const KEY = 'wk2_v3_dedupe_ex_1';
