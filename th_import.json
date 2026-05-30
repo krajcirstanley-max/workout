@@ -159,7 +159,8 @@
       "start-30m": [
        {
         "values": {
-         "tf-time": 4.07
+         "tf-time": 4.07,
+         "split-30m": 4.07
         },
         "completed": true
        }
@@ -631,14 +632,16 @@
        {
         "values": {
          "tf-time": 2.79,
-         "split-10m": 1.61
+         "split-10m": 1.61,
+         "split-20m": 2.79
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.8,
-         "split-10m": 1.62
+         "split-10m": 1.62,
+         "split-20m": 2.8
         },
         "completed": true
        }
@@ -666,13 +669,15 @@
       "start-30m": [
        {
         "values": {
-         "tf-time": 4.0
+         "tf-time": 4.0,
+         "split-30m": 4.0
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 3.97
+         "tf-time": 3.97,
+         "split-30m": 3.97
         },
         "completed": true
        }
@@ -1259,14 +1264,16 @@
        {
         "values": {
          "tf-time": 2.94,
-         "split-10m": 1.72
+         "split-10m": 1.72,
+         "split-20m": 2.94
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.94,
-         "split-10m": 1.73
+         "split-10m": 1.73,
+         "split-20m": 2.94
         },
         "completed": true
        }
@@ -1435,13 +1442,15 @@
        {
         "values": {
          "tf-time": 2.8,
-         "split-10m": 1.6
+         "split-10m": 1.6,
+         "split-20m": 2.8
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 2.93
+         "tf-time": 2.93,
+         "split-20m": 2.93
         },
         "completed": true
        }
@@ -1483,7 +1492,8 @@
         "values": {
          "tf-time": 3.91,
          "split-10m": 1.61,
-         "split-20m": 2.83
+         "split-20m": 2.83,
+         "split-30m": 3.91
         },
         "completed": true
        }
@@ -1871,14 +1881,16 @@
        {
         "values": {
          "tf-time": 2.85,
-         "split-10m": 1.63
+         "split-10m": 1.63,
+         "split-20m": 2.85
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.87,
-         "split-10m": 1.64
+         "split-10m": 1.64,
+         "split-20m": 2.87
         },
         "completed": true
        }
@@ -2244,28 +2256,32 @@
        {
         "values": {
          "tf-time": 2.81,
-         "split-10m": 1.58
+         "split-10m": 1.58,
+         "split-20m": 2.81
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.84,
-         "split-10m": 1.63
+         "split-10m": 1.63,
+         "split-20m": 2.84
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.84,
-         "split-10m": 1.64
+         "split-10m": 1.64,
+         "split-20m": 2.84
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.77,
-         "split-10m": 1.58
+         "split-10m": 1.58,
+         "split-20m": 2.77
         },
         "completed": true
        }
@@ -2305,7 +2321,8 @@
         "values": {
          "tf-time": 3.98,
          "split-10m": 1.6,
-         "split-20m": 2.84
+         "split-20m": 2.84,
+         "split-30m": 3.98
         },
         "completed": true
        },
@@ -2313,7 +2330,8 @@
         "values": {
          "tf-time": 3.93,
          "split-10m": 1.64,
-         "split-20m": 2.83
+         "split-20m": 2.83,
+         "split-30m": 3.93
         },
         "completed": true
        },
@@ -2321,7 +2339,8 @@
         "values": {
          "tf-time": 3.95,
          "split-10m": 1.67,
-         "split-20m": 2.85
+         "split-20m": 2.85,
+         "split-30m": 3.95
         },
         "completed": true
        }
@@ -2682,13 +2701,15 @@
        {
         "values": {
          "tf-time": 2.83,
-         "split-10m": 1.62
+         "split-10m": 1.62,
+         "split-20m": 2.83
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 2.73
+         "tf-time": 2.73,
+         "split-20m": 2.73
         },
         "completed": true
        }
@@ -3092,21 +3113,24 @@
        {
         "values": {
          "tf-time": 2.9,
-         "split-10m": 1.7
+         "split-10m": 1.7,
+         "split-20m": 2.9
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.81,
-         "split-10m": 1.68
+         "split-10m": 1.68,
+         "split-20m": 2.81
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.81,
-         "split-10m": 1.66
+         "split-10m": 1.66,
+         "split-20m": 2.81
         },
         "completed": true
        }
@@ -3194,7 +3218,8 @@
         "values": {
          "tf-time": 3.92,
          "split-10m": 1.69,
-         "split-20m": 2.84
+         "split-20m": 2.84,
+         "split-30m": 3.92
         },
         "completed": true
        },
@@ -3202,7 +3227,8 @@
         "values": {
          "tf-time": 3.88,
          "split-10m": 1.66,
-         "split-20m": 2.81
+         "split-20m": 2.81,
+         "split-30m": 3.88
         },
         "completed": true
        },
@@ -3210,7 +3236,8 @@
         "values": {
          "tf-time": 3.92,
          "split-10m": 1.69,
-         "split-20m": 2.87
+         "split-20m": 2.87,
+         "split-30m": 3.92
         },
         "completed": true
        }
@@ -3504,14 +3531,16 @@
        {
         "values": {
          "tf-time": 2.9,
-         "split-10m": 1.63
+         "split-10m": 1.63,
+         "split-20m": 2.9
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.81,
-         "split-10m": 1.62
+         "split-10m": 1.62,
+         "split-20m": 2.81
         },
         "completed": true
        }
@@ -3729,14 +3758,16 @@
        {
         "values": {
          "tf-time": 2.79,
-         "split-10m": 1.62
+         "split-10m": 1.62,
+         "split-20m": 2.79
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.83,
-         "split-10m": 1.64
+         "split-10m": 1.64,
+         "split-20m": 2.83
         },
         "completed": true
        }
@@ -4097,19 +4128,22 @@
       "start-20m": [
        {
         "values": {
-         "tf-time": 3.76
+         "tf-time": 3.76,
+         "split-20m": 3.76
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 3.71
+         "tf-time": 3.71,
+         "split-20m": 3.71
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 3.66
+         "tf-time": 3.66,
+         "split-20m": 3.66
         },
         "completed": true
        }
@@ -4119,7 +4153,8 @@
         "values": {
          "tf-time": 4.27,
          "split-10m": 1.85,
-         "split-20m": 3.09
+         "split-20m": 3.09,
+         "split-30m": 4.27
         },
         "completed": true
        },
@@ -4127,7 +4162,8 @@
         "values": {
          "tf-time": 4.3,
          "split-10m": 1.83,
-         "split-20m": 3.07
+         "split-20m": 3.07,
+         "split-30m": 4.3
         },
         "completed": true
        }
@@ -4544,25 +4580,29 @@
        {
         "values": {
          "tf-time": 3.0,
-         "split-10m": 1.72
+         "split-10m": 1.72,
+         "split-20m": 3.0
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 2.99
+         "tf-time": 2.99,
+         "split-20m": 2.99
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 3.65
+         "tf-time": 3.65,
+         "split-20m": 3.65
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 3.46
+         "tf-time": 3.46,
+         "split-20m": 3.46
         },
         "completed": true
        }
@@ -4572,7 +4612,8 @@
         "values": {
          "tf-time": 4.31,
          "split-10m": 1.87,
-         "split-20m": 3.1
+         "split-20m": 3.1,
+         "split-30m": 4.31
         },
         "completed": true
        },
@@ -4580,7 +4621,8 @@
         "values": {
          "tf-time": 4.34,
          "split-10m": 1.85,
-         "split-20m": 3.12
+         "split-20m": 3.12,
+         "split-30m": 4.34
         },
         "completed": true
        }
@@ -5078,14 +5120,16 @@
        {
         "values": {
          "tf-time": 3.17,
-         "split-10m": 1.87
+         "split-10m": 1.87,
+         "split-20m": 3.17
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.14,
-         "split-10m": 1.85
+         "split-10m": 1.85,
+         "split-20m": 3.14
         },
         "completed": true
        }
@@ -5287,35 +5331,40 @@
        {
         "values": {
          "tf-time": 2.95,
-         "split-10m": 1.67
+         "split-10m": 1.67,
+         "split-20m": 2.95
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.05,
-         "split-10m": 1.81
+         "split-10m": 1.81,
+         "split-20m": 3.05
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.8,
-         "split-10m": 2.18
+         "split-10m": 2.18,
+         "split-20m": 3.8
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.77,
-         "split-10m": 2.2
+         "split-10m": 2.2,
+         "split-20m": 3.77
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.98,
-         "split-10m": 2.25
+         "split-10m": 2.25,
+         "split-20m": 3.98
         },
         "completed": true
        }
@@ -5325,7 +5374,8 @@
         "values": {
          "tf-time": 4.16,
          "split-10m": 1.72,
-         "split-20m": 2.98
+         "split-20m": 2.98,
+         "split-30m": 4.16
         },
         "completed": true
        },
@@ -5333,7 +5383,8 @@
         "values": {
          "tf-time": 4.19,
          "split-10m": 1.77,
-         "split-20m": 2.99
+         "split-20m": 2.99,
+         "split-30m": 4.19
         },
         "completed": true
        }
@@ -5676,7 +5727,8 @@
        {
         "values": {
          "tf-time": 3.15,
-         "split-10m": 1.78
+         "split-10m": 1.78,
+         "split-20m": 3.15
         },
         "completed": true
        }
@@ -6058,56 +6110,64 @@
        {
         "values": {
          "tf-time": 3.01,
-         "split-10m": 1.72
+         "split-10m": 1.72,
+         "split-20m": 3.01
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.92,
-         "split-10m": 1.67
+         "split-10m": 1.67,
+         "split-20m": 2.92
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.97,
-         "split-10m": 1.7
+         "split-10m": 1.7,
+         "split-20m": 2.97
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.01,
-         "split-10m": 1.72
+         "split-10m": 1.72,
+         "split-20m": 3.01
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.84,
-         "split-10m": 2.17
+         "split-10m": 2.17,
+         "split-20m": 3.84
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.82,
-         "split-10m": 2.16
+         "split-10m": 2.16,
+         "split-20m": 3.82
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.83,
-         "split-10m": 2.19
+         "split-10m": 2.19,
+         "split-20m": 3.83
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.77,
-         "split-10m": 2.11
+         "split-10m": 2.11,
+         "split-20m": 3.77
         },
         "completed": true
        }
@@ -6117,7 +6177,8 @@
         "values": {
          "tf-time": 4.3,
          "split-10m": 1.76,
-         "split-20m": 3.05
+         "split-20m": 3.05,
+         "split-30m": 4.3
         },
         "completed": true
        },
@@ -6125,7 +6186,8 @@
         "values": {
          "tf-time": 4.25,
          "split-10m": 1.73,
-         "split-20m": 3.05
+         "split-20m": 3.05,
+         "split-30m": 4.25
         },
         "completed": true
        },
@@ -6133,7 +6195,8 @@
         "values": {
          "tf-time": 4.23,
          "split-10m": 1.71,
-         "split-20m": 3.01
+         "split-20m": 3.01,
+         "split-30m": 4.23
         },
         "completed": true
        }
@@ -6422,14 +6485,16 @@
        {
         "values": {
          "tf-time": 2.92,
-         "split-10m": 1.65
+         "split-10m": 1.65,
+         "split-20m": 2.92
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.02,
-         "split-10m": 1.73
+         "split-10m": 1.73,
+         "split-20m": 3.02
         },
         "completed": true
        }
@@ -6817,42 +6882,48 @@
        {
         "values": {
          "tf-time": 3.0,
-         "split-10m": 1.73
+         "split-10m": 1.73,
+         "split-20m": 3.0
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 2.99,
-         "split-10m": 1.71
+         "split-10m": 1.71,
+         "split-20m": 2.99
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.0,
-         "split-10m": 1.72
+         "split-10m": 1.72,
+         "split-20m": 3.0
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.68,
-         "split-10m": 2.1
+         "split-10m": 2.1,
+         "split-20m": 3.68
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.61,
-         "split-10m": 2.05
+         "split-10m": 2.05,
+         "split-20m": 3.61
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.55,
-         "split-10m": 2.01
+         "split-10m": 2.01,
+         "split-20m": 3.55
         },
         "completed": true
        }
@@ -6887,7 +6958,8 @@
         "values": {
          "tf-time": 4.22,
          "split-10m": 1.7,
-         "split-20m": 3.03
+         "split-20m": 3.03,
+         "split-30m": 4.22
         },
         "completed": true
        },
@@ -6895,7 +6967,8 @@
         "values": {
          "tf-time": 4.24,
          "split-10m": 1.73,
-         "split-20m": 3.05
+         "split-20m": 3.05,
+         "split-30m": 4.24
         },
         "completed": true
        },
@@ -6903,7 +6976,8 @@
         "values": {
          "tf-time": 4.17,
          "split-10m": 1.7,
-         "split-20m": 3.02
+         "split-20m": 3.02,
+         "split-30m": 4.17
         },
         "completed": true
        }
@@ -7183,14 +7257,16 @@
        {
         "values": {
          "tf-time": 2.99,
-         "split-10m": 1.69
+         "split-10m": 1.69,
+         "split-20m": 2.99
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.01,
-         "split-10m": 1.7
+         "split-10m": 1.7,
+         "split-20m": 3.01
         },
         "completed": true
        }
@@ -7387,20 +7463,23 @@
        {
         "values": {
          "tf-time": 3.07,
-         "split-10m": 1.74
+         "split-10m": 1.74,
+         "split-20m": 3.07
         },
         "completed": true
        },
        {
         "values": {
          "tf-time": 3.08,
-         "split-10m": 1.73
+         "split-10m": 1.73,
+         "split-20m": 3.08
         },
         "completed": true
        },
        {
         "values": {
-         "tf-time": 0.0
+         "tf-time": 0.0,
+         "split-20m": 0.0
         },
         "completed": true
        }
