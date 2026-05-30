@@ -2194,7 +2194,6 @@
     "resisted-20m",
     "start-30m",
     "start-40m",
-    "start-50m",
     "triple-broad-jump"
    ],
    "supersets": [],
@@ -2328,49 +2327,6 @@
         "completed": true
        }
       ],
-      "start-50m": [
-       {
-        "values": {
-         "tf-time": 3.51,
-         "split-30m": 1.22,
-         "fly-10m-1": 1.17,
-         "fly-10m-2": 1.11
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "tf-time": 3.47,
-         "split-30m": 1.2,
-         "fly-10m-1": 1.15,
-         "fly-10m-2": 1.12
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "tf-time": 3.53,
-         "split-30m": 1.22,
-         "fly-10m-1": 1.21,
-         "fly-10m-2": 1.11
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "split-30m": 1.28,
-         "fly-10m-1": 1.17,
-         "fly-10m-2": 1.06
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "tf-time": 3.51
-        },
-        "completed": true
-       }
-      ],
       "triple-broad-jump": [
        {
         "values": {
@@ -2411,9 +2367,6 @@
     },
     "start-40m": {
      "ath-1": "2.86/1.11/1.09"
-    },
-    "start-50m": {
-     "ath-1": "Z 20 krokov 1.22/1.17/1.11 1.20/1.15/1.12 Z 18 krokov 1.22/1.21/1.11 Nezmeralo 1.28/1.17/1.06"
     },
     "triple-broad-jump": {
      "ath-1": "8.30 / 8.80 / 9.05"
@@ -3534,10 +3487,6 @@
          "fly-10m-1": 1.09,
          "fly-10m-2": 1.03
         },
-        "completed": true
-       },
-       {
-        "values": {},
         "completed": true
        },
        {
@@ -7717,33 +7666,6 @@
          "distance": 40,
          "fly-10m-1": 1.19,
          "fly-10m-2": 1.19
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "tf-time": 4.01,
-         "distance": 40,
-         "fly-10m-1": 1.21,
-         "fly-10m-2": 1.1
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "tf-time": 4.01,
-         "distance": 40,
-         "fly-10m-1": 1.22,
-         "fly-10m-2": 1.13
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "tf-time": 4.42,
-         "distance": 40,
-         "fly-10m-1": 1.14,
-         "fly-10m-2": 1.05
         },
         "completed": true
        }

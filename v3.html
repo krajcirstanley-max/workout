@@ -783,37 +783,37 @@ const METRIC_MAP = {
   },
   'split-10m': {
     id: 'split-10m',
-    name: '0–10m',
+    name: '10m',
     unit: 's',
     step: .01
   },
   'split-20m': {
     id: 'split-20m',
-    name: '0–20m',
+    name: '20m',
     unit: 's',
     step: .01
   },
   'split-30m': {
     id: 'split-30m',
-    name: '0–30m',
+    name: '30m',
     unit: 's',
     step: .01
   },
   'split-40m': {
     id: 'split-40m',
-    name: '0–40m',
+    name: '40m',
     unit: 's',
     step: .01
   },
   'split-50m': {
     id: 'split-50m',
-    name: '0–50m',
+    name: '50m',
     unit: 's',
     step: .01
   },
   'split-60m': {
     id: 'split-60m',
-    name: '0–60m',
+    name: '60m',
     unit: 's',
     step: .01
   },
@@ -11637,7 +11637,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, exercises.length]);
   useEffect(() => {
-    const KEY = 'wk2_v3_th_import_9';
+    const KEY = 'wk2_v3_th_import_10';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !wkSynced || !exercises.length) return;
     fetch('th_import.json', {

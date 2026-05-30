@@ -690,12 +690,15 @@ const METRIC_MAP={
   'tf-time':{id:'tf-time',name:'Time',unit:'s',step:.01},
   'tf-dist':{id:'tf-dist',name:'Dist',unit:'m',step:.01},
   height:{id:'height',name:'Height',unit:'m',step:.01},
-  'split-10m':{id:'split-10m',name:'0–10m',unit:'s',step:.01},
-  'split-20m':{id:'split-20m',name:'0–20m',unit:'s',step:.01},
-  'split-30m':{id:'split-30m',name:'0–30m',unit:'s',step:.01},
-  'split-40m':{id:'split-40m',name:'0–40m',unit:'s',step:.01},
-  'split-50m':{id:'split-50m',name:'0–50m',unit:'s',step:.01},
-  'split-60m':{id:'split-60m',name:'0–60m',unit:'s',step:.01},
+  // Labels are bare distance markers — for short sprints (start-20/30m) the value
+  // is the 10m segment ending at that mark; for longer sprints (40/50/60m) the
+  // value can be a cumulative split. Context tells you which.
+  'split-10m':{id:'split-10m',name:'10m',unit:'s',step:.01},
+  'split-20m':{id:'split-20m',name:'20m',unit:'s',step:.01},
+  'split-30m':{id:'split-30m',name:'30m',unit:'s',step:.01},
+  'split-40m':{id:'split-40m',name:'40m',unit:'s',step:.01},
+  'split-50m':{id:'split-50m',name:'50m',unit:'s',step:.01},
+  'split-60m':{id:'split-60m',name:'60m',unit:'s',step:.01},
   'seg-10-20m':{id:'seg-10-20m',name:'10–20m',unit:'s',step:.01},
   'seg-20-30m':{id:'seg-20-30m',name:'20–30m',unit:'s',step:.01},
   'seg-30-40m':{id:'seg-30-40m',name:'30–40m',unit:'s',step:.01},
@@ -4546,7 +4549,7 @@ function App(){
   // ath-2. Migration replaces existing imported workouts by id, then appends
   // any missing - so v6 brings in Miska's 29 new workouts while keeping
   // Stanley's 27 corrected ones.
-  useEffect(()=>{const KEY='wk2_v3_th_import_9';
+  useEffect(()=>{const KEY='wk2_v3_th_import_10';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{
