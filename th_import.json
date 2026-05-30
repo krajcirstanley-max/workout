@@ -874,7 +874,6 @@
        },
        {
         "values": {
-         "tf-dist": 0.0,
          "reps": 5
         },
         "completed": true
@@ -1061,21 +1060,15 @@
      "sets": {
       "approach-jump-10": [
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
@@ -1095,7 +1088,6 @@
       "bounds-10-pr": [
        {
         "values": {
-         "tf-dist": 0.0,
          "reps": 10
         },
         "completed": true
@@ -1117,9 +1109,7 @@
       ],
       "approach-jump-12": [
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
@@ -1170,7 +1160,6 @@
        },
        {
         "values": {
-         "tf-dist": 0.0,
          "reps": 5
         },
         "completed": true
@@ -1592,9 +1581,7 @@
      "sets": {
       "approach-jump-10": [
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
@@ -1649,41 +1636,29 @@
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        }
       ],
       "alt-bounds-jump": [
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
@@ -1920,9 +1895,7 @@
         "completed": true
        },
        {
-        "values": {
-         "tf-time": 0.0
-        },
+        "values": {},
         "completed": true
        }
       ],
@@ -2351,9 +2324,7 @@
         "completed": true
        },
        {
-        "values": {
-         "tf-time": 0.0
-        },
+        "values": {},
         "completed": true
        }
       ],
@@ -2387,7 +2358,6 @@
        },
        {
         "values": {
-         "tf-time": 0.0,
          "split-30m": 1.28,
          "fly-10m-1": 1.17,
          "fly-10m-2": 1.06
@@ -2511,7 +2481,6 @@
        },
        {
         "values": {
-         "tf-dist": 0.0,
          "reps": 5
         },
         "completed": true
@@ -3543,7 +3512,6 @@
       "start-50m": [
        {
         "values": {
-         "tf-time": 0.0,
          "split-30m": 3.88,
          "fly-10m-1": 1.08,
          "fly-10m-2": 1.04
@@ -3569,9 +3537,7 @@
         "completed": true
        },
        {
-        "values": {
-         "tf-time": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
@@ -5023,7 +4989,6 @@
       "sl-bounds-pr-l": [
        {
         "values": {
-         "tf-dist": 0.0,
          "reps": 5
         },
         "completed": true
@@ -5491,9 +5456,7 @@
       ],
       "approach-jump-12": [
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
@@ -5504,9 +5467,7 @@
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
@@ -5610,15 +5571,11 @@
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        }
       ],
@@ -5833,21 +5790,15 @@
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
-        "values": {
-         "tf-dist": 0.0
-        },
+        "values": {},
         "completed": true
        },
        {
@@ -5973,7 +5924,6 @@
        },
        {
         "values": {
-         "tf-dist": 0.0,
          "reps": 5
         },
         "completed": true
@@ -6929,7 +6879,6 @@
        },
        {
         "values": {
-         "tf-time": 0.0,
          "split-10m": 1.94,
          "split-20m": 3.36
         },
@@ -7162,7 +7111,6 @@
       "sl-bounds-pr-r": [
        {
         "values": {
-         "tf-dist": 0.0,
          "reps": 5
         },
         "completed": true
@@ -7466,9 +7414,7 @@
         "completed": true
        },
        {
-        "values": {
-         "tf-time": 0.0
-        },
+        "values": {},
         "completed": true
        }
       ],
@@ -7666,7 +7612,6 @@
        },
        {
         "values": {
-         "tf-dist": 0.0,
          "reps": 5
         },
         "completed": true
