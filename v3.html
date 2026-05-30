@@ -5993,15 +5993,39 @@ function StatScreen({
   const [q, setQ] = useState('');
   const PERF_METRIC = m => m === 'tf-time' || m === 'tf-dist' || m === 'weight' || m === 'height' || m === 'gct' || m.startsWith('time-') || m.startsWith('split-') || m.startsWith('fly-') || m.startsWith('seg-');
   const HIDE_FROM_INSIGHTS = new Set(['start-40m']);
-  const isMeaningful = ex => !HIDE_FROM_INSIGHTS.has(ex.id) && (ex.metrics || []).some(PERF_METRIC);
+  const actualKeysByEx = {};
+  myWk.forEach(w => {
+    const ad = w.athletes?.[activeAth];
+    if (!ad) return;
+    Object.keys(ad.sets || {}).forEach(eid => {
+      const base = baseExId(eid);
+      const ks = actualKeysByEx[base] = actualKeysByEx[base] || new Set();
+      ad.sets[eid].forEach(s => {
+        if (!s.completed || s.warmup) return;
+        Object.entries(s.values || {}).forEach(([k, v]) => {
+          if (Number(v)) ks.add(k);
+        });
+      });
+    });
+  });
+  const isMeaningful = ex => {
+    if (HIDE_FROM_INSIGHTS.has(ex.id)) return false;
+    const declared = ex.metrics || [];
+    const actual = [...(actualKeysByEx[ex.id] || [])];
+    return declared.some(PERF_METRIC) || actual.some(PERF_METRIC);
+  };
   const prMap = {};
   myWk.forEach(w => {
     const ad = w.athletes?.[activeAth];
     if (!ad) return;
     Object.keys(ad.sets || {}).forEach(eid => {
       const base = baseExId(eid);
-      const ex = exercises.find(e => e.id === base);
-      if (!ex) return;
+      const ex = exercises.find(e => e.id === base) || {
+        id: base,
+        name: base,
+        category: '',
+        metrics: []
+      };
       if (!isMeaningful(ex)) return;
       ad.sets[eid].filter(s => s.completed && !s.warmup).forEach(s => {
         const v = s.values || {};
@@ -6011,8 +6035,11 @@ function StatScreen({
           metrics: {},
           lastDate: 0
         };
-        ex.metrics.forEach(m => {
-          if (m === 'approach-mark' || m === 'wicket-spc') return;
+        const seen = new Set();
+        [...(ex.metrics || []), ...Object.keys(v)].forEach(m => {
+          if (seen.has(m)) return;
+          seen.add(m);
+          if (m === 'approach-mark' || m === 'wicket-spc' || m === 'reps' || m === 'distance' || m === 'steps' || m === 'eg-setting') return;
           const val = Number(v[m]);
           if (!val || isNaN(val)) return;
           const md = METRIC_MAP[m] || {
@@ -12078,6 +12105,52 @@ function App() {
         };
       });
       return changed ? n : prev;
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exSynced, exercises.length]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_repair_metrics_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !exercises.length) return;
+    const ADD_METRICS = {
+      'approach-popup-16': ['time-10-1m', 'time-20-11m'],
+      'full-app-runthrough': ['split-10m', 'time-10-1m', 'time-20-11m'],
+      'nordics': ['weight'],
+      'hip-flexor': ['weight'],
+      'lower-back-ext': ['weight'],
+      'pogos-bands': ['weight'],
+      'sl-calf-iso': ['weight'],
+      'sprint-arms': ['weight'],
+      'iso-on-off': ['time'],
+      'podrep-vypon': ['time']
+    };
+    const MISSING_EX = [{
+      id: 'cstm-mpl5hfhr9e3s',
+      name: 'Custom (Rep-Only)',
+      category: 'Core',
+      metrics: ['reps']
+    }, {
+      id: 'ex-mohjfp75rv83',
+      name: 'Custom (Light Accessory)',
+      category: 'Legs',
+      metrics: ['weight', 'reps']
+    }];
+    setExercises(prev => {
+      const byId = new Map(prev.map(e => [e.id, e]));
+      MISSING_EX.forEach(ne => {
+        if (!byId.has(ne.id)) byId.set(ne.id, ne);
+      });
+      Object.entries(ADD_METRICS).forEach(([id, extra]) => {
+        const ex = byId.get(id);
+        if (!ex) return;
+        const cur = ex.metrics || [];
+        const need = extra.filter(m => !cur.includes(m));
+        if (need.length) byId.set(id, {
+          ...ex,
+          metrics: [...cur, ...need]
+        });
+      });
+      return [...byId.values()];
     });
     localStorage.setItem(KEY, '1');
   }, [exSynced, exercises.length]);
