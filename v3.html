@@ -5974,6 +5974,8 @@ function StatScreen({
 }) {
   const myWk = workouts.filter(w => w.athletes?.[activeAth]);
   const [q, setQ] = useState('');
+  const RESERVED_M = new Set(['approach-mark', 'wicket-spc']);
+  const isMeaningful = ex => (ex.metrics || []).some(m => !RESERVED_M.has(m) && m !== 'reps');
   const prMap = {};
   myWk.forEach(w => {
     const ad = w.athletes?.[activeAth];
@@ -5982,6 +5984,7 @@ function StatScreen({
       const base = baseExId(eid);
       const ex = exercises.find(e => e.id === base);
       if (!ex) return;
+      if (!isMeaningful(ex)) return;
       ad.sets[eid].filter(s => s.completed && !s.warmup).forEach(s => {
         const v = s.values || {};
         if (!prMap[base]) prMap[base] = {
@@ -11637,7 +11640,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, exercises.length]);
   useEffect(() => {
-    const KEY = 'wk2_v3_th_import_10';
+    const KEY = 'wk2_v3_th_import_11';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !wkSynced || !exercises.length) return;
     fetch('th_import.json', {
@@ -11661,6 +11664,31 @@ function App() {
       localStorage.setItem(KEY, '1');
     }).catch(() => {});
   }, [exSynced, wkSynced, exercises.length]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_fix_miska_seated_calf_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!wkSynced) return;
+    setWorkouts(prev => prev.map(w => {
+      if (w.id !== 'wk-mpb0fqbmf4b6') return w;
+      const ad2 = w.athletes?.['ath-2'];
+      if (!ad2 || !ad2.sets || !ad2.sets['seated-calf-raise']) return w;
+      const ns = {
+        ...ad2.sets
+      };
+      delete ns['seated-calf-raise'];
+      return {
+        ...w,
+        athletes: {
+          ...w.athletes,
+          'ath-2': {
+            ...ad2,
+            sets: ns
+          }
+        }
+      };
+    }));
+    localStorage.setItem(KEY, '1');
+  }, [wkSynced]);
   useEffect(() => {
     const KEY = 'wk2_v3_merge_aj_10_1';
     if (localStorage.getItem(KEY) === '1') return;

@@ -4169,8 +4169,7 @@
    "exerciseIds": [
     "hip-thrust",
     "bulgarian-split-squat",
-    "calf-raise",
-    "podrep-vypon"
+    "calf-raise"
    ],
    "supersets": [],
    "setConfigs": {},
@@ -4245,22 +4244,6 @@
         "values": {
          "weight": 144.0,
          "reps": 8
-        },
-        "completed": true
-       }
-      ],
-      "podrep-vypon": [
-       {
-        "values": {
-         "weight": 103.0,
-         "reps": 4
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "weight": 113.0,
-         "reps": 4
         },
         "completed": true
        }
@@ -4753,8 +4736,7 @@
    "exerciseIds": [
     "hip-thrust",
     "bulgarian-split-squat",
-    "calf-raise",
-    "podrep-vypon"
+    "calf-raise"
    ],
    "supersets": [],
    "setConfigs": {},
@@ -4820,22 +4802,6 @@
         "values": {
          "weight": 200.0,
          "reps": 8
-        },
-        "completed": true
-       }
-      ],
-      "podrep-vypon": [
-       {
-        "values": {
-         "weight": 110.0,
-         "reps": 4
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "weight": 120.0,
-         "reps": 4
         },
         "completed": true
        }

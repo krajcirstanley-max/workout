@@ -2419,10 +2419,15 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
   const myWk=workouts.filter(w=>w.athletes?.[activeAth]);
   const[q,setQ]=useState('');
   // Build per-exercise PRs (across all metrics: best per metric)
+  // Hide reps-only exercises from Insights - rep count alone isn't a meaningful PR
+  // (you could always do more reps), and they clutter the list.
+  const RESERVED_M=new Set(['approach-mark','wicket-spc']);
+  const isMeaningful=ex=>(ex.metrics||[]).some(m=>!RESERVED_M.has(m)&&m!=='reps');
   const prMap={};
   myWk.forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;
     Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);
       const ex=exercises.find(e=>e.id===base);if(!ex)return;
+      if(!isMeaningful(ex))return;
       ad.sets[eid].filter(s=>s.completed&&!s.warmup).forEach(s=>{
         const v=s.values||{};
         if(!prMap[base])prMap[base]={name:ex.name,category:ex.category,metrics:{},lastDate:0};
@@ -4549,7 +4554,7 @@ function App(){
   // ath-2. Migration replaces existing imported workouts by id, then appends
   // any missing - so v6 brings in Miska's 29 new workouts while keeping
   // Stanley's 27 corrected ones.
-  useEffect(()=>{const KEY='wk2_v3_th_import_10';
+  useEffect(()=>{const KEY='wk2_v3_th_import_11';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{
@@ -4569,6 +4574,22 @@ function App(){
       localStorage.setItem(KEY,'1')
     }).catch(()=>{})
   },[exSynced,wkSynced,exercises.length]);
+
+  // One-shot: the 120kg/150kg seated calf raise on the 2026-05-18 Gym workout
+  // (id wk-mpb0fqbmf4b6) was logged under Miska but belongs to Stanley. Drop
+  // Miska's seated-calf-raise sets on that specific workout. Idempotent.
+  useEffect(()=>{const KEY='wk2_v3_fix_miska_seated_calf_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!wkSynced)return;
+    setWorkouts(prev=>prev.map(w=>{
+      if(w.id!=='wk-mpb0fqbmf4b6')return w;
+      const ad2=w.athletes?.['ath-2'];
+      if(!ad2||!ad2.sets||!ad2.sets['seated-calf-raise'])return w;
+      const ns={...ad2.sets};delete ns['seated-calf-raise'];
+      return {...w,athletes:{...w.athletes,'ath-2':{...ad2,sets:ns}}};
+    }));
+    localStorage.setItem(KEY,'1')
+  },[wkSynced]);
 
   // One-shot: legacy generic "Approach Jump" is really 10-step; merge into
   // approach-jump-10 so the 8 old sets show up in the 10-step history. Idempotent.
