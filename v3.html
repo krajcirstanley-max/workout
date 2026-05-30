@@ -6381,17 +6381,58 @@ function StatScreen({
     const hasPrev = velo.length >= 2;
     const delta = hasPrev ? last - velo[velo.length - 2] : 0;
     return React.createElement("div", {
-      className: "velo-hero"
+      className: "velo-hero",
+      style: {
+        background: 'linear-gradient(160deg,#16161c,#0c0c10)',
+        color: '#fff',
+        borderRadius: 20,
+        padding: '18px 18px 6px',
+        margin: '16px 14px 4px'
+      }
     }, React.createElement("div", {
-      className: "velo-head"
+      className: "velo-head",
+      style: {
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        marginBottom: 6
+      }
     }, React.createElement("span", {
-      className: "velo-label"
+      className: "velo-label",
+      style: {
+        fontFamily: 'var(--mono)',
+        fontSize: 10,
+        fontWeight: 800,
+        letterSpacing: '1px',
+        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,.65)'
+      }
     }, "Top Speed \xB7 10m Fly"), hasPrev && React.createElement("span", {
-      className: "velo-best"
+      className: "velo-best",
+      style: {
+        fontFamily: 'var(--mono)',
+        fontSize: 10,
+        fontWeight: 700,
+        color: 'rgba(255,255,255,.55)'
+      }
     }, "Best ", best.toFixed(2), " m/s")), React.createElement("div", {
-      className: "velo-big"
+      className: "velo-big",
+      style: {
+        fontSize: 52,
+        fontWeight: 900,
+        fontStyle: 'italic',
+        letterSpacing: -2,
+        lineHeight: 1,
+        color: '#fff'
+      }
     }, last.toFixed(2), React.createElement("span", {
-      className: "velo-unit"
+      className: "velo-unit",
+      style: {
+        fontSize: 18,
+        fontWeight: 800,
+        color: 'rgba(255,255,255,.5)',
+        marginLeft: 6
+      }
     }, "m/s")), hasPrev ? React.createElement(React.Fragment, null, React.createElement("div", {
       className: "velo-delta",
       style: {

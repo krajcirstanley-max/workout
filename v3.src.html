@@ -2631,12 +2631,14 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
     <div className="scroll">
       {velo.length>=1&&(()=>{const last=velo[velo.length-1];const best=Math.max(...velo);
         const hasPrev=velo.length>=2;const delta=hasPrev?last-velo[velo.length-2]:0;
-        return(<div className="velo-hero">
-          <div className="velo-head">
-            <span className="velo-label">Top Speed · 10m Fly</span>
-            {hasPrev&&<span className="velo-best">Best {best.toFixed(2)} m/s</span>}
+        // Inline styles duplicate the .velo-hero CSS so labels stay readable
+        // even if a stale SW serves the page without the matching stylesheet.
+        return(<div className="velo-hero" style={{background:'linear-gradient(160deg,#16161c,#0c0c10)',color:'#fff',borderRadius:20,padding:'18px 18px 6px',margin:'16px 14px 4px'}}>
+          <div className="velo-head" style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:6}}>
+            <span className="velo-label" style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,letterSpacing:'1px',textTransform:'uppercase',color:'rgba(255,255,255,.65)'}}>Top Speed · 10m Fly</span>
+            {hasPrev&&<span className="velo-best" style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:700,color:'rgba(255,255,255,.55)'}}>Best {best.toFixed(2)} m/s</span>}
           </div>
-          <div className="velo-big">{last.toFixed(2)}<span className="velo-unit">m/s</span></div>
+          <div className="velo-big" style={{fontSize:52,fontWeight:900,fontStyle:'italic',letterSpacing:-2,lineHeight:1,color:'#fff'}}>{last.toFixed(2)}<span className="velo-unit" style={{fontSize:18,fontWeight:800,color:'rgba(255,255,255,.5)',marginLeft:6}}>m/s</span></div>
           {hasPrev?<><div className="velo-delta" style={{color:delta>0?'#16a34a':delta<0?'#ef4444':'rgba(255,255,255,.5)'}}>
             {delta>0?'▲':delta<0?'▼':'•'} {Math.abs(delta).toFixed(2)} m/s ({delta>=0?'+':''}{(delta/(last-delta||1)*100).toFixed(1)}%) vs last session</div>
             <TrendChart values={velo} lowerBetter={false} refLines={[{val:best,label:'BEST '+best.toFixed(2),color:'rgba(255,255,255,.45)'}]}/></>
