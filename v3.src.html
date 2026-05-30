@@ -4538,12 +4538,12 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exSynced,exercises.length]);
 
-  // One-shot v4: import Stanley's TrainHeroic history from th_import.json. v4
-  // fixes LJ APPROACH (timed 30m approach so it now lands on start-30m), the
-  // suitcase-carry "x N m" being mis-mapped to reps instead of distance, and
-  // ensures triple-broad-jump / bounds-10-pr declare the reps column.
-  // REPLACES wk-th-* on upgrade so the v3 versions get the corrections.
-  useEffect(()=>{const KEY='wk2_v3_th_import_4';
+  // One-shot v5: import Stanley's TrainHeroic history from th_import.json. v5
+  // remaps LJ APPROACH -> approach-jump-18 (was start-30m) so the slash pairs
+  // in notes land in the proper time-20-11m / time-10-1m segment columns. Also
+  // keeps suitcase distance fix + reps columns on triple-broad/bounds-10.
+  // REPLACES wk-th-* on upgrade.
+  useEffect(()=>{const KEY='wk2_v3_th_import_5';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{
