@@ -6629,17 +6629,46 @@ function StatScreen({
         Hb = 70,
         Ht = 70,
         pad = 15;
-      const allTs = [...tD.map(p => p.ts), ...wkD.map(p => p.ts)];
-      const t0 = Math.min(...allTs),
-        t1 = Math.max(...allTs);
-      const tspan = t1 - t0 || 1;
-      const X = t => pad + (t - t0) / tspan * (W - 2 * pad);
-      const Ytendon = v => Ht - pad - v / 10 * (Ht - 2 * pad);
+      const fmtDate = ts => new Date(ts).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+      const wkTs = wkD.map(p => p.ts);
+      const wt0 = wkTs.length ? Math.min(...wkTs) : 0,
+        wt1 = wkTs.length ? Math.max(...wkTs) : 1;
+      const wtSpan = wt1 - wt0 || 1;
+      const Xwk = t => pad + (t - wt0) / wtSpan * (W - 2 * pad);
       const wkMax = Math.max(...wkD.map(p => p.val), 1);
       const Ywk = v => Hb - pad - v / wkMax * (Hb - 2 * pad);
-      const tendLine = tD.map(p => `${X(p.ts).toFixed(1)},${Ytendon(p.val).toFixed(1)}`).join(' ');
-      const lst = tD[tD.length - 1].val;
       const barW = Math.max(8, (W - 2 * pad) / Math.max(6, wkD.length + 1) * 0.65);
+      const tTs = tD.map(p => p.ts);
+      const tt0 = Math.min(...tTs),
+        tt1 = Math.max(...tTs);
+      const ttSpan = tt1 - tt0 || 1;
+      const Xtd = t => tD.length === 1 ? W / 2 : pad + (t - tt0) / ttSpan * (W - 2 * pad);
+      const Ytendon = v => Ht - pad - v / 10 * (Ht - 2 * pad);
+      const tendLine = tD.map(p => `${Xtd(p.ts).toFixed(1)},${Ytendon(p.val).toFixed(1)}`).join(' ');
+      const lst = tD[tD.length - 1].val;
+      const axisLbl = {
+        fontFamily: 'var(--mono)',
+        fontSize: 9,
+        fontWeight: 700,
+        color: 'var(--text3)',
+        letterSpacing: '.4px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginTop: 2
+      };
+      const sectionLbl = {
+        fontFamily: 'var(--mono)',
+        fontSize: 9.5,
+        fontWeight: 800,
+        color: 'var(--text3)',
+        letterSpacing: '.6px',
+        textTransform: 'uppercase',
+        marginTop: 10,
+        marginBottom: 2
+      };
       return React.createElement(React.Fragment, null, React.createElement("div", {
         className: "s-title"
       }, "Tendon Pain Trend"), React.createElement("div", {
@@ -6662,16 +6691,7 @@ function StatScreen({
           fontStyle: 'normal'
         }
       }, "/ 10")), wkD.length > 0 && React.createElement(React.Fragment, null, React.createElement("div", {
-        style: {
-          fontFamily: 'var(--mono)',
-          fontSize: 9.5,
-          fontWeight: 800,
-          color: 'var(--text3)',
-          letterSpacing: '.6px',
-          textTransform: 'uppercase',
-          marginTop: 10,
-          marginBottom: 2
-        }
+        style: sectionLbl
       }, "Week Load (high-intensity m)"), React.createElement("svg", {
         viewBox: `0 0 ${W} ${Hb}`,
         style: {
@@ -6679,7 +6699,7 @@ function StatScreen({
           display: 'block'
         }
       }, wkD.map((p, i) => {
-        const x = X(p.ts);
+        const x = Xwk(p.ts);
         const y = Ywk(p.val);
         return React.createElement("rect", {
           key: 'w' + i,
@@ -6691,17 +6711,10 @@ function StatScreen({
           fillOpacity: "0.25",
           rx: "2"
         });
-      }))), React.createElement("div", {
-        style: {
-          fontFamily: 'var(--mono)',
-          fontSize: 9.5,
-          fontWeight: 800,
-          color: 'var(--text3)',
-          letterSpacing: '.6px',
-          textTransform: 'uppercase',
-          marginTop: 10,
-          marginBottom: 2
-        }
+      })), wkD.length >= 2 && React.createElement("div", {
+        style: axisLbl
+      }, React.createElement("span", null, fmtDate(wt0)), React.createElement("span", null, fmtDate(wt1)))), React.createElement("div", {
+        style: sectionLbl
       }, "Tendon Score (lower better)"), React.createElement("svg", {
         viewBox: `0 0 ${W} ${Ht}`,
         style: {
@@ -6731,11 +6744,13 @@ function StatScreen({
         strokeLinejoin: "round"
       }), tD.map((p, i) => React.createElement("circle", {
         key: 't' + i,
-        cx: X(p.ts),
+        cx: Xtd(p.ts),
         cy: Ytendon(p.val),
         r: "3.5",
         fill: "#ef4444"
-      }))), tD.length < 2 ? React.createElement("div", {
+      }))), tD.length >= 2 && React.createElement("div", {
+        style: axisLbl
+      }, React.createElement("span", null, fmtDate(tt0)), React.createElement("span", null, fmtDate(tt1))), tD.length < 2 ? React.createElement("div", {
         style: {
           fontSize: 12,
           color: 'var(--text3)',
@@ -6747,7 +6762,7 @@ function StatScreen({
         style: {
           marginTop: 6
         }
-      }, "Bars and line share the same dates \u2014 line up a load spike with the tendon response.")));
+      }, "Each chart shows its own date range \u2014 date labels under each let you correlate by week.")));
     })(), (() => {
       let sess = null;
       for (let i = sw.length - 1; i >= 0 && !sess; i--) {
