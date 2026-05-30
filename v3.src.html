@@ -4515,11 +4515,35 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exSynced,wkSynced,exercises.length]);
 
-  // One-shot v3: import Stanley's TrainHeroic history (27 workouts, ~370 sets,
-  // Mar-Apr 2026) from th_import.json. v3 fixes the resisted-sprint parser: TH
-  // values labelled "kg" are eg-settings, values labelled "s" are tf-time
-  // (v2 wrote both into eg-setting). REPLACES wk-th-* on upgrade.
-  useEffect(()=>{const KEY='wk2_v3_th_import_3';
+  // One-shot: extend in-store exercise metric lists to cover the columns the TH
+  // import populates - so weight on alt-bounds, split-10m on 20m resisted,
+  // split-10m/20m on 30m resisted, reps on bounds-10/triple-broad, and weight
+  // on alt-bounds-jump all display. Additive only - never removes a metric.
+  useEffect(()=>{const KEY='wk2_v3_th_metric_extend_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!exercises.length)return;
+    const ADD={
+      'alt-bounds-jump':['weight'],
+      'resisted-20m':['split-10m'],
+      'resisted-30m':['split-10m','split-20m'],
+      'bounds-10-pr':['reps'],
+      'triple-broad-jump':['reps'],
+      'hurdle-jumps':['height'],
+    };
+    setExercises(prev=>{let changed=false;
+      const n=prev.map(e=>{const adds=ADD[e.id];if(!adds)return e;
+        const cur=e.metrics||[];const fresh=adds.filter(m=>!cur.includes(m));
+        if(!fresh.length)return e;changed=true;return{...e,metrics:[...cur,...fresh]}});
+      return changed?n:prev});
+    localStorage.setItem(KEY,'1')
+  },[exSynced,exercises.length]);
+
+  // One-shot v4: import Stanley's TrainHeroic history from th_import.json. v4
+  // fixes LJ APPROACH (timed 30m approach so it now lands on start-30m), the
+  // suitcase-carry "x N m" being mis-mapped to reps instead of distance, and
+  // ensures triple-broad-jump / bounds-10-pr declare the reps column.
+  // REPLACES wk-th-* on upgrade so the v3 versions get the corrections.
+  useEffect(()=>{const KEY='wk2_v3_th_import_4';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{

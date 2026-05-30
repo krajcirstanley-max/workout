@@ -585,7 +585,6 @@
     "start-30m",
     "start-40m",
     "start-50m",
-    "approach-tech",
     "triple-broad-jump"
    ],
    "supersets": [],
@@ -675,6 +674,24 @@
          "tf-time": 3.97
         },
         "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.63
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.59
+        },
+        "completed": true
+       },
+       {
+        "values": {
+         "tf-time": 2.62
+        },
+        "completed": true
        }
       ],
       "start-40m": [
@@ -702,26 +719,6 @@
          "split-30m": 4.02,
          "fly-10m-1": 1.03,
          "fly-10m-2": 1.03
-        },
-        "completed": true
-       }
-      ],
-      "approach-tech": [
-       {
-        "values": {
-         "tf-time": 2.63
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "tf-time": 2.59
-        },
-        "completed": true
-       },
-       {
-        "values": {
-         "tf-time": 2.62
         },
         "completed": true
        }
@@ -770,7 +767,7 @@
     "start-50m": {
      "ath-1": "4.02/1.03/1.03\naccel - 1.50 od štartu prvý Freelap , druhý na 21,50 a potom po 10m"
     },
-    "approach-tech": {
+    "start-30m": {
      "ath-1": "1.43/1.19\n1.43/1.16\n1.44/1.18"
     },
     "triple-broad-jump": {
@@ -1812,7 +1809,7 @@
        {
         "values": {
          "weight": 28.0,
-         "reps": 30
+         "distance": 30
         },
         "completed": true
        }
@@ -3684,7 +3681,7 @@
        {
         "values": {
          "weight": 32.0,
-         "reps": 20
+         "distance": 20
         },
         "completed": true
        }
@@ -3993,7 +3990,8 @@
    "name": "10 Bounds w Pre-Run",
    "category": "T&F",
    "metrics": [
-    "tf-dist"
+    "tf-dist",
+    "reps"
    ]
   },
   {
@@ -4019,7 +4017,8 @@
    "name": "Triple Broad Jump",
    "category": "T&F",
    "metrics": [
-    "tf-dist"
+    "tf-dist",
+    "reps"
    ]
   },
   {
