@@ -1525,7 +1525,7 @@ function TodayScreen({
     return overlap >= Math.ceil(pIds.length / 2);
   };
   const dayPlans = (planned || []).filter(p => p.date === today && !dayWk.some(w => planMatchesWorkout(p, w)));
-  const recent = workouts.filter(w => w.athletes?.[activeAth]).slice(-12).reverse();
+  const recent = workouts.filter(w => w.athletes?.[activeAth]).sort((a, b) => (b.startTime || 0) - (a.startTime || 0)).slice(0, 12);
   const monthName = selDate.toLocaleDateString('en-US', {
     month: 'short'
   }).toUpperCase() + " '" + selDate.getFullYear().toString().slice(-2);
@@ -2146,7 +2146,7 @@ function ExerciseCard({
   const cn = workout.exNotes?.[eid];
   const coachNote = typeof cn === 'string' ? cn : cn?.[activeAth] || '';
   const athNote = workout.athleteNotes?.[eid]?.[activeAth] || '';
-  const lastWk = [...workouts].reverse().find(w => {
+  const lastWk = [...workouts].sort((a, b) => (b.startTime || 0) - (a.startTime || 0)).find(w => {
     const ws = w.athletes?.[activeAth]?.sets;
     if (!ws) return false;
     return Object.keys(ws).some(k => baseExId(k) === baseExId(eid) && ws[k].some(s => s.completed));
@@ -8218,7 +8218,7 @@ function ExerciseDetail({
       });
     });
   });
-  history.reverse();
+  history.sort((a, b) => (b.wk.startTime || 0) - (a.wk.startTime || 0));
   return React.createElement("div", {
     className: "over",
     onClick: e => e.target === e.currentTarget && onClose()

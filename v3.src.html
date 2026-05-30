@@ -934,7 +934,7 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
     return overlap>=Math.ceil(pIds.length/2);
   };
   const dayPlans=(planned||[]).filter(p=>p.date===today&&!dayWk.some(w=>planMatchesWorkout(p,w)));
-  const recent=workouts.filter(w=>w.athletes?.[activeAth]).slice(-12).reverse();
+  const recent=workouts.filter(w=>w.athletes?.[activeAth]).sort((a,b)=>(b.startTime||0)-(a.startTime||0)).slice(0,12);
   const monthName=selDate.toLocaleDateString('en-US',{month:'short'}).toUpperCase()+" '"+selDate.getFullYear().toString().slice(-2);
 
   const isToday=dateKey(Date.now())===today;
@@ -1193,7 +1193,7 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
   const cn=workout.exNotes?.[eid];const coachNote=typeof cn==='string'?cn:(cn?.[activeAth]||'');
   const athNote=workout.athleteNotes?.[eid]?.[activeAth]||'';
   // last session
-  const lastWk=[...workouts].reverse().find(w=>{const ws=w.athletes?.[activeAth]?.sets;if(!ws)return false;
+  const lastWk=[...workouts].sort((a,b)=>(b.startTime||0)-(a.startTime||0)).find(w=>{const ws=w.athletes?.[activeAth]?.sets;if(!ws)return false;
     return Object.keys(ws).some(k=>baseExId(k)===baseExId(eid)&&ws[k].some(s=>s.completed))});
   let lastSets=[];
   if(lastWk){const ws=lastWk.athletes[activeAth].sets;
@@ -3291,7 +3291,10 @@ function ExerciseDetail({exercise,athletes,activeAth,workouts,cm,onClose,onUpdat
           if(hasR){const r=Number(v.reps)||0;if(w_&&r){const e=w_*(1+r/30);if(e>e1rm){e1rm=Math.round(e*10)/10;e1rmDate=w.startTime}}}}
         if(hasT){const t=Number(v['tf-time']||v.time)||0;if(t>0&&t<bestT){bestT=t;bestTDate=w.startTime;bestTDist=v.distance}}
       })})});
-  history.reverse();
+  // Sort newest first by actual startTime — workouts isn't guaranteed
+  // chronological (imports/upserts can shuffle insertion order), so .reverse()
+  // alone was unreliable.
+  history.sort((a,b)=>(b.wk.startTime||0)-(a.wk.startTime||0));
   return(<div className="over" onClick={e=>e.target===e.currentTarget&&onClose()}>
     <div className="modal" style={{maxHeight:'94vh'}}>
       <div className="exd-h" style={{paddingTop:18,position:'sticky',top:0,background:'var(--surface)',zIndex:1}}>
