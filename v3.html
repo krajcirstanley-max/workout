@@ -6633,22 +6633,19 @@ function StatScreen({
         month: 'short',
         day: 'numeric'
       });
-      const wkTs = wkD.map(p => p.ts);
-      const wt0 = wkTs.length ? Math.min(...wkTs) : 0,
-        wt1 = wkTs.length ? Math.max(...wkTs) : 1;
-      const wtSpan = wt1 - wt0 || 1;
-      const Xwk = t => pad + (t - wt0) / wtSpan * (W - 2 * pad);
+      const allTs = [...tD.map(p => p.ts), ...wkD.map(p => p.ts)];
+      const t0 = Math.min(...allTs),
+        t1 = Math.max(...allTs);
+      const tspan = t1 - t0 || 1;
+      const X = t => pad + (t - t0) / tspan * (W - 2 * pad);
+      const Ytendon = v => Ht - pad - v / 10 * (Ht - 2 * pad);
       const wkMax = Math.max(...wkD.map(p => p.val), 1);
       const Ywk = v => Hb - pad - v / wkMax * (Hb - 2 * pad);
-      const barW = Math.max(8, (W - 2 * pad) / Math.max(6, wkD.length + 1) * 0.65);
-      const tTs = tD.map(p => p.ts);
-      const tt0 = Math.min(...tTs),
-        tt1 = Math.max(...tTs);
-      const ttSpan = tt1 - tt0 || 1;
-      const Xtd = t => tD.length === 1 ? W / 2 : pad + (t - tt0) / ttSpan * (W - 2 * pad);
-      const Ytendon = v => Ht - pad - v / 10 * (Ht - 2 * pad);
-      const tendLine = tD.map(p => `${Xtd(p.ts).toFixed(1)},${Ytendon(p.val).toFixed(1)}`).join(' ');
+      const tendLine = tD.map(p => `${X(p.ts).toFixed(1)},${Ytendon(p.val).toFixed(1)}`).join(' ');
       const lst = tD[tD.length - 1].val;
+      const barW = Math.max(8, (W - 2 * pad) / Math.max(6, wkD.length + 1) * 0.65);
+      const tStart = Math.min(...tD.map(p => p.ts));
+      const tEnd = Math.max(...tD.map(p => p.ts));
       const axisLbl = {
         fontFamily: 'var(--mono)',
         fontSize: 9,
@@ -6699,7 +6696,7 @@ function StatScreen({
           display: 'block'
         }
       }, wkD.map((p, i) => {
-        const x = Xwk(p.ts);
+        const x = X(p.ts);
         const y = Ywk(p.val);
         return React.createElement("rect", {
           key: 'w' + i,
@@ -6711,9 +6708,7 @@ function StatScreen({
           fillOpacity: "0.25",
           rx: "2"
         });
-      })), wkD.length >= 2 && React.createElement("div", {
-        style: axisLbl
-      }, React.createElement("span", null, fmtDate(wt0)), React.createElement("span", null, fmtDate(wt1)))), React.createElement("div", {
+      }))), React.createElement("div", {
         style: sectionLbl
       }, "Tendon Score (lower better)"), React.createElement("svg", {
         viewBox: `0 0 ${W} ${Ht}`,
@@ -6721,7 +6716,15 @@ function StatScreen({
           width: '100%',
           display: 'block'
         }
-      }, React.createElement("line", {
+      }, tD.length >= 2 && React.createElement("rect", {
+        x: X(tStart),
+        y: pad - 2,
+        width: Math.max(2, X(tEnd) - X(tStart)),
+        height: Ht - 2 * pad + 4,
+        fill: "#ef4444",
+        fillOpacity: "0.06",
+        rx: "3"
+      }), React.createElement("line", {
         x1: pad,
         y1: Ytendon(0),
         x2: W - pad,
@@ -6744,13 +6747,13 @@ function StatScreen({
         strokeLinejoin: "round"
       }), tD.map((p, i) => React.createElement("circle", {
         key: 't' + i,
-        cx: Xtd(p.ts),
+        cx: X(p.ts),
         cy: Ytendon(p.val),
         r: "3.5",
         fill: "#ef4444"
-      }))), tD.length >= 2 && React.createElement("div", {
+      }))), allTs.length >= 2 && React.createElement("div", {
         style: axisLbl
-      }, React.createElement("span", null, fmtDate(tt0)), React.createElement("span", null, fmtDate(tt1))), tD.length < 2 ? React.createElement("div", {
+      }, React.createElement("span", null, fmtDate(t0)), React.createElement("span", null, fmtDate(t1))), tD.length < 2 ? React.createElement("div", {
         style: {
           fontSize: 12,
           color: 'var(--text3)',
@@ -6762,7 +6765,7 @@ function StatScreen({
         style: {
           marginTop: 6
         }
-      }, "Each chart shows its own date range \u2014 date labels under each let you correlate by week.")));
+      }, "Same x-axis on both panels \u2014 a bar lines up vertically with the tendon score it caused. Pink band marks when tendon tracking started.")));
     })(), (() => {
       let sess = null;
       for (let i = sw.length - 1; i >= 0 && !sess; i--) {
