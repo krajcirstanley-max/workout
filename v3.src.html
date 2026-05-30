@@ -2705,50 +2705,57 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
             const wk=computeWeekLoad(sw,activeAth);
             const wkD=wk?wk.wkData:[];
             const tD=tendData;
-            // Both charts share ONE x-axis (full date range) so a bar lines up
-            // vertically with the tendon point it caused. Tendon dots cluster on
-            // the right when tendon tracking only started recently — that's
-            // truth, not a bug. Date labels under each panel are identical.
+            // Two independent charts, each spread across the FULL panel width.
+            // Forcing them to share an x-axis when tendon tracking only spans
+            // recent days made the tendon line a useless cluster on the right.
+            // Per-chart date labels make the time range of each one explicit.
             const W=320,Hb=70,Ht=70,pad=15;
             const fmtDate=ts=>new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-            const allTs=[...tD.map(p=>p.ts),...wkD.map(p=>p.ts)];
-            const t0=Math.min(...allTs),t1=Math.max(...allTs);const tspan=t1-t0||1;
-            const X=t=>pad+((t-t0)/tspan)*(W-2*pad);
-            const Ytendon=v=>Ht-pad-(v/10)*(Ht-2*pad);
+            // Week-load axis
+            const wkTs=wkD.map(p=>p.ts);
+            const wt0=wkTs.length?Math.min(...wkTs):0,wt1=wkTs.length?Math.max(...wkTs):1;
+            const wtSpan=wt1-wt0||1;
+            const Xwk=t=>pad+((t-wt0)/wtSpan)*(W-2*pad);
             const wkMax=Math.max(...wkD.map(p=>p.val),1);
             const Ywk=v=>Hb-pad-(v/wkMax)*(Hb-2*pad);
-            const tendLine=tD.map(p=>`${X(p.ts).toFixed(1)},${Ytendon(p.val).toFixed(1)}`).join(' ');
-            const lst=tD[tD.length-1].val;
             const barW=Math.max(8,(W-2*pad)/Math.max(6,wkD.length+1)*0.65);
-            // Shaded band on the tendon panel marks the date range where tendon
-            // data actually exists, so the cluster on the right reads as
-            // "tracking window" not "broken chart".
-            const tStart=Math.min(...tD.map(p=>p.ts));
-            const tEnd=Math.max(...tD.map(p=>p.ts));
-            const axisLbl={fontFamily:'var(--mono)',fontSize:9,fontWeight:700,color:'var(--text3)',letterSpacing:'.4px',display:'flex',justifyContent:'space-between',marginTop:2};
-            const sectionLbl={fontFamily:'var(--mono)',fontSize:9.5,fontWeight:800,color:'var(--text3)',letterSpacing:'.6px',textTransform:'uppercase',marginTop:10,marginBottom:2};
+            // Tendon axis (own scale)
+            const tTs=tD.map(p=>p.ts);
+            const tt0=Math.min(...tTs),tt1=Math.max(...tTs);
+            const ttSpan=tt1-tt0||1;
+            const Xtd=t=>tD.length===1?W/2:pad+((t-tt0)/ttSpan)*(W-2*pad);
+            const Ytendon=v=>Ht-pad-(v/10)*(Ht-2*pad);
+            const tendLine=tD.map(p=>`${Xtd(p.ts).toFixed(1)},${Ytendon(p.val).toFixed(1)}`).join(' ');
+            const lst=tD[tD.length-1].val;
+            const sectionHead={display:'flex',justifyContent:'space-between',alignItems:'baseline',marginTop:12,marginBottom:4};
+            const sectionLbl={fontFamily:'var(--mono)',fontSize:9.5,fontWeight:800,color:'var(--text3)',letterSpacing:'.6px',textTransform:'uppercase'};
+            const dateRange={fontFamily:'var(--mono)',fontSize:9,fontWeight:700,color:'var(--text4)',letterSpacing:'.3px'};
             return(<>
               <div className="s-title">Tendon Pain Trend</div>
               <div style={{margin:'0 14px 6px'}}>
                 <div style={{fontSize:24,fontWeight:900,fontStyle:'italic',color:'var(--text)'}}>{lst}<span style={{fontSize:13,color:'var(--text3)',fontWeight:700,marginLeft:5,fontStyle:'normal'}}>/ 10</span></div>
                 {wkD.length>0&&<>
-                  <div style={sectionLbl}>Week Load (high-intensity m)</div>
+                  <div style={sectionHead}>
+                    <span style={sectionLbl}>Week Load (high-intensity m)</span>
+                    {wkD.length>=2&&<span style={dateRange}>{fmtDate(wt0)} → {fmtDate(wt1)}</span>}
+                  </div>
                   <svg viewBox={`0 0 ${W} ${Hb}`} style={{width:'100%',display:'block'}}>
-                    {wkD.map((p,i)=>{const x=X(p.ts);const y=Ywk(p.val);
+                    {wkD.map((p,i)=>{const x=Xwk(p.ts);const y=Ywk(p.val);
                       return(<rect key={'w'+i} x={x-barW/2} y={y} width={barW} height={Hb-pad-y} fill="var(--primary)" fillOpacity="0.25" rx="2"/>)})}
                   </svg>
                 </>}
-                <div style={sectionLbl}>Tendon Score (lower better)</div>
+                <div style={sectionHead}>
+                  <span style={sectionLbl}>Tendon Score (lower better)</span>
+                  {tD.length>=2&&<span style={dateRange}>{fmtDate(tt0)} → {fmtDate(tt1)}</span>}
+                </div>
                 <svg viewBox={`0 0 ${W} ${Ht}`} style={{width:'100%',display:'block'}}>
-                  {tD.length>=2&&<rect x={X(tStart)} y={pad-2} width={Math.max(2,X(tEnd)-X(tStart))} height={Ht-2*pad+4} fill="#ef4444" fillOpacity="0.06" rx="3"/>}
                   <line x1={pad} y1={Ytendon(0)} x2={W-pad} y2={Ytendon(0)} stroke="rgba(148,163,184,.25)" strokeWidth="1"/>
                   <line x1={pad} y1={Ytendon(10)} x2={W-pad} y2={Ytendon(10)} stroke="rgba(148,163,184,.25)" strokeWidth="1"/>
                   {tD.length>=2&&<polyline points={tendLine} fill="none" stroke="#ef4444" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>}
-                  {tD.map((p,i)=>(<circle key={'t'+i} cx={X(p.ts)} cy={Ytendon(p.val)} r="3.5" fill="#ef4444"/>))}
+                  {tD.map((p,i)=>(<circle key={'t'+i} cx={Xtd(p.ts)} cy={Ytendon(p.val)} r="3.5" fill="#ef4444"/>))}
                 </svg>
-                {allTs.length>=2&&<div style={axisLbl}><span>{fmtDate(t0)}</span><span>{fmtDate(t1)}</span></div>}
                 {tD.length<2?<div style={{fontSize:12,color:'var(--text3)',fontWeight:600,padding:'4px 0 8px'}}>Logs from the Šľachy slider each session.</div>
-                  :<div className="prd-meta" style={{marginTop:6}}>Same x-axis on both panels — a bar lines up vertically with the tendon score it caused. Pink band marks when tendon tracking started.</div>}
+                  :<div className="prd-meta" style={{marginTop:8}}>Each chart spans its own date range (shown next to its title). The bars cover all your training; the tendon line covers only the days you've logged a šľachy score.</div>}
               </div>
             </>);
           })()}
