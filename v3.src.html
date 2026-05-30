@@ -2551,31 +2551,37 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
     }
     return 0;
   };
+  // aggMap[aid] = {series:[{ts,val,wk,eid,setIdx}], pb:{...}}
+  // series in chronological order; pb is the best of those entries.
   const aggMap={};
   [...myWk].sort((a,b)=>a.startTime-b.startTime).forEach(w=>{const ad=w.athletes?.[activeAth];if(!ad)return;
     const sb={};
     Object.keys(ad.sets||{}).forEach(eid=>{const base=baseExId(eid);
-      ad.sets[eid].filter(s=>s.completed&&!s.warmup).forEach(s=>{const v=s.values||{};
+      ad.sets[eid].forEach((s,idx)=>{if(!s.completed||s.warmup)return;const v=s.values||{};
         AGG_DEFS.forEach(a=>{const x=aggExtract(a.id,base,v);if(!x)return;
-          if(sb[a.id]==null||x<sb[a.id])sb[a.id]=x})})});
-    Object.entries(sb).forEach(([aid,val])=>{
-      if(!aggMap[aid])aggMap[aid]={series:[],best:Infinity,date:0};
-      aggMap[aid].series.push(val);
-      if(val<aggMap[aid].best){aggMap[aid].best=val;aggMap[aid].date=w.startTime}});
+          if(!sb[a.id]||x<sb[a.id].val)sb[a.id]={val:x,eid:base,setIdx:idx}})})});
+    Object.entries(sb).forEach(([aid,info])=>{
+      if(!aggMap[aid])aggMap[aid]={series:[],pb:null};
+      const pt={ts:w.startTime,val:info.val,wk:w,eid:info.eid,setIdx:info.setIdx};
+      aggMap[aid].series.push(pt);
+      if(!aggMap[aid].pb||pt.val<aggMap[aid].pb.val)aggMap[aid].pb=pt;
+    });
   });
   const aggIds=AGG_DEFS.filter(a=>aggMap[a.id]&&aggMap[a.id].series.length).sort((a,b)=>a.ord-b.ord).map(a=>a.id);
+  const[selAgg,setSelAgg]=useState(null);
   const renderAggRow=aid=>{const def=AGG_DEFS.find(a=>a.id===aid);const m=aggMap[aid];
-    return(<div key={aid} className="pr-card" style={{borderLeft:'3px solid #06b6d4'}}>
+    return(<button key={aid} className="pr-card" style={{borderLeft:'3px solid #06b6d4'}} onClick={()=>setSelAgg(aid)}>
       <div className="pr-card-top">
         <span className="pr-card-name">{def.name}</span>
         <span style={{display:'flex',alignItems:'center',gap:7,flexShrink:0}}>
           <span style={{fontFamily:'var(--mono)',fontSize:8.5,fontWeight:800,letterSpacing:'.5px',textTransform:'uppercase',color:'#06b6d4',background:'#06b6d422',padding:'3px 7px',borderRadius:5}}>Pooled</span>
+          <Ic n="chevR" s={16}/>
         </span>
       </div>
-      <TrendChart values={m.series} lowerBetter={true}/>
+      <TrendChart values={m.series.map(p=>p.val)} lowerBetter={true}/>
       <div className="pr-metrics">
         <div className="pr-metric">
-          <div className="pr-metric-v">{m.best.toFixed(2)}<span className="u">s</span></div>
+          <div className="pr-metric-v">{m.pb.val.toFixed(2)}<span className="u">s</span></div>
           <div className="pr-metric-l">PB</div>
         </div>
         <div className="pr-metric">
@@ -2583,7 +2589,7 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
           <div className="pr-metric-l">Sessions</div>
         </div>
       </div>
-    </div>)};
+    </button>)};
   const aggMatchQ=aid=>{if(!q.trim())return true;const def=AGG_DEFS.find(a=>a.id===aid);return def&&def.name.toLowerCase().includes(q.trim().toLowerCase())};
   const aggSection=()=>{const f=aggIds.filter(aggMatchQ);return f.length?<><div className="s-title">Pooled PBs</div><div className="recent">{f.map(renderAggRow)}</div></>:null};
   // Velocity trend: fastest free 10m fly per session, as m/s
@@ -2820,6 +2826,41 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
       {Object.keys(prMap).length===0&&<div className="empty"><div className="empty-text">Log a workout to see your records</div></div>}
       {noMatch&&<div className="empty"><div className="empty-text">No exercises match your search</div></div>}
     </div>
+    {selAgg&&aggMap[selAgg]&&(()=>{const def=AGG_DEFS.find(a=>a.id===selAgg);const m=aggMap[selAgg];
+      const sorted=[...m.series].sort((a,b)=>b.ts-a.ts);
+      const exName=eid=>(exercises.find(e=>e.id===eid)?.name)||eid;
+      return(<div className="over" onClick={e=>e.target===e.currentTarget&&setSelAgg(null)}>
+        <div className="modal" style={{maxHeight:'94vh'}}>
+          <div className="exd-h" style={{paddingTop:18,position:'sticky',top:0,background:'var(--surface)',zIndex:1}}>
+            <button className="exd-back" onClick={()=>setSelAgg(null)}><Ic n="x" s={22}/></button>
+            <div className="exd-title">{def.name}</div>
+            <div style={{width:40}}/>
+          </div>
+          <div style={{padding:'4px 14px 14px'}}>
+            <div className="ex-pr-card" style={{marginBottom:12}}>
+              <div className="ex-pr-l">
+                <div className="ex-pr-icon"><Ic n="trophy" s={18}/></div>
+                <div className="ex-pr-meta">
+                  <div className="ex-pr-h">Personal Record · Pooled</div>
+                  <div className="ex-pr-v">{m.pb.val.toFixed(2)}s</div>
+                  <div style={{fontSize:11,fontWeight:600,color:'var(--text3)',marginTop:2}}>{exName(m.pb.eid)} · Set {m.pb.setIdx+1}</div>
+                </div>
+              </div>
+              <div className="pr-date">{new Date(m.pb.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'})}</div>
+            </div>
+            <div style={{fontFamily:'var(--mono)',fontSize:11,fontWeight:800,color:'var(--text3)',letterSpacing:'1px',textTransform:'uppercase',margin:'8px 4px 8px'}}>{sorted.length} Session{sorted.length===1?'':'s'}</div>
+            {sorted.map((p,i)=>{const isPb=p===m.pb;return(
+              <button key={i} onClick={()=>{setSelAgg(null);onView&&onView(p.wk)}} className="hist-card" style={{display:'block',width:'100%',textAlign:'left',border:isPb?'2px solid #06b6d4':'none',padding:isPb?12:14,marginBottom:8,cursor:'pointer'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+                  <div className="hist-date" style={{margin:0}}>{new Date(p.ts).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
+                  <div style={{fontFamily:'var(--mono)',fontWeight:900,fontSize:18,color:isPb?'#06b6d4':'var(--text)'}}>{p.val.toFixed(2)}<span style={{fontSize:11,color:'var(--text3)',marginLeft:2}}>s</span></div>
+                </div>
+                <div style={{fontSize:12,fontWeight:600,color:'var(--text3)',marginTop:4}}>{exName(p.eid)} · Set {p.setIdx+1}{isPb&&<span style={{marginLeft:8,fontFamily:'var(--mono)',fontSize:9,fontWeight:800,color:'#06b6d4',background:'#06b6d422',padding:'2px 6px',borderRadius:4,letterSpacing:'.5px',textTransform:'uppercase'}}>PB</span>}</div>
+              </button>)})}
+          </div>
+        </div>
+      </div>);
+    })()}
   </div>)}
 
 // === PROFILE ===

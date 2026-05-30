@@ -6214,38 +6214,48 @@ function StatScreen({
     const sb = {};
     Object.keys(ad.sets || {}).forEach(eid => {
       const base = baseExId(eid);
-      ad.sets[eid].filter(s => s.completed && !s.warmup).forEach(s => {
+      ad.sets[eid].forEach((s, idx) => {
+        if (!s.completed || s.warmup) return;
         const v = s.values || {};
         AGG_DEFS.forEach(a => {
           const x = aggExtract(a.id, base, v);
           if (!x) return;
-          if (sb[a.id] == null || x < sb[a.id]) sb[a.id] = x;
+          if (!sb[a.id] || x < sb[a.id].val) sb[a.id] = {
+            val: x,
+            eid: base,
+            setIdx: idx
+          };
         });
       });
     });
-    Object.entries(sb).forEach(([aid, val]) => {
+    Object.entries(sb).forEach(([aid, info]) => {
       if (!aggMap[aid]) aggMap[aid] = {
         series: [],
-        best: Infinity,
-        date: 0
+        pb: null
       };
-      aggMap[aid].series.push(val);
-      if (val < aggMap[aid].best) {
-        aggMap[aid].best = val;
-        aggMap[aid].date = w.startTime;
-      }
+      const pt = {
+        ts: w.startTime,
+        val: info.val,
+        wk: w,
+        eid: info.eid,
+        setIdx: info.setIdx
+      };
+      aggMap[aid].series.push(pt);
+      if (!aggMap[aid].pb || pt.val < aggMap[aid].pb.val) aggMap[aid].pb = pt;
     });
   });
   const aggIds = AGG_DEFS.filter(a => aggMap[a.id] && aggMap[a.id].series.length).sort((a, b) => a.ord - b.ord).map(a => a.id);
+  const [selAgg, setSelAgg] = useState(null);
   const renderAggRow = aid => {
     const def = AGG_DEFS.find(a => a.id === aid);
     const m = aggMap[aid];
-    return React.createElement("div", {
+    return React.createElement("button", {
       key: aid,
       className: "pr-card",
       style: {
         borderLeft: '3px solid #06b6d4'
-      }
+      },
+      onClick: () => setSelAgg(aid)
     }, React.createElement("div", {
       className: "pr-card-top"
     }, React.createElement("span", {
@@ -6269,8 +6279,11 @@ function StatScreen({
         padding: '3px 7px',
         borderRadius: 5
       }
-    }, "Pooled"))), React.createElement(TrendChart, {
-      values: m.series,
+    }, "Pooled"), React.createElement(Ic, {
+      n: "chevR",
+      s: 16
+    }))), React.createElement(TrendChart, {
+      values: m.series.map(p => p.val),
       lowerBetter: true
     }), React.createElement("div", {
       className: "pr-metrics"
@@ -6278,7 +6291,7 @@ function StatScreen({
       className: "pr-metric"
     }, React.createElement("div", {
       className: "pr-metric-v"
-    }, m.best.toFixed(2), React.createElement("span", {
+    }, m.pb.val.toFixed(2), React.createElement("span", {
       className: "u"
     }, "s")), React.createElement("div", {
       className: "pr-metric-l"
@@ -6960,7 +6973,155 @@ function StatScreen({
     className: "empty"
   }, React.createElement("div", {
     className: "empty-text"
-  }, "No exercises match your search"))));
+  }, "No exercises match your search"))), selAgg && aggMap[selAgg] && (() => {
+    const def = AGG_DEFS.find(a => a.id === selAgg);
+    const m = aggMap[selAgg];
+    const sorted = [...m.series].sort((a, b) => b.ts - a.ts);
+    const exName = eid => exercises.find(e => e.id === eid)?.name || eid;
+    return React.createElement("div", {
+      className: "over",
+      onClick: e => e.target === e.currentTarget && setSelAgg(null)
+    }, React.createElement("div", {
+      className: "modal",
+      style: {
+        maxHeight: '94vh'
+      }
+    }, React.createElement("div", {
+      className: "exd-h",
+      style: {
+        paddingTop: 18,
+        position: 'sticky',
+        top: 0,
+        background: 'var(--surface)',
+        zIndex: 1
+      }
+    }, React.createElement("button", {
+      className: "exd-back",
+      onClick: () => setSelAgg(null)
+    }, React.createElement(Ic, {
+      n: "x",
+      s: 22
+    })), React.createElement("div", {
+      className: "exd-title"
+    }, def.name), React.createElement("div", {
+      style: {
+        width: 40
+      }
+    })), React.createElement("div", {
+      style: {
+        padding: '4px 14px 14px'
+      }
+    }, React.createElement("div", {
+      className: "ex-pr-card",
+      style: {
+        marginBottom: 12
+      }
+    }, React.createElement("div", {
+      className: "ex-pr-l"
+    }, React.createElement("div", {
+      className: "ex-pr-icon"
+    }, React.createElement(Ic, {
+      n: "trophy",
+      s: 18
+    })), React.createElement("div", {
+      className: "ex-pr-meta"
+    }, React.createElement("div", {
+      className: "ex-pr-h"
+    }, "Personal Record \xB7 Pooled"), React.createElement("div", {
+      className: "ex-pr-v"
+    }, m.pb.val.toFixed(2), "s"), React.createElement("div", {
+      style: {
+        fontSize: 11,
+        fontWeight: 600,
+        color: 'var(--text3)',
+        marginTop: 2
+      }
+    }, exName(m.pb.eid), " \xB7 Set ", m.pb.setIdx + 1))), React.createElement("div", {
+      className: "pr-date"
+    }, new Date(m.pb.ts).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: '2-digit'
+    }))), React.createElement("div", {
+      style: {
+        fontFamily: 'var(--mono)',
+        fontSize: 11,
+        fontWeight: 800,
+        color: 'var(--text3)',
+        letterSpacing: '1px',
+        textTransform: 'uppercase',
+        margin: '8px 4px 8px'
+      }
+    }, sorted.length, " Session", sorted.length === 1 ? '' : 's'), sorted.map((p, i) => {
+      const isPb = p === m.pb;
+      return React.createElement("button", {
+        key: i,
+        onClick: () => {
+          setSelAgg(null);
+          onView && onView(p.wk);
+        },
+        className: "hist-card",
+        style: {
+          display: 'block',
+          width: '100%',
+          textAlign: 'left',
+          border: isPb ? '2px solid #06b6d4' : 'none',
+          padding: isPb ? 12 : 14,
+          marginBottom: 8,
+          cursor: 'pointer'
+        }
+      }, React.createElement("div", {
+        style: {
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          gap: 8
+        }
+      }, React.createElement("div", {
+        className: "hist-date",
+        style: {
+          margin: 0
+        }
+      }, new Date(p.ts).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      })), React.createElement("div", {
+        style: {
+          fontFamily: 'var(--mono)',
+          fontWeight: 900,
+          fontSize: 18,
+          color: isPb ? '#06b6d4' : 'var(--text)'
+        }
+      }, p.val.toFixed(2), React.createElement("span", {
+        style: {
+          fontSize: 11,
+          color: 'var(--text3)',
+          marginLeft: 2
+        }
+      }, "s"))), React.createElement("div", {
+        style: {
+          fontSize: 12,
+          fontWeight: 600,
+          color: 'var(--text3)',
+          marginTop: 4
+        }
+      }, exName(p.eid), " \xB7 Set ", p.setIdx + 1, isPb && React.createElement("span", {
+        style: {
+          marginLeft: 8,
+          fontFamily: 'var(--mono)',
+          fontSize: 9,
+          fontWeight: 800,
+          color: '#06b6d4',
+          background: '#06b6d422',
+          padding: '2px 6px',
+          borderRadius: 4,
+          letterSpacing: '.5px',
+          textTransform: 'uppercase'
+        }
+      }, "PB")));
+    }))));
+  })());
 }
 function ProfileScreen({
   athletes,
