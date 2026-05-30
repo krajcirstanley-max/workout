@@ -1187,15 +1187,15 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
   if(lastSets.length){
     const n=lastSets.length;
     if(hasW){
-      const wv=lastSets.map(s=>s.values.weight).filter(v=>v!=null&&v!=='');
+      const wv=lastSets.map(s=>s.values.weight).filter(v=>v!=null&&v!==''&&Number(v)!==0);
       const wsame=wv.length&&wv.every(x=>x===wv[0]);
       let per='';
-      if(hasR){const r=lastSets.map(s=>s.values.reps).filter(v=>v!=null&&v!=='');if(r.length&&r.every(x=>x===r[0]))per='×'+r[0]}
-      else if(effMetrics.includes('distance')){const d=lastSets.map(s=>s.values.distance).filter(v=>v!=null&&v!=='');if(d.length&&d.every(x=>x===d[0]))per='×'+d[0]+'m'}
+      if(hasR){const r=lastSets.map(s=>s.values.reps).filter(v=>v!=null&&v!==''&&Number(v)!==0);if(r.length&&r.every(x=>x===r[0]))per='×'+r[0]}
+      else if(effMetrics.includes('distance')){const d=lastSets.map(s=>s.values.distance).filter(v=>v!=null&&v!==''&&Number(v)!==0);if(d.length&&d.every(x=>x===d[0]))per='×'+d[0]+'m'}
       lastSummary=`${n}${per}`+(wv.length?` @ ${wsame?wv[0]:wv.join(', ')} kg`:'');
     }else{
       const pm=effMetrics.find(m=>m!=='approach-mark')||effMetrics[0];const md=METRIC_MAP[pm]||{unit:''};
-      const vals=lastSets.map(s=>s.values[pm]).filter(v=>v!=null&&v!=='');
+      const vals=lastSets.map(s=>s.values[pm]).filter(v=>v!=null&&v!==''&&Number(v)!==0);
       lastSummary=vals.length?vals.join(', ')+(md.unit?` ${md.unit}`:''):'';
     }
   }
@@ -1284,7 +1284,7 @@ function ExerciseCard({eid,blockLabel,isSuperset,workout,activeAth,exercises,wor
         {mds.map(m=><span key={m.id}>{m.name||m.unit}</span>)}
         <button onClick={()=>onCheckAll(eid)} className={'set-check chk-all'+(allDone?' done':'')} title="Mark all done"><Ic n="check" s={15}/></button>
       </div>
-      {sets.map((s,i)=>{const emptyDone=s.completed&&mds.every(m=>s.values[m.id]===''||s.values[m.id]==null);
+      {sets.map((s,i)=>{const emptyDone=s.completed&&mds.every(m=>s.values[m.id]===''||s.values[m.id]==null||Number(s.values[m.id])===0);
         const pr=s.completed&&!s.warmup&&isPR(s);
         // number warmups W1, W2... and working sets 1, 2, 3... so the list reads naturally
         const wIdx=sets.slice(0,i+1).filter(x=>x.warmup).length;
@@ -2081,7 +2081,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
           if(!sets.length)return null;
           // Determine which metrics actually have values across this exercise's sets
           const allMetrics=ex?.metrics||[];
-          const usedMetrics=allMetrics.filter(m=>sets.some(s=>s.values?.[m]!=null&&s.values[m]!==''));
+          const usedMetrics=allMetrics.filter(m=>sets.some(s=>s.values?.[m]!=null&&s.values[m]!==''&&Number(s.values[m])!==0));
           const cols=`24px ${usedMetrics.map(()=>'minmax(0,1fr)').join(' ')}`;
           return(<div key={eid} style={{padding:'14px 0',borderBottom:'1px solid var(--border)'}}>
             <div style={{fontSize:16,fontWeight:900,fontStyle:'italic',letterSpacing:'-.3px',color:'var(--text)',marginBottom:8,textTransform:'uppercase'}}>{ex?.name||'?'}</div>
@@ -2091,7 +2091,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
               {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{name:m,unit:''};return<span key={m} style={{textAlign:'left'}}>{md.name||md.unit}</span>})}
             </div>}
             {sets.map((s,j)=>{const v=s.values;
-              const measured=usedMetrics.some(m=>v[m]!=null&&v[m]!=='');
+              const measured=usedMetrics.some(m=>v[m]!=null&&v[m]!==''&&Number(v[m])!==0);
               if(!editing&&(s.flop||!measured))return(<div key={j} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',fontFamily:'var(--mono)',fontSize:13}}>
                 <span style={{color:'var(--text3)',fontWeight:800,minWidth:14}}>{j+1}</span>
                 {s.flop
@@ -2100,7 +2100,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
               </div>);
               return(<div key={j} style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0',fontFamily:'var(--mono)',fontVariantNumeric:'tabular-nums',fontSize:14,alignItems:'center'}}>
                 <span style={{color:'var(--text3)',fontWeight:800}}>{j+1}</span>
-                {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{unit:''};const val=v[m];const has=val!=null&&val!=='';
+                {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{unit:''};const val=v[m];const has=val!=null&&val!==''&&Number(val)!==0;
                   const pr=has&&isPR(eid,m,val,j);
                   if(editing)return(<input key={m} type="number" inputMode="decimal" step={md.step||0.01}
                     value={val??''} placeholder={md.unit||'-'}
@@ -3073,7 +3073,9 @@ function NoteEditor({initial,onSave,onClose,title}){
 // === EXERCISE DETAIL ===
 // Format one logged set into a bold headline + clean sub-metrics for the history view
 function histSet(v){
-  const has=k=>v[k]!=null&&v[k]!=='';
+  // 0 is treated as "not measured" everywhere - matches how TH logged missed runs
+  // and prevents stray "0.00" entries in the per-set history.
+  const has=k=>v[k]!=null&&v[k]!==''&&Number(v[k])!==0;
   const t2=n=>{const x=Number(n);return Number.isFinite(x)?x.toFixed(2):n;};
   let headKey=null;
   if(has('tf-time'))headKey='tf-time';

@@ -2144,14 +2144,14 @@ function ExerciseCard({
   if (lastSets.length) {
     const n = lastSets.length;
     if (hasW) {
-      const wv = lastSets.map(s => s.values.weight).filter(v => v != null && v !== '');
+      const wv = lastSets.map(s => s.values.weight).filter(v => v != null && v !== '' && Number(v) !== 0);
       const wsame = wv.length && wv.every(x => x === wv[0]);
       let per = '';
       if (hasR) {
-        const r = lastSets.map(s => s.values.reps).filter(v => v != null && v !== '');
+        const r = lastSets.map(s => s.values.reps).filter(v => v != null && v !== '' && Number(v) !== 0);
         if (r.length && r.every(x => x === r[0])) per = '×' + r[0];
       } else if (effMetrics.includes('distance')) {
-        const d = lastSets.map(s => s.values.distance).filter(v => v != null && v !== '');
+        const d = lastSets.map(s => s.values.distance).filter(v => v != null && v !== '' && Number(v) !== 0);
         if (d.length && d.every(x => x === d[0])) per = '×' + d[0] + 'm';
       }
       lastSummary = `${n}${per}` + (wv.length ? ` @ ${wsame ? wv[0] : wv.join(', ')} kg` : '');
@@ -2160,7 +2160,7 @@ function ExerciseCard({
       const md = METRIC_MAP[pm] || {
         unit: ''
       };
-      const vals = lastSets.map(s => s.values[pm]).filter(v => v != null && v !== '');
+      const vals = lastSets.map(s => s.values[pm]).filter(v => v != null && v !== '' && Number(v) !== 0);
       lastSummary = vals.length ? vals.join(', ') + (md.unit ? ` ${md.unit}` : '') : '';
     }
   }
@@ -2497,7 +2497,7 @@ function ExerciseCard({
     n: "check",
     s: 15
   }))), sets.map((s, i) => {
-    const emptyDone = s.completed && mds.every(m => s.values[m.id] === '' || s.values[m.id] == null);
+    const emptyDone = s.completed && mds.every(m => s.values[m.id] === '' || s.values[m.id] == null || Number(s.values[m.id]) === 0);
     const pr = s.completed && !s.warmup && isPR(s);
     const wIdx = sets.slice(0, i + 1).filter(x => x.warmup).length;
     const workIdx = sets.slice(0, i + 1).filter(x => !x.warmup).length;
@@ -4841,7 +4841,7 @@ function WorkoutDetailModal({
     const sets = (ad?.sets?.[eid] || []).filter(s => s.completed || s.flop);
     if (!sets.length) return null;
     const allMetrics = ex?.metrics || [];
-    const usedMetrics = allMetrics.filter(m => sets.some(s => s.values?.[m] != null && s.values[m] !== ''));
+    const usedMetrics = allMetrics.filter(m => sets.some(s => s.values?.[m] != null && s.values[m] !== '' && Number(s.values[m]) !== 0));
     const cols = `24px ${usedMetrics.map(() => 'minmax(0,1fr)').join(' ')}`;
     return React.createElement("div", {
       key: eid,
@@ -4892,7 +4892,7 @@ function WorkoutDetailModal({
       }, md.name || md.unit);
     })), sets.map((s, j) => {
       const v = s.values;
-      const measured = usedMetrics.some(m => v[m] != null && v[m] !== '');
+      const measured = usedMetrics.some(m => v[m] != null && v[m] !== '' && Number(v[m]) !== 0);
       if (!editing && (s.flop || !measured)) return React.createElement("div", {
         key: j,
         style: {
@@ -4953,7 +4953,7 @@ function WorkoutDetailModal({
           unit: ''
         };
         const val = v[m];
-        const has = val != null && val !== '';
+        const has = val != null && val !== '' && Number(val) !== 0;
         const pr = has && isPR(eid, m, val, j);
         if (editing) return React.createElement("input", {
           key: m,
@@ -7735,7 +7735,7 @@ function NoteEditor({
   }, "Save"))));
 }
 function histSet(v) {
-  const has = k => v[k] != null && v[k] !== '';
+  const has = k => v[k] != null && v[k] !== '' && Number(v[k]) !== 0;
   const t2 = n => {
     const x = Number(n);
     return Number.isFinite(x) ? x.toFixed(2) : n;
