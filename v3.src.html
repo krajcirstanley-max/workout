@@ -4716,6 +4716,45 @@ function App(){
   // ath-2. Migration replaces existing imported workouts by id, then appends
   // any missing - so v6 brings in Miska's 29 new workouts while keeping
   // Stanley's 27 corrected ones.
+  // One-shot: the Apr 27 "Speed Session" (id mohp6sdjdcto) has start-50m__2
+  // sets that were actually 60m sprints (distance=60, tf-time 6.8+, split-40m
+  // instead of split-30m). Move all distance=60 sets out of any start-50m* key
+  // into a fresh start-60m key. Affects both athletes.
+  useEffect(()=>{const KEY='wk2_v3_fix_apr27_60m_in_50m_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!wkSynced)return;
+    setWorkouts(prev=>prev.map(w=>{
+      if(w.id!=='mohp6sdjdcto')return w;
+      const newAth={};let touched=false;
+      Object.entries(w.athletes||{}).forEach(([aid,ad])=>{
+        const sets={...(ad.sets||{})};
+        const sixties=[];
+        Object.keys(sets).forEach(eid=>{
+          if(!eid.startsWith('start-50m'))return;
+          const keep=[];const move=[];
+          (sets[eid]||[]).forEach(s=>{const d=Number(s.values?.distance);
+            if(d===60)move.push(s);else keep.push(s)});
+          if(move.length){touched=true;
+            if(keep.length)sets[eid]=keep;else delete sets[eid];
+            sixties.push(...move)}
+        });
+        if(sixties.length){
+          let key='start-60m';let n=0;
+          while(sets[key]){n++;key='start-60m__'+n}
+          sets[key]=sixties;
+        }
+        newAth[aid]={...ad,sets};
+      });
+      if(!touched)return w;
+      const allKeys=new Set();
+      Object.values(newAth).forEach(a=>Object.keys(a.sets||{}).forEach(k=>allKeys.add(k)));
+      const newExIds=(w.exerciseIds||[]).filter(k=>allKeys.has(k));
+      allKeys.forEach(k=>{if(!newExIds.includes(k))newExIds.push(k)});
+      return{...w,athletes:newAth,exerciseIds:newExIds};
+    }));
+    localStorage.setItem(KEY,'1')
+  },[wkSynced]);
+
   // One-shot: purge Miska's 2026-03-11 50m sprint - failed measurement.
   useEffect(()=>{const KEY='wk2_v3_purge_miska_mar11_50m_1';
     if(localStorage.getItem(KEY)==='1')return;
