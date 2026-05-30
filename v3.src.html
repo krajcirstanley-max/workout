@@ -4537,6 +4537,43 @@ function App(){
     }).catch(()=>{})
   },[exSynced,wkSynced,exercises.length]);
 
+  // One-shot: legacy generic "Approach Jump" is really 10-step; merge into
+  // approach-jump-10 so the 8 old sets show up in the 10-step history. Idempotent.
+  useEffect(()=>{const KEY='wk2_v3_merge_aj_10_1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced||!wkSynced||!exercises.length)return;
+    // drop the source exercise
+    setExercises(prev=>prev.filter(e=>e.id!=='approach-jump'));
+    // remap workout set keys: approach-jump[__N] -> approach-jump-10[__N]
+    setWorkouts(prev=>prev.map(w=>{
+      let touched=false;const na={};
+      Object.entries(w.athletes||{}).forEach(([aid,ad])=>{
+        const ns={};
+        Object.entries(ad.sets||{}).forEach(([eid,sets])=>{const b=baseExId(eid);const suf=eid.slice(b.length);
+          if(b==='approach-jump'){touched=true;const k='approach-jump-10'+suf;(ns[k]=ns[k]||[]).push(...sets)}
+          else{(ns[eid]=ns[eid]||[]).push(...sets)}
+        });
+        na[aid]={...ad,sets:ns};
+      });
+      if(!touched)return w;
+      const ids=[];const seen=new Set();
+      (w.exerciseIds||[]).forEach(eid=>{const b=baseExId(eid);const suf=eid.slice(b.length);
+        const t=(b==='approach-jump'?'approach-jump-10':b)+suf;
+        if(!seen.has(t)){seen.add(t);ids.push(t)}});
+      return {...w,athletes:na,exerciseIds:ids};
+    }));
+    // remap plans (in case any planned session references approach-jump)
+    setPlanned(prev=>prev.map(p=>{
+      const remap=eid=>{const b=baseExId(eid);return (b==='approach-jump'?'approach-jump-10':b)+eid.slice(b.length)};
+      const ids=[];const seen=new Set();
+      (p.exerciseIds||[]).forEach(eid=>{const t=remap(eid);if(!seen.has(t)){seen.add(t);ids.push(t)}});
+      const remapObj=o=>{if(!o)return o;const n={};Object.entries(o).forEach(([k,v])=>{n[remap(k)]=v});return n};
+      const ss=(p.supersets||[]).map(g=>[...new Set(g.map(remap))]).filter(g=>g.length>1);
+      return {...p,exerciseIds:ids,setConfigs:remapObj(p.setConfigs),exNotes:remapObj(p.exNotes),velocityZones:remapObj(p.velocityZones),exerciseAthletes:remapObj(p.exerciseAthletes),supersets:ss};
+    }));
+    localStorage.setItem(KEY,'1')
+  },[exSynced,plannedSynced,wkSynced,exercises.length]);
+
   // One-shot: collapse duplicate exercise entries (same id stored multiple times
   // in the array from seeds re-appending). Unions metrics, keeps first position.
   // Safe: workouts/plans reference exercises by id, not array index. Idempotent.
