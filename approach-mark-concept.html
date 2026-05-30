@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=800">
+<title>Značka rozbehu — koncept</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff;--s2:#f7f8fa;--s3:#eef0f3;--bd:#e5e7eb;
+  --t:#0a0a0b;--t2:#4b5563;--t3:#9ca3af;--t4:#cdd2da;
+  --lj:#8b5cf6;--ljd:#7c3aed;--ljdim:#f1ecfe;
+  --or:#f97316;--cold:#3b82f6;
+  --gr:#16a34a;--grbg:#dcfce7;--rd:#ef4444;--rdbg:#fee2e2;--am:#d97706;--ambg:#fef3c7;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--t);width:800px;padding:34px 30px 30px;
+  background:radial-gradient(700px 460px at 8% -2%,#efe9ff 0%,rgba(244,245,247,0) 60%),
+             radial-gradient(700px 460px at 100% 4%,#e6f5ff 0%,rgba(244,245,247,0) 55%),
+             #f4f5f7}
+.italic{font-style:italic}
+
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:2px;
+  color:var(--lj);background:var(--ljdim);padding:6px 12px;border-radius:7px;text-transform:uppercase}
+h1{font-size:36px;font-weight:900;font-style:italic;letter-spacing:-1.1px;margin:11px 0 5px;line-height:1}
+.lede{font-size:14.5px;color:var(--t2);font-weight:500;line-height:1.55}
+.lede b{color:var(--t);font-weight:800}
+
+.zone{margin-top:24px;background:var(--bg);border-radius:22px;padding:22px 22px 24px;
+  box-shadow:0 14px 34px -20px rgba(40,30,80,.3),0 0 0 1px rgba(0,0,0,.035)}
+.zhead{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.znum{width:32px;height:32px;border-radius:50%;background:var(--lj);color:#fff;font-weight:900;font-style:italic;
+  font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.zttl{font-size:18px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.3px}
+
+.split{display:flex;gap:26px;align-items:center}
+.expl{flex:1}
+.expl p{font-size:14px;color:var(--t2);font-weight:500;line-height:1.6}
+.expl p b{color:var(--t);font-weight:800}
+.expl p+p{margin-top:11px}
+.pill-note{display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:var(--ljdim);color:var(--ljd);
+  font-size:12.5px;font-weight:800;padding:9px 14px;border-radius:11px;line-height:1.35}
+
+/* telefon */
+.phone{width:290px;background:var(--bg);border-radius:30px;flex-shrink:0;
+  box-shadow:0 22px 52px -18px rgba(40,30,80,.4),0 0 0 1px rgba(0,0,0,.05)}
+.notch{width:62px;height:5px;background:var(--s3);border-radius:3px;margin:9px auto 10px}
+.pscr{padding:0 14px 18px}
+.pbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.pbar .x{width:26px;height:26px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:15px;font-weight:700}
+.pbar .ttl{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--t2)}
+.pbar .skip{font-size:13px;font-weight:800;color:var(--lj)}
+
+.card{background:var(--s2);border-radius:18px;padding:16px 15px}
+.ch{font-size:12px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:13px}
+.flabel{font-size:12px;font-weight:800;color:var(--t2);margin:13px 0 7px}
+.flabel:first-of-type{margin-top:0}
+
+.seg{display:flex;gap:6px}
+.seg .opt{flex:1;text-align:center;padding:10px 3px;border-radius:11px;background:var(--bg);border:1.5px solid var(--bd);
+  font-size:11.5px;font-weight:800;color:var(--t3);line-height:1.25}
+.seg .opt .em{display:block;font-size:14px;margin-bottom:2px}
+.seg .opt.on{border-color:var(--lj);background:var(--lj);color:#fff}
+.seg .opt.cold.on{border-color:var(--cold);background:var(--cold)}
+.venue .opt{padding:13px 3px;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 11px;border-radius:20px;border:1.5px solid var(--bd);background:var(--bg);
+  font-size:11px;font-weight:800;color:var(--t3)}
+.chip.on{border-color:var(--lj);background:var(--lj);color:#fff}
+
+/* cvicenie */
+.exhead{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.badge{width:22px;height:22px;border-radius:7px;background:var(--lj);color:#fff;font-weight:900;font-style:italic;
+  font-size:13px;display:flex;align-items:center;justify-content:center}
+.excat{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:1px;color:var(--t3)}
+.exname{font-size:21px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.6px;line-height:1;margin-bottom:12px}
+
+.sug{background:linear-gradient(158deg,#8b5cf6,#6d28d9);border-radius:18px;padding:15px 16px;color:#fff;
+  box-shadow:0 14px 26px -12px rgba(124,58,237,.7)}
+.sug .lab{font-family:var(--mono);font-size:9.5px;font-weight:800;letter-spacing:1.5px;opacity:.78}
+.sug .big{font-size:43px;font-weight:900;font-style:italic;letter-spacing:-1.6px;line-height:1;margin:6px 0 4px}
+.sug .why{font-size:12px;font-weight:600;opacity:.94;line-height:1.4}
+.sug .out{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;opacity:.82;margin-top:9px;
+  border-top:1px solid rgba(255,255,255,.2);padding-top:9px}
+.usebtn{margin-top:11px;background:#fff;color:var(--ljd);text-align:center;padding:11px;border-radius:11px;
+  font-size:13px;font-weight:900}
+
+.tbl-h,.tbl-r{display:grid;grid-template-columns:30px 1fr 1fr 32px;gap:8px;align-items:center}
+.tbl-h{font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:14px 2px 8px}
+.tbl-h span:first-child,.tbl-r .sn{text-align:center}
+.tbl-r{padding:5px 0}
+.sn{font-size:14px;font-weight:800;color:var(--t3)}
+.cell{border:1.5px solid var(--bd);border-radius:9px;padding:11px 4px;text-align:center;font-family:var(--mono);
+  font-size:14px;font-weight:800;color:var(--t)}
+.cell.ghost{color:var(--t4);font-weight:600}
+.cell.mark{border-color:var(--lj);background:var(--ljdim);color:var(--ljd)}
+.tick{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--bd);justify-self:center}
+
+/* zhoda */
+.today{background:#0a0a0b;color:#fff;border-radius:15px;padding:13px 16px;display:flex;align-items:center;gap:16px}
+.today .l{font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:1.4px;color:#8b8f99;flex-shrink:0;line-height:1.5}
+.today .row{display:flex;gap:7px;flex:1}
+.tpill{flex:1;background:rgba(255,255,255,.1);border-radius:9px;padding:9px 4px;text-align:center;font-size:12.5px;font-weight:800}
+.tpill .em{margin-right:4px}
+
+.leadnote{display:flex;gap:9px;margin-top:11px;background:var(--ljdim);border-radius:12px;padding:11px 14px}
+.leadnote .ic{font-size:15px;flex-shrink:0;line-height:1.3}
+.leadnote .tx{font-size:12.5px;font-weight:600;color:var(--ljd);line-height:1.5}
+.leadnote .tx b{font-weight:800}
+
+.candttl{font-size:12px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--t3);margin:16px 2px 9px}
+.cand{background:var(--bg);border:1.5px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:9px;
+  position:relative;display:flex;flex-direction:column;gap:10px}
+.cand.win{border-color:var(--lj);background:var(--ljdim);box-shadow:0 10px 22px -12px rgba(139,92,246,.55)}
+.cand-top{display:flex;align-items:center;gap:14px}
+.cand-date{font-size:13.5px;font-weight:800;flex:1}
+.cand-date .ago{color:var(--t3);font-weight:600;font-size:12px}
+.mrow{display:flex;flex-wrap:wrap;gap:6px}
+.mtag{display:flex;align-items:center;gap:3px;font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:6px;white-space:nowrap}
+.mtag.y{background:var(--grbg);color:var(--gr)}
+.mtag.n{background:var(--rdbg);color:var(--rd)}
+.mtag.m{background:var(--ambg);color:var(--am)}
+.cand-mark{font-family:var(--mono);font-size:18px;font-weight:800;letter-spacing:-.5px;flex-shrink:0}
+.cand.win .cand-mark{color:var(--ljd)}
+.score{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sbar{width:54px;height:6px;border-radius:3px;background:var(--s3);overflow:hidden}
+.sbar i{display:block;height:100%;border-radius:3px;background:var(--t4)}
+.cand.win .sbar i{background:var(--lj)}
+.snum{font-family:var(--mono);font-size:14px;font-weight:800;color:var(--t3);width:24px;text-align:right}
+.cand.win .snum{color:var(--ljd)}
+.wintag{position:absolute;top:-9px;left:15px;background:var(--lj);color:#fff;font-size:9px;font-weight:900;
+  letter-spacing:1px;padding:3px 9px;border-radius:6px;text-transform:uppercase}
+.legend{font-size:12px;color:var(--t3);font-weight:700;margin-top:6px;line-height:1.55}
+.legend b{color:var(--lj)}
+
+/* slucka */
+.loop-h{font-size:13px;font-weight:900;font-style:italic;text-transform:uppercase;color:var(--lj);letter-spacing:.2px;margin-bottom:13px}
+.lstep{display:flex;align-items:center;gap:11px;padding:9px 0}
+.lstep+.lstep{border-top:1px dashed var(--bd)}
+.ldot{width:24px;height:24px;border-radius:50%;background:var(--ljdim);color:var(--ljd);font-weight:900;
+  font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-style:italic}
+.ltxt{font-size:13.5px;font-weight:600;color:var(--t2)}
+.ltxt b{color:var(--t);font-weight:800}
+.lloop{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:12px;font-weight:800;color:var(--lj)}
+.lloop .rc{font-size:18px}
+</style>
+</head>
+<body>
+
+<div class="tag">Koncept · Značka rozbehu</div>
+<h1 class="italic">Inteligentná dĺžka rozbehu</h1>
+<p class="lede">Nová hodnota, ktorú zapíšeš pri každom rozbehovom cvičení: <b>tvoja štartovacia značka</b>. Aplikácia ju
+označí podmienkami dňa a nabudúce ti ponúkne značku, ktorá naozaj sedí &mdash; <b>rovnaké miesto, rovnaká teplota,
+rovnaký vietor, rovnaká záťaž pred ním, najnovšia.</b></p>
+
+<!-- ZONA 1 -->
+<div class="zone">
+  <div class="zhead"><div class="znum">1</div><div class="zttl">Zaznamenaj podmienky</div></div>
+  <div class="split">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="pscr">
+        <div class="pbar"><div class="x">&times;</div><div class="ttl">PRÍPRAVA</div><div class="skip">Preskočiť</div></div>
+        <div class="card">
+          <div class="ch">Podmienky</div>
+          <div class="flabel">Miesto</div>
+          <div class="seg venue"><div class="opt on">Hala</div><div class="opt">Vonku</div></div>
+          <div class="flabel">Teplota</div>
+          <div class="seg">
+            <div class="opt cold on"><span class="em">&#10052;</span>Zima</div>
+            <div class="opt"><span class="em">&#127783;</span>Mierne</div>
+            <div class="opt"><span class="em">&#9925;</span>Teplo</div>
+            <div class="opt"><span class="em">&#9728;</span>Horúco</div>
+          </div>
+          <div class="flabel">Vietor</div>
+          <div class="chips">
+            <div class="chip on">Bezvetrie</div><div class="chip">Protivietor</div>
+            <div class="chip">V chrbte</div><div class="chip">Bočný</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="expl">
+      <p>Tri rýchle ťuknutia v <b>príprave pred tréningom</b> &mdash; na obrazovke, ktorá sa už pýta na typ tréningu a pripravenosť.</p>
+      <p>Hala alebo vonku je pre rozbeh to najdôležitejšie. Teplota a vietor to doladia.</p>
+      <div class="pill-note">&#9670;&nbsp; Zadáš raz &mdash; označí každú značku, ktorú v ten deň zapíšeš</div>
+    </div>
+  </div>
+</div>
+
+<!-- ZONA 2 -->
+<div class="zone">
+  <div class="zhead"><div class="znum">2</div><div class="zttl">Porovnaj s históriou</div></div>
+  <div class="today">
+    <div class="l">DNES<br>16-KROKOV</div>
+    <div class="row">
+      <div class="tpill"><span class="em">&#127967;</span>Hala</div>
+      <div class="tpill"><span class="em">&#10052;</span>Zima</div>
+      <div class="tpill"><span class="em">&#127807;</span>Bezvetrie</div>
+      <div class="tpill"><span class="em">&#128564;</span>Deň voľna</div>
+    </div>
+  </div>
+
+  <div class="leadnote">
+    <span class="ic">&#128197;</span>
+    <span class="tx">Aplikácia sa pozrie aj na to, <b>čo si trénoval deň-dva predtým</b> &mdash; deň voľna, posilka či
+    rýchlosť menia sviežosť nôh, a tým aj rozbeh. Číta to z kalendára sama, nič nezadávaš.</span>
+  </div>
+
+  <div class="candttl">Predošlé značky 16-krokov &mdash; Stanley</div>
+
+  <div class="cand win">
+    <div class="wintag">Najlepšia zhoda</div>
+    <div class="cand-top">
+      <div class="cand-date">2. máj <span class="ago">&middot; pred 15 dňami</span></div>
+      <div class="cand-mark">34.40 m</div>
+      <div class="score"><span class="sbar"><i style="width:96%"></i></span><span class="snum">96</span></div>
+    </div>
+    <div class="mrow">
+      <span class="mtag y">&#10003; Hala</span><span class="mtag y">&#10003; Zima</span>
+      <span class="mtag y">&#10003; Bezvetrie</span><span class="mtag y">&#10003; Deň voľna predtým</span>
+    </div>
+  </div>
+
+  <div class="cand">
+    <div class="cand-top">
+      <div class="cand-date">12. apr <span class="ago">&middot; pred 38 dňami</span></div>
+      <div class="cand-mark">34.25 m</div>
+      <div class="score"><span class="sbar"><i style="width:78%"></i></span><span class="snum">78</span></div>
+    </div>
+    <div class="mrow">
+      <span class="mtag y">&#10003; Hala</span><span class="mtag y">&#10003; Zima</span>
+      <span class="mtag y">&#10003; Bezvetrie</span><span class="mtag n">&#10007; Posilka predtým</span>
+    </div>
+  </div>
+
+  <div class="cand">
+    <div class="cand-top">
+      <div class="cand-date">20. apr <span class="ago">&middot; pred 27 dňami</span></div>
+      <div class="cand-mark">35.10 m</div>
+      <div class="score"><span class="sbar"><i style="width:38%"></i></span><span class="snum">38</span></div>
+    </div>
+    <div class="mrow">
+      <span class="mtag n">&#10007; Vonku</span><span class="mtag m">~ Mierne</span>
+      <span class="mtag n">&#10007; V chrbte</span><span class="mtag n">&#10007; Rýchlosť predtým</span>
+    </div>
+  </div>
+
+  <div class="legend">Hodnotené podľa <b>miesta</b> &middot; <b>teploty</b> &middot; <b>vetra</b> &middot;
+  <b>záťaže pred tréningom</b> &middot; <b>čerstvosti</b>. 2. máj sedí vo všetkých štyroch podmienkach &mdash;
+  vrátane toho, že pred ním bol deň voľna, rovnako ako dnes &mdash; a je najčerstvejší. 12. apríl má rovnaké
+  počasie, ale pred ním bola posilka, takže nohy boli unavenejšie &mdash; preto klesá.</div>
+</div>
+
+<!-- ZONA 3 -->
+<div class="zone">
+  <div class="zhead"><div class="znum">3</div><div class="zttl">Navrhni ju pri cvičení</div></div>
+  <div class="split">
+    <div class="expl">
+      <p>Otvoríš rozbehové cvičenie a navrhnutá značka je rovno tam &mdash; aj <b>prečo</b> bola vybraná a
+      <b>ako ten tréning dopadol</b> &mdash; aby si tomu číslu veril.</p>
+      <p>Ťukneš na <b>Použiť túto značku</b> a vyplní sa do sérií. Počas tréningu ju uprav, ak doska nesedí &mdash;
+      série pod ňou prevezmú novú značku.</p>
+      <p>To, na čom nakoniec skončíš, sa zapíše &mdash; a stane sa to dátami na zajtra.</p>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="pscr">
+        <div class="exhead"><div class="badge">C</div><div class="excat">ATLETIKA</div></div>
+        <div class="exname">Skok z 16 krokov</div>
+        <div class="sug">
+          <div class="lab">&#9670; NAVRHNUTÁ ZNAČKA ROZBEHU</div>
+          <div class="big">34.40 m</div>
+          <div class="why">V hale a zime, po dni voľna &mdash; ako dnes &middot; 2. máj</div>
+          <div class="out">&#127942;&nbsp; 3 platné skoky &middot; najlepší 6.55 m &middot; doska sedela</div>
+          <div class="usebtn">Použiť túto značku</div>
+        </div>
+        <div class="tbl-h"><span>Séria</span><span>Značka</span><span>Diaľka</span><span></span></div>
+        <div class="tbl-r"><span class="sn">1</span><span class="cell mark">34.40</span><span class="cell ghost">m</span><span class="tick"></span></div>
+        <div class="tbl-r"><span class="sn">2</span><span class="cell mark">34.40</span><span class="cell ghost">m</span><span class="tick"></span></div>
+        <div class="tbl-r"><span class="sn">3</span><span class="cell mark">34.40</span><span class="cell ghost">m</span><span class="tick"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLUCKA -->
+<div class="zone">
+  <div class="loop-h">Zlepšuje sa každým tréningom</div>
+  <div class="lstep"><div class="ldot">1</div><div class="ltxt">Počas tréningu zapíšeš <b>značku + podmienky</b></div></div>
+  <div class="lstep"><div class="ldot">2</div><div class="ltxt">Aplikácia ohodnotí každý predošlý tréning &mdash; <b>podmienky aj to, čo mu predchádzalo</b></div></div>
+  <div class="lstep"><div class="ldot">3</div><div class="ltxt">Ukáže <b>najvhodnejšiu značku</b> aj s dôvodom</div></div>
+  <div class="lstep"><div class="ldot">4</div><div class="ltxt">Na dráhe ju <b>doladíš</b> &mdash; rozbeh povie pravdu</div></div>
+  <div class="lstep"><div class="ldot">5</div><div class="ltxt">Finálna značka sa <b>zapíše</b> &mdash; poslúži ďalšiemu návrhu</div></div>
+  <div class="lloop"><span class="rc">&#8635;</span> viac tréningov &rarr; presnejšie návrhy</div>
+</div>
+
+</body>
+</html>

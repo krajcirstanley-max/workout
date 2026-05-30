@@ -11641,7 +11641,32 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exSynced, exercises.length]);
   useEffect(() => {
-    const KEY = 'wk2_v3_th_import_12';
+    const KEY = 'wk2_v3_purge_miska_mar11_50m_1';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!wkSynced) return;
+    setWorkouts(prev => prev.map(w => {
+      if (w.id !== 'wk-th-m-20260311') return w;
+      const ath = (w.athletes || {})['ath-2'];
+      if (!ath) return w;
+      const sets = {
+        ...(ath.sets || {})
+      };
+      delete sets['start-50m'];
+      return {
+        ...w,
+        athletes: {
+          ...w.athletes,
+          'ath-2': {
+            ...ath,
+            sets
+          }
+        }
+      };
+    }));
+    localStorage.setItem(KEY, '1');
+  }, [wkSynced]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_th_import_13';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !wkSynced || !exercises.length) return;
     fetch('th_import.json', {
