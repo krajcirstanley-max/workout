@@ -4544,7 +4544,7 @@ function App(){
   // ath-2. Migration replaces existing imported workouts by id, then appends
   // any missing - so v6 brings in Miska's 29 new workouts while keeping
   // Stanley's 27 corrected ones.
-  useEffect(()=>{const KEY='wk2_v3_th_import_7';
+  useEffect(()=>{const KEY='wk2_v3_th_import_8';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!wkSynced||!exercises.length)return;
     fetch('th_import.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(DATA=>{
