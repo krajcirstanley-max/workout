@@ -2516,7 +2516,9 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
     {id:'agg-sprint-40m',name:'Best 40m',ord:40},
     {id:'agg-sprint-50m',name:'Best 50m',ord:50},
   ];
+  const AGG_DENY=new Set(['overspeed-40m','resisted-10m','resisted-20m','resisted-30m']);
   const aggExtract=(aid,eid,v)=>{
+    if(AGG_DENY.has(eid))return 0;
     const n=k=>{const x=Number(v[k]);return x&&!isNaN(x)?x:0};
     if(aid==='agg-sprint-10m'){
       if(eid==='start-10m'&&n('tf-time'))return n('tf-time');
