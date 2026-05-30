@@ -1328,6 +1328,9 @@ function TrendChart({
   const slope = denom ? (n * sxy - sx * sy) / denom : 0;
   const flat = Math.abs(slope) < range * 0.005;
   const color = flat ? '#9ca3af' : (lowerBetter ? slope < 0 : slope > 0) ? '#16a34a' : '#ef4444';
+  const prev = values[values.length - 2];
+  const stepImproved = lowerBetter ? lst < prev : lst > prev;
+  const dotColor = lst === prev ? color : stepImproved ? '#16a34a' : '#ef4444';
   return React.createElement("svg", {
     viewBox: `0 0 ${W} ${H}`,
     style: {
@@ -1374,8 +1377,10 @@ function TrendChart({
   }), React.createElement("circle", {
     cx: X(values.length - 1),
     cy: Y(lst),
-    r: "4",
-    fill: color
+    r: "4.5",
+    fill: dotColor,
+    stroke: "var(--surface)",
+    strokeWidth: "1.5"
   }));
 }
 function Sparkline({
@@ -6198,12 +6203,14 @@ function StatScreen({
     }
     if (aid === 'agg-fly-10m') {
       if (eid === 'fly-10m' && n('tf-time')) return n('tf-time');
-      let best = 0;
-      ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'].forEach(k => {
-        const x = n(k);
-        if (x && (!best || x < best)) best = x;
-      });
-      return best || 0;
+      if (eid === 'start-50m' || eid === 'start-60m') {
+        let best = 0;
+        ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'].forEach(k => {
+          const x = n(k);
+          if (x && (!best || x < best)) best = x;
+        });
+        return best || 0;
+      }
     }
     return 0;
   };

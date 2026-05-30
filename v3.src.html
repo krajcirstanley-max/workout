@@ -862,6 +862,12 @@ function TrendChart({values,lowerBetter,refLines}){
   const denom=n*sxx-sx*sx;const slope=denom?(n*sxy-sx*sy)/denom:0;
   const flat=Math.abs(slope)<range*0.005;
   const color=flat?'#9ca3af':((lowerBetter?slope<0:slope>0)?'#16a34a':'#ef4444');
+  // Color the last-point dot by the recent step (last vs prev), so a series
+  // that's improving overall but regressed in the most recent session shows a
+  // green line with a red dot — answers "are you still moving the right way?"
+  const prev=values[values.length-2];
+  const stepImproved=lowerBetter?lst<prev:lst>prev;
+  const dotColor=lst===prev?color:(stepImproved?'#16a34a':'#ef4444');
   return(<svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',display:'block',margin:'4px 0 12px'}}>
     {refs.map((r,i)=>{const y=Y(r.val);const c=r.color||'rgba(148,163,184,.7)';return(<g key={'r'+i}>
       <line x1={pad} y1={y} x2={W-pad} y2={y} stroke={c} strokeWidth="1" strokeDasharray="4 3"/>
@@ -869,7 +875,7 @@ function TrendChart({values,lowerBetter,refLines}){
     </g>)})}
     <polygon points={`${X(0)},${H} ${line} ${X(values.length-1)},${H}`} fill={color} fillOpacity="0.1"/>
     <polyline points={line} fill="none" stroke={color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
-    <circle cx={X(values.length-1)} cy={Y(lst)} r="4" fill={color}/>
+    <circle cx={X(values.length-1)} cy={Y(lst)} r="4.5" fill={dotColor} stroke="var(--surface)" strokeWidth="1.5"/>
   </svg>);
 }
 
@@ -2545,9 +2551,13 @@ function StatScreen({workouts,activeAth,exercises,onView,onSelectEx,remoteSessio
     }
     if(aid==='agg-fly-10m'){
       if(eid==='fly-10m'&&n('tf-time'))return n('tf-time');
-      let best=0;
-      ['fly-10m-1','fly-10m-2','fly-10m-3'].forEach(k=>{const x=n(k);if(x&&(!best||x<best))best=x});
-      return best||0;
+      // Only pool fly-10m segments from real free sprints. Overspeed / resisted
+      // are already blocked above but be explicit about the allow-list.
+      if(eid==='start-50m'||eid==='start-60m'){
+        let best=0;
+        ['fly-10m-1','fly-10m-2','fly-10m-3'].forEach(k=>{const x=n(k);if(x&&(!best||x<best))best=x});
+        return best||0;
+      }
     }
     return 0;
   };
