@@ -1312,10 +1312,22 @@ function TrendChart({
   const X = i => pad + i / (values.length - 1) * (W - 2 * pad);
   const Y = v => H - pad - (v - min) / range * (H - 2 * pad);
   const line = values.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
-  const lst = values[values.length - 1],
-    fst = values[0];
-  const flat = lst === fst;
-  const color = flat ? '#9ca3af' : (lowerBetter ? lst < fst : lst > fst) ? '#16a34a' : '#ef4444';
+  const lst = values[values.length - 1];
+  const n = values.length;
+  let sx = 0,
+    sy = 0,
+    sxy = 0,
+    sxx = 0;
+  for (let i = 0; i < n; i++) {
+    sx += i;
+    sy += values[i];
+    sxy += i * values[i];
+    sxx += i * i;
+  }
+  const denom = n * sxx - sx * sx;
+  const slope = denom ? (n * sxy - sx * sy) / denom : 0;
+  const flat = Math.abs(slope) < range * 0.005;
+  const color = flat ? '#9ca3af' : (lowerBetter ? slope < 0 : slope > 0) ? '#16a34a' : '#ef4444';
   return React.createElement("svg", {
     viewBox: `0 0 ${W} ${H}`,
     style: {
@@ -6128,6 +6140,167 @@ function StatScreen({
     }, f.map(renderRow))) : null;
   };
   const noMatch = Object.keys(prMap).length > 0 && !Object.keys(prMap).some(matchQ);
+  const r2 = v => Math.round(v * 100) / 100;
+  const AGG_DEFS = [{
+    id: 'agg-fly-10m',
+    name: 'Best 10m Fly',
+    ord: 5
+  }, {
+    id: 'agg-sprint-10m',
+    name: 'Best 10m',
+    ord: 10
+  }, {
+    id: 'agg-sprint-20m',
+    name: 'Best 20m',
+    ord: 20
+  }, {
+    id: 'agg-sprint-30m',
+    name: 'Best 30m',
+    ord: 30
+  }, {
+    id: 'agg-sprint-40m',
+    name: 'Best 40m',
+    ord: 40
+  }, {
+    id: 'agg-sprint-50m',
+    name: 'Best 50m',
+    ord: 50
+  }];
+  const aggExtract = (aid, eid, v) => {
+    const n = k => {
+      const x = Number(v[k]);
+      return x && !isNaN(x) ? x : 0;
+    };
+    if (aid === 'agg-sprint-10m') {
+      if (eid === 'start-10m' && n('tf-time')) return n('tf-time');
+      if ((eid === 'start-20m' || eid === 'start-30m') && n('split-10m')) return n('split-10m');
+    }
+    if (aid === 'agg-sprint-20m') {
+      if (eid === 'start-20m' && n('tf-time')) return n('tf-time');
+      if (eid === 'start-30m' && n('split-10m') && n('split-20m')) return r2(n('split-10m') + n('split-20m'));
+      if (eid === 'start-40m' && n('split-20m')) return n('split-20m');
+    }
+    if (aid === 'agg-sprint-30m') {
+      if (eid === 'start-30m' && n('tf-time')) return n('tf-time');
+      if (eid === 'start-40m' && n('split-20m') && n('split-30m')) return r2(n('split-20m') + n('split-30m'));
+      if (eid === 'start-50m' && n('split-30m')) return n('split-30m');
+    }
+    if (aid === 'agg-sprint-40m') {
+      if (eid === 'start-40m' && n('tf-time')) return n('tf-time');
+      if (eid === 'start-50m' && n('split-30m') && n('fly-10m-1')) return r2(n('split-30m') + n('fly-10m-1'));
+      if (eid === 'start-60m' && n('split-40m')) return n('split-40m');
+    }
+    if (aid === 'agg-sprint-50m') {
+      if (eid === 'start-50m' && n('tf-time')) return n('tf-time');
+      if (eid === 'start-60m' && n('split-40m') && n('fly-10m-1')) return r2(n('split-40m') + n('fly-10m-1'));
+    }
+    if (aid === 'agg-fly-10m') {
+      if (eid === 'fly-10m' && n('tf-time')) return n('tf-time');
+      let best = 0;
+      ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'].forEach(k => {
+        const x = n(k);
+        if (x && (!best || x < best)) best = x;
+      });
+      return best || 0;
+    }
+    return 0;
+  };
+  const aggMap = {};
+  [...myWk].sort((a, b) => a.startTime - b.startTime).forEach(w => {
+    const ad = w.athletes?.[activeAth];
+    if (!ad) return;
+    const sb = {};
+    Object.keys(ad.sets || {}).forEach(eid => {
+      const base = baseExId(eid);
+      ad.sets[eid].filter(s => s.completed && !s.warmup).forEach(s => {
+        const v = s.values || {};
+        AGG_DEFS.forEach(a => {
+          const x = aggExtract(a.id, base, v);
+          if (!x) return;
+          if (sb[a.id] == null || x < sb[a.id]) sb[a.id] = x;
+        });
+      });
+    });
+    Object.entries(sb).forEach(([aid, val]) => {
+      if (!aggMap[aid]) aggMap[aid] = {
+        series: [],
+        best: Infinity,
+        date: 0
+      };
+      aggMap[aid].series.push(val);
+      if (val < aggMap[aid].best) {
+        aggMap[aid].best = val;
+        aggMap[aid].date = w.startTime;
+      }
+    });
+  });
+  const aggIds = AGG_DEFS.filter(a => aggMap[a.id] && aggMap[a.id].series.length).sort((a, b) => a.ord - b.ord).map(a => a.id);
+  const renderAggRow = aid => {
+    const def = AGG_DEFS.find(a => a.id === aid);
+    const m = aggMap[aid];
+    return React.createElement("div", {
+      key: aid,
+      className: "pr-card",
+      style: {
+        borderLeft: '3px solid #06b6d4'
+      }
+    }, React.createElement("div", {
+      className: "pr-card-top"
+    }, React.createElement("span", {
+      className: "pr-card-name"
+    }, def.name), React.createElement("span", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 7,
+        flexShrink: 0
+      }
+    }, React.createElement("span", {
+      style: {
+        fontFamily: 'var(--mono)',
+        fontSize: 8.5,
+        fontWeight: 800,
+        letterSpacing: '.5px',
+        textTransform: 'uppercase',
+        color: '#06b6d4',
+        background: '#06b6d422',
+        padding: '3px 7px',
+        borderRadius: 5
+      }
+    }, "Pooled"))), React.createElement(TrendChart, {
+      values: m.series,
+      lowerBetter: true
+    }), React.createElement("div", {
+      className: "pr-metrics"
+    }, React.createElement("div", {
+      className: "pr-metric"
+    }, React.createElement("div", {
+      className: "pr-metric-v"
+    }, m.best.toFixed(2), React.createElement("span", {
+      className: "u"
+    }, "s")), React.createElement("div", {
+      className: "pr-metric-l"
+    }, "PB")), React.createElement("div", {
+      className: "pr-metric"
+    }, React.createElement("div", {
+      className: "pr-metric-v"
+    }, m.series.length), React.createElement("div", {
+      className: "pr-metric-l"
+    }, "Sessions"))));
+  };
+  const aggMatchQ = aid => {
+    if (!q.trim()) return true;
+    const def = AGG_DEFS.find(a => a.id === aid);
+    return def && def.name.toLowerCase().includes(q.trim().toLowerCase());
+  };
+  const aggSection = () => {
+    const f = aggIds.filter(aggMatchQ);
+    return f.length ? React.createElement(React.Fragment, null, React.createElement("div", {
+      className: "s-title"
+    }, "Pooled PBs"), React.createElement("div", {
+      className: "recent"
+    }, f.map(renderAggRow))) : null;
+  };
   const FLY10 = ['fly-10m-1', 'fly-10m-2', 'fly-10m-3'];
   const velo = [];
   [...myWk].sort((a, b) => a.startTime - b.startTime).forEach(w => {
@@ -6777,7 +6950,7 @@ function StatScreen({
       fontFamily: 'inherit',
       boxSizing: 'border-box'
     }
-  })), section('Sprint PBs', sprintIds), section('Fly PBs', flyIds), section('Resisted Sprint PBs', resistedIds), section('Everything Else', otherIds), Object.keys(prMap).length === 0 && React.createElement("div", {
+  })), aggSection(), section('Sprint PBs', sprintIds), section('Fly PBs', flyIds), section('Resisted Sprint PBs', resistedIds), section('Everything Else', otherIds), Object.keys(prMap).length === 0 && React.createElement("div", {
     className: "empty"
   }, React.createElement("div", {
     className: "empty-text"
