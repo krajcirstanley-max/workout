@@ -1421,14 +1421,20 @@ function PlanBlocks({
   activeAth
 }) {
   if (!plan || !plan.exerciseIds || !plan.exerciseIds.length) return null;
+  const visForAth = eid => {
+    const a = plan.exerciseAthletes?.[eid];
+    return !a || a.length === 0 || !activeAth || a.includes(activeAth);
+  };
+  const visibleIds = plan.exerciseIds.filter(visForAth);
+  if (!visibleIds.length) return null;
   const blocks = [];
   const seen = new Set();
   let bi = 0;
-  plan.exerciseIds.forEach(eid => {
+  visibleIds.forEach(eid => {
     if (seen.has(eid)) return;
     const ss = (plan.supersets || []).find(g => g.includes(eid));
     if (ss) {
-      const grp = ss.filter(id => plan.exerciseIds.includes(id));
+      const grp = ss.filter(id => visibleIds.includes(id));
       grp.forEach(id => seen.add(id));
       blocks.push({
         letter: String.fromCharCode(65 + bi++),

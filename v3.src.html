@@ -892,10 +892,16 @@ function Sparkline({values,w=180,h=40}){
 // dosage and per-exercise notes). Used by Today and the Calendar day view.
 function PlanBlocks({plan,exercises,activeAth}){
   if(!plan||!plan.exerciseIds||!plan.exerciseIds.length)return null;
+  // exerciseAthletes restricts which athlete sees which exercise. Without this
+  // filter Stanley's plan preview was showing Miška-only entries (and vice
+  // versa) even though those exercises wouldn't appear in his actual workout.
+  const visForAth=eid=>{const a=plan.exerciseAthletes?.[eid];return !a||a.length===0||(!activeAth)||a.includes(activeAth)};
+  const visibleIds=plan.exerciseIds.filter(visForAth);
+  if(!visibleIds.length)return null;
   const blocks=[];const seen=new Set();let bi=0;
-  plan.exerciseIds.forEach(eid=>{if(seen.has(eid))return;
+  visibleIds.forEach(eid=>{if(seen.has(eid))return;
     const ss=(plan.supersets||[]).find(g=>g.includes(eid));
-    if(ss){const grp=ss.filter(id=>plan.exerciseIds.includes(id));grp.forEach(id=>seen.add(id));
+    if(ss){const grp=ss.filter(id=>visibleIds.includes(id));grp.forEach(id=>seen.add(id));
       blocks.push({letter:String.fromCharCode(65+bi++),type:'ss',eids:grp})}
     else{seen.add(eid);blocks.push({letter:String.fromCharCode(65+bi++),type:'single',eids:[eid]})}});
   return(<>{blocks.map((b,bi2)=>(<div key={bi2} className="block">
