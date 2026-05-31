@@ -10993,6 +10993,68 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_lj_session_may31';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'fly-20m',
+      name: '20m Fly',
+      category: 'T&F',
+      metrics: ['tf-time']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const plan = {
+      id: 'pl-lj-session-may31',
+      date: '2026-05-31',
+      name: 'Long Jump Session',
+      color: '#8b5cf6',
+      exerciseIds: ['fly-20m', 'high-hurdle-jumps', 'short-app-popup', 'approach-runthrough-16', 'approach-popup-16', 'approach-jump-10', 'approach-jump-16', 'alt-bounds-jump'],
+      supersets: [],
+      setConfigs: {
+        'fly-20m': [{
+          reps: 1
+        }],
+        'high-hurdle-jumps': [{
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'short-app-popup': [{}, {}, {}, {}, {}, {}],
+        'approach-runthrough-16': [{}],
+        'approach-popup-16': [{}, {}, {}, {}],
+        'approach-jump-10': [{}, {}, {}, {}, {}, {}],
+        'approach-jump-16': [{}, {}, {}, {}, {}, {}],
+        'alt-bounds-jump': [{
+          reps: 5
+        }, {
+          reps: 5
+        }]
+      },
+      exerciseAthletes: {
+        'approach-jump-10': ['ath-2'],
+        'approach-jump-16': ['ath-1']
+      },
+      exNotes: {},
+      notes: ''
+    };
+    setPlanned(p => {
+      const i = p.findIndex(x => x.id === 'pl-lj-session-may31');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_lj_session_7b';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
