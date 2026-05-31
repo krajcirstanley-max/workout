@@ -3939,8 +3939,8 @@ function ActiveWorkout({
         if (Object.keys(cs).length > 0) cleanA[aId] = {
           ...ad,
           sets: cs,
-          rpe: data.athData[aId]?.rpe || null,
-          tendons: data.athData[aId]?.tendons || null,
+          rpe: data.athData[aId]?.rpe ?? null,
+          tendons: data.athData[aId]?.tendons ?? null,
           notes: data.athData[aId]?.notes || ''
         };
       });
@@ -6577,8 +6577,10 @@ function StatScreen({
     const tendData = [];
     sw.forEach(w => {
       const ad = w.athletes[activeAth];
-      const t = Number(ad && ad.tendons);
-      if (t > 0) tendData.push({
+      const raw = ad && ad.tendons;
+      if (raw == null || raw === '') return;
+      const t = Number(raw);
+      if (Number.isFinite(t) && t >= 0) tendData.push({
         ts: w.startTime,
         val: t
       });
@@ -8700,7 +8702,7 @@ function FinishFormFull({
     }, "0"), React.createElement("span", {
       className: "fs-slider-tick"
     }, "10"))), a.name === 'Miška' && (() => {
-      const tn = athData[a.id]?.tendons || 5;
+      const tn = athData[a.id]?.tendons ?? 5;
       return React.createElement("div", {
         className: "fs-card"
       }, React.createElement("div", {
@@ -8713,7 +8715,7 @@ function FinishFormFull({
         className: "fs-slider-bar"
       }), React.createElement("input", {
         type: "range",
-        min: "1",
+        min: "0",
         max: "10",
         step: "1",
         value: tn,
@@ -8727,7 +8729,7 @@ function FinishFormFull({
       }), React.createElement("div", {
         className: "fs-slider-thumb",
         style: {
-          left: `${(tn - 1) / 9 * 100}%`,
+          left: `${tn / 10 * 100}%`,
           borderColor: a.color,
           color: a.color
         }
@@ -8735,7 +8737,7 @@ function FinishFormFull({
         className: "fs-slider-ticks"
       }, React.createElement("span", {
         className: "fs-slider-tick"
-      }, "1 \xB7 ok"), React.createElement("span", {
+      }, "0 \xB7 \u017Eiadne"), React.createElement("span", {
         className: "fs-slider-tick"
       }, "10 \xB7 zle")));
     })());
