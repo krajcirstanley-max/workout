@@ -4309,6 +4309,50 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-06-01 Gym - iso/yielding + power + core.
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_june1';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'med-ball-lateral-situp',name:'Med Ball Lateral Throw Sit Up',category:'Core',metrics:['weight','reps']},
+      {id:'hanging-leg-raise',name:'Hanging Leg Raise',category:'Core',metrics:['reps']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    const plan={id:'pl-gym-june1',date:'2026-06-01',name:'Gym',color:'#3b82f6',
+      exerciseIds:['leg-curl-iso','sl-calf-iso','iso-on-off','loaded-walk-banded','half-squat-jump-oh','rdl','copenhagen-plank','med-ball-lateral-situp','hanging-leg-raise'],
+      supersets:[],
+      setConfigs:{
+        'leg-curl-iso':[{time:20},{time:20}],
+        'sl-calf-iso':[{weight:100},{weight:100}],
+        'iso-on-off':[{reps:3,time:3},{reps:3,time:3}],
+        'loaded-walk-banded':[{weight:31},{weight:31}],
+        'half-squat-jump-oh':[{weight:40,reps:4},{weight:40,reps:4}],
+        'rdl':[{reps:5},{reps:5}],
+        'copenhagen-plank':[{},{}],
+        'med-ball-lateral-situp':[{reps:6}],
+        'hanging-leg-raise':[{reps:6}]
+      },
+      exerciseAthletes:{
+        'leg-curl-iso':['ath-2']
+      },
+      exNotes:{
+        'leg-curl-iso':'Yielding. Každá noha.',
+        'sl-calf-iso':'Yielding. Každá noha.',
+        'iso-on-off':'Overcoming. Každá noha.',
+        'loaded-walk-banded':'Barbell + kettlebell, banded.',
+        'half-squat-jump-oh':'BB nad hlavou.'
+      },
+      notes:''
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-gym-june1');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-05-31 Long Jump Session.
   // Shared warm-up + main. Per-athlete differences:
   //  - Pop Up: Miška 4 sets, Stanley 2 sets (use 4 globally, Stanley stops early)
