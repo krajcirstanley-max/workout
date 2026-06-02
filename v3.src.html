@@ -4309,6 +4309,32 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-06-02 Speed Session - light resisted, accel, overspeed, free.
+  useEffect(()=>{const KEY='wk2_v3_seed_speed_june2';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    const plan={id:'pl-speed-june2',date:'2026-06-02',name:'Speed Session',color:'#dc2626',
+      exerciseIds:['resisted-20m','start-30m','overspeed-40m','start-50m','start-60m'],
+      supersets:[],
+      setConfigs:{
+        'resisted-20m':[{},{}],
+        'start-30m':[{},{},{}],
+        'overspeed-40m':[{},{},{}],
+        'start-50m':[{},{}],
+        'start-60m':[{},{}]
+      },
+      exNotes:{
+        'resisted-20m':'Light.'
+      },
+      notes:''
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-speed-june2');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-06-01 Gym - iso/yielding + power + core.
   useEffect(()=>{const KEY='wk2_v3_seed_gym_june1';
     if(localStorage.getItem(KEY)==='1')return;
