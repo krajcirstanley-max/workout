@@ -1591,6 +1591,8 @@ function TodayScreen({
       plan: plan,
       program: isToday ? "Today's Session" : isPast ? "Was Planned" : "Upcoming",
       exercises: exercises,
+      athletes: athletes,
+      activeAth: activeAth,
       live: isLive,
       isPast: isPast,
       onAction: isPast ? null : () => isLive ? onResume() : onStartPlan(plan),
@@ -1727,12 +1729,25 @@ function WorkoutCard({
   live,
   isPast,
   onAction,
-  actionLabel
+  actionLabel,
+  athletes,
+  activeAth
 }) {
   const exCount = plan.exerciseIds.length;
   const totalSets = Object.values(plan.setConfigs || {}).reduce((a, s) => a + (s?.length || 0), 0);
   const minutes = Math.max(15, exCount * 3 + totalSets * 1);
   const c = plan.color || 'var(--primary)';
+  const assigned = (() => {
+    const ea = plan.exerciseAthletes || {};
+    const sets = [];
+    Object.values(ea).forEach(a => {
+      if (Array.isArray(a) && a.length === 1) sets.push(a[0]);
+    });
+    if (!sets.length || sets.length !== Object.keys(ea).length) return null;
+    const uniq = [...new Set(sets)];
+    return uniq.length === 1 ? uniq[0] : null;
+  })();
+  const assignedAth = assigned && (athletes || []).find(a => a.id === assigned);
   return React.createElement("div", {
     className: "wcard",
     style: isPast ? {
@@ -1753,7 +1768,21 @@ function WorkoutCard({
     className: "wcard-program"
   }, program || "Today's Workout"), React.createElement("div", {
     className: "wcard-name"
-  }, plan.name)))), React.createElement("div", {
+  }, plan.name, assignedAth && React.createElement("span", {
+    style: {
+      marginLeft: 8,
+      fontFamily: 'var(--mono)',
+      fontSize: 9,
+      fontWeight: 800,
+      letterSpacing: '.6px',
+      textTransform: 'uppercase',
+      color: '#fff',
+      background: assignedAth.color || 'var(--primary)',
+      padding: '3px 7px',
+      borderRadius: 5,
+      verticalAlign: 'middle'
+    }
+  }, assignedAth.name))))), React.createElement("div", {
     className: "wcard-stats",
     style: {
       borderBottom: 'none',
@@ -3851,7 +3880,7 @@ function ActiveWorkout({
     const a = workout.exerciseAthletes?.[eid];
     return !a || a.length === 0 || a.includes(activeAth);
   };
-  const blocks = [];
+  let blocks = [];
   const seen = new Set();
   let bi = 0;
   workout.exerciseIds.forEach(eid => {
@@ -3875,6 +3904,30 @@ function ActiveWorkout({
       });
     }
   });
+  if (blocks.length === 0 && workout.exerciseIds.length > 0) {
+    const seen2 = new Set();
+    let bi2 = 0;
+    workout.exerciseIds.forEach(eid => {
+      if (seen2.has(eid)) return;
+      const grp = (workout.supersets || []).find(g => g.includes(eid));
+      if (grp) {
+        const all = workout.exerciseIds.filter(id => grp.includes(id));
+        all.forEach(id => seen2.add(id));
+        blocks.push({
+          letter: String.fromCharCode(65 + bi2++),
+          eids: all,
+          superset: all.length > 1
+        });
+      } else {
+        seen2.add(eid);
+        blocks.push({
+          letter: String.fromCharCode(65 + bi2++),
+          eids: [eid],
+          superset: false
+        });
+      }
+    });
+  }
   let totalReps = 0,
     totalKg = 0;
   Object.values(workout.athletes[activeAth]?.sets || {}).forEach(ss => {

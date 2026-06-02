@@ -970,6 +970,7 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
 
       {dayPlans.map(plan=>{const isLive=remoteSession?.planId===plan.id;
         return<WorkoutCard key={plan.id} plan={plan} program={isToday?"Today's Session":isPast?"Was Planned":"Upcoming"} exercises={exercises}
+          athletes={athletes} activeAth={activeAth}
           live={isLive} isPast={isPast} onAction={isPast?null:()=>isLive?onResume():onStartPlan(plan)} actionLabel={isLive?'Resume Workout':'Start Workout'}/>})}
 
       {dayWk.length>0&&dayWk.map(wk=><WorkoutLogCard key={wk.id} wk={wk} exercises={exercises} onClick={()=>onView(wk)}/>)}
@@ -1021,18 +1022,26 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
     </div>
   </div>)}
 
-function WorkoutCard({plan,program,exercises,live,isPast,onAction,actionLabel}){
+function WorkoutCard({plan,program,exercises,live,isPast,onAction,actionLabel,athletes,activeAth}){
   const exCount=plan.exerciseIds.length;
   const totalSets=Object.values(plan.setConfigs||{}).reduce((a,s)=>a+(s?.length||0),0);
   const minutes=Math.max(15,exCount*3+totalSets*1);
   const c=plan.color||'var(--primary)';
+  // If the plan is single-athlete-restricted, show a small chip so two
+  // same-day plans (one per athlete) are visually distinguishable.
+  const assigned=(()=>{const ea=plan.exerciseAthletes||{};const sets=[];
+    Object.values(ea).forEach(a=>{if(Array.isArray(a)&&a.length===1)sets.push(a[0])});
+    if(!sets.length||sets.length!==Object.keys(ea).length)return null;
+    const uniq=[...new Set(sets)];return uniq.length===1?uniq[0]:null;
+  })();
+  const assignedAth=assigned&&(athletes||[]).find(a=>a.id===assigned);
   return(<div className="wcard" style={isPast?{opacity:.85}:{}}>
     <div className="wcard-head">
       <div className="wcard-coach">
         <div className="wcard-coach-icon" style={{background:c}}>{plan.coach?initials(plan.coach):initials(plan.name||'W')[0]}</div>
         <div className="wcard-coach-info">
           <div className="wcard-program">{program||"Today's Workout"}</div>
-          <div className="wcard-name">{plan.name}</div>
+          <div className="wcard-name">{plan.name}{assignedAth&&<span style={{marginLeft:8,fontFamily:'var(--mono)',fontSize:9,fontWeight:800,letterSpacing:'.6px',textTransform:'uppercase',color:'#fff',background:assignedAth.color||'var(--primary)',padding:'3px 7px',borderRadius:5,verticalAlign:'middle'}}>{assignedAth.name}</span>}</div>
         </div>
       </div>
     </div>
@@ -1800,13 +1809,24 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   // Build blocks - supersets grouped under one letter. Exercises assigned to a
   // specific athlete (exerciseAthletes) only show for that athlete.
   const exForAth=eid=>{const a=workout.exerciseAthletes?.[eid];return !a||a.length===0||a.includes(activeAth)};
-  const blocks=[];const seen=new Set();let bi=0;
+  let blocks=[];const seen=new Set();let bi=0;
   workout.exerciseIds.forEach(eid=>{if(seen.has(eid))return;
     const grp=(workout.supersets||[]).find(g=>g.includes(eid));
     if(grp){const all=workout.exerciseIds.filter(id=>grp.includes(id));all.forEach(id=>seen.add(id));
       const g=all.filter(exForAth);
       if(g.length)blocks.push({letter:String.fromCharCode(65+bi++),eids:g,superset:g.length>1})}
     else{seen.add(eid);if(exForAth(eid))blocks.push({letter:String.fromCharCode(65+bi++),eids:[eid],superset:false})}});
+  // Safety net: if the per-athlete filter clipped EVERY exercise (e.g. user
+  // started a plan whose exerciseAthletes only list the other athlete), fall
+  // back to rendering the full list so the workout isn't visually empty.
+  if(blocks.length===0&&workout.exerciseIds.length>0){
+    const seen2=new Set();let bi2=0;
+    workout.exerciseIds.forEach(eid=>{if(seen2.has(eid))return;
+      const grp=(workout.supersets||[]).find(g=>g.includes(eid));
+      if(grp){const all=workout.exerciseIds.filter(id=>grp.includes(id));all.forEach(id=>seen2.add(id));
+        blocks.push({letter:String.fromCharCode(65+bi2++),eids:all,superset:all.length>1})}
+      else{seen2.add(eid);blocks.push({letter:String.fromCharCode(65+bi2++),eids:[eid],superset:false})}});
+  }
 
   // Whole-workout totals for the active athlete
   let totalReps=0,totalKg=0;
