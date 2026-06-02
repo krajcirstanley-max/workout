@@ -11062,17 +11062,17 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_gym2_june2';
+    const KEY = 'wk2_v3_seed_gym2_june2_v2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
     const exNotes = {
       'high-pull': 'Peak 1.7-2.0 m/s. Stop pri -10%.',
-      'landmine-back-lunge': 'Mean 0.5-0.7 m/s. L vs R do 10%.',
+      'rear-lunge': 'Mean 0.5-0.7 m/s. L vs R do 10%.',
       'hip-thrust-staggered': 'Mean 0.6-0.8 m/s.',
       'hip-flexor': 'Explozívne.'
     };
-    const order = ['high-pull', 'bosu-afsm', 'landmine-back-lunge', 'hip-thrust-staggered', 'nordics', 'calf-raise', 'hip-flexor', 'sprint-arms', 'lat-pulldown', 'seated-low-row'];
+    const order = ['high-pull', 'bosu-afsm', 'rear-lunge', 'hip-thrust-staggered', 'nordics', 'calf-raise', 'hip-flexor', 'sprint-arms', 'lat-pulldown', 'seated-low-row'];
     const stanley = {
       id: 'pl-gym2-june2-s',
       date: '2026-06-02',
@@ -11104,7 +11104,7 @@ function App() {
         }, {
           time: 6
         }],
-        'landmine-back-lunge': [{
+        'rear-lunge': [{
           weight: 60,
           reps: 8
         }, {
@@ -11196,7 +11196,7 @@ function App() {
         }, {
           time: 6
         }],
-        'landmine-back-lunge': [{
+        'rear-lunge': [{
           weight: 40,
           reps: 8
         }, {
