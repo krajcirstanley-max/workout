@@ -4339,6 +4339,61 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-06-02 Gym 2 (evening session, after Max Vel in the AM).
+  // Per-athlete loads, so two plans on the same date - one per athlete.
+  useEffect(()=>{const KEY='wk2_v3_seed_gym2_june2';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    const exNotes={
+      'high-pull':'Peak 1.7-2.0 m/s. Stop pri -10%.',
+      'landmine-back-lunge':'Mean 0.5-0.7 m/s. L vs R do 10%.',
+      'hip-thrust-staggered':'Mean 0.6-0.8 m/s.',
+      'hip-flexor':'Explozívne.'
+    };
+    const order=['high-pull','bosu-afsm','landmine-back-lunge','hip-thrust-staggered','nordics','calf-raise','hip-flexor','sprint-arms','lat-pulldown','seated-low-row'];
+    const stanley={id:'pl-gym2-june2-s',date:'2026-06-02',name:'Gym 2',color:'#3b82f6',
+      exerciseIds:order,supersets:[],
+      setConfigs:{
+        'high-pull':[{weight:50,reps:2},{weight:75,reps:2},{weight:85,reps:3},{weight:90,reps:3},{weight:90,reps:3}],
+        'bosu-afsm':[{time:6},{time:6},{time:6}],
+        'landmine-back-lunge':[{weight:60,reps:8},{weight:80,reps:8},{weight:90,reps:8}],
+        'hip-thrust-staggered':[{weight:160,reps:6},{weight:170,reps:6}],
+        'nordics':[{weight:10,reps:4},{weight:15,reps:4}],
+        'calf-raise':[{weight:170,reps:8},{weight:170,reps:8}],
+        'hip-flexor':[{weight:30,reps:12},{reps:5}],
+        'sprint-arms':[{time:6},{time:6}],
+        'lat-pulldown':[{weight:50,reps:6},{weight:50,reps:6}],
+        'seated-low-row':[{weight:65,reps:8}]
+      },
+      exerciseAthletes:Object.fromEntries(order.map(e=>[e,['ath-1']])),
+      exNotes:{...exNotes,'calf-raise':'Stráž Achilovku podľa skokov v okolí.'},
+      notes:''};
+    const miska={id:'pl-gym2-june2-m',date:'2026-06-02',name:'Gym 2',color:'#3b82f6',
+      exerciseIds:order,supersets:[],
+      setConfigs:{
+        'high-pull':[{weight:40,reps:2},{weight:50,reps:2},{weight:60,reps:2},{weight:65,reps:2},{weight:65,reps:2}],
+        'bosu-afsm':[{time:6},{time:6},{time:6}],
+        'landmine-back-lunge':[{weight:40,reps:8},{weight:45,reps:8},{weight:45,reps:8}],
+        'hip-thrust-staggered':[{weight:120,reps:6},{weight:130,reps:6}],
+        'nordics':[{reps:4},{reps:4}],
+        'calf-raise':[{weight:110,reps:8},{weight:120,reps:8}],
+        'hip-flexor':[{weight:22.5,reps:12},{reps:5}],
+        'sprint-arms':[{time:6},{time:6}],
+        'lat-pulldown':[{weight:30,reps:6},{weight:30,reps:6}],
+        'seated-low-row':[{weight:35,reps:6}]
+      },
+      exerciseAthletes:Object.fromEntries(order.map(e=>[e,['ath-2']])),
+      exNotes:{...exNotes,'nordics':'Priorita. Progresuj tempom/rozsahom.'},
+      notes:''};
+    setPlanned(p=>{let out=[...p];
+      [stanley,miska].forEach(plan=>{const i=out.findIndex(x=>x.id===plan.id);
+        if(i>=0)out[i]={...out[i],...plan};else out.push(plan)});
+      return out;
+    });
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-06-02 Speed Session - same exercises but each athlete
   // wants a different running order, so we seed TWO plans on the same date and
   // restrict each plan's exercises to one athlete. The day-view filter hides
