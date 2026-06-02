@@ -1530,7 +1530,11 @@ function TodayScreen({
     const overlap = pIds.filter(id => wkSet.has(id)).length;
     return overlap >= Math.ceil(pIds.length / 2);
   };
-  const dayPlans = (planned || []).filter(p => p.date === today && !dayWk.some(w => planMatchesWorkout(p, w)));
+  const planVisibleForAth = p => !p.exerciseIds?.length || p.exerciseIds.some(eid => {
+    const a = p.exerciseAthletes?.[eid];
+    return !a || a.length === 0 || a.includes(activeAth);
+  });
+  const dayPlans = (planned || []).filter(p => p.date === today && planVisibleForAth(p) && !dayWk.some(w => planMatchesWorkout(p, w)));
   const recent = workouts.filter(w => w.athletes?.[activeAth]).sort((a, b) => (b.startTime || 0) - (a.startTime || 0)).slice(0, 12);
   const monthName = selDate.toLocaleDateString('en-US', {
     month: 'short'
@@ -7415,7 +7419,11 @@ function CalScreen({
   const todayK = dateKey(Date.now());
   const selK = dateKey(sel.getTime());
   const dayWk = workouts.filter(w => w.athletes?.[activeAth] && dateKey(w.startTime) === selK);
-  const dayPlans = (planned || []).filter(p => p.date === selK);
+  const planVisibleForAth = p => !p.exerciseIds?.length || p.exerciseIds.some(eid => {
+    const a = p.exerciseAthletes?.[eid];
+    return !a || a.length === 0 || a.includes(activeAth);
+  });
+  const dayPlans = (planned || []).filter(p => p.date === selK && planVisibleForAth(p));
   return React.createElement("div", {
     className: "shell"
   }, React.createElement(TopBar, {
@@ -11001,40 +11009,71 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_speed_june2';
+    const KEY = 'wk2_v3_seed_speed_june2_v2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
-    const plan = {
-      id: 'pl-speed-june2',
+    const sets = {
+      'resisted-20m': [{}, {}],
+      'start-30m': [{}, {}, {}],
+      'overspeed-40m': [{}, {}, {}],
+      'start-50m': [{}, {}],
+      'start-60m': [{}, {}]
+    };
+    const exNotes = {
+      'resisted-20m': 'Light.'
+    };
+    const miska = {
+      id: 'pl-speed-june2-m',
       date: '2026-06-02',
       name: 'Speed Session',
       color: '#dc2626',
       exerciseIds: ['resisted-20m', 'start-30m', 'overspeed-40m', 'start-50m', 'start-60m'],
       supersets: [],
-      setConfigs: {
-        'resisted-20m': [{}, {}],
-        'start-30m': [{}, {}, {}],
-        'overspeed-40m': [{}, {}, {}],
-        'start-50m': [{}, {}],
-        'start-60m': [{}, {}]
+      setConfigs: sets,
+      exerciseAthletes: {
+        'resisted-20m': ['ath-2'],
+        'start-30m': ['ath-2'],
+        'overspeed-40m': ['ath-2'],
+        'start-50m': ['ath-2'],
+        'start-60m': ['ath-2']
       },
-      exNotes: {
-        'resisted-20m': 'Light.'
+      exNotes,
+      notes: ''
+    };
+    const stanley = {
+      id: 'pl-speed-june2-s',
+      date: '2026-06-02',
+      name: 'Speed Session',
+      color: '#dc2626',
+      exerciseIds: ['overspeed-40m', 'start-50m', 'start-60m', 'resisted-20m', 'start-30m'],
+      supersets: [],
+      setConfigs: sets,
+      exerciseAthletes: {
+        'overspeed-40m': ['ath-1'],
+        'start-50m': ['ath-1'],
+        'start-60m': ['ath-1'],
+        'resisted-20m': ['ath-1'],
+        'start-30m': ['ath-1']
       },
+      exNotes,
       notes: ''
     };
     setPlanned(p => {
-      const i = p.findIndex(x => x.id === 'pl-speed-june2');
-      if (i >= 0) {
-        const n = [...p];
-        n[i] = {
-          ...n[i],
-          ...plan
-        };
-        return n;
-      }
-      return [...p, plan];
+      let out = p.filter(x => x.id !== 'pl-speed-june2');
+      [miska, stanley].forEach(plan => {
+        const i = out.findIndex(x => x.id === plan.id);
+        if (i >= 0) {
+          out = [...out];
+          out[i] = {
+            ...out[i],
+            ...plan
+          };
+        } else {
+          out = [...out, plan];
+        }
+      });
+      return out;
     });
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
