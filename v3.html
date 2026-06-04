@@ -3263,7 +3263,10 @@ function ActiveWorkout({
       vzMap: initialPlan?.velocityZones ? {
         ...initialPlan.velocityZones
       } : {},
-      athleteNotes: {}
+      athleteNotes: {},
+      athleteExerciseIds: initialPlan?.athleteExerciseIds ? {
+        ...initialPlan.athleteExerciseIds
+      } : undefined
     };
     athletes.forEach(a => {
       w.athletes[a.id] = {
@@ -3880,14 +3883,16 @@ function ActiveWorkout({
     const a = workout.exerciseAthletes?.[eid];
     return !a || a.length === 0 || a.includes(activeAth);
   };
+  const ownOrder = workout.athleteExerciseIds?.[activeAth];
+  const orderForBlocks = ownOrder && ownOrder.length ? ownOrder : workout.exerciseIds;
   let blocks = [];
   const seen = new Set();
   let bi = 0;
-  workout.exerciseIds.forEach(eid => {
+  orderForBlocks.forEach(eid => {
     if (seen.has(eid)) return;
     const grp = (workout.supersets || []).find(g => g.includes(eid));
     if (grp) {
-      const all = workout.exerciseIds.filter(id => grp.includes(id));
+      const all = orderForBlocks.filter(id => grp.includes(id));
       all.forEach(id => seen.add(id));
       const g = all.filter(exForAth);
       if (g.length) blocks.push({
@@ -9688,6 +9693,42 @@ function App() {
     sb.from('wk_store').delete().eq('key', 'sharedActiveSession').then(() => {});
     setRemoteSession(null);
   };
+  const mergeSiblingPlans = plan => {
+    if (!plan?.exerciseAthletes) return plan;
+    const vals = Object.values(plan.exerciseAthletes);
+    if (!vals.length || !vals.every(a => Array.isArray(a) && a.length === 1)) return plan;
+    const ath = vals[0][0];
+    if (!vals.every(a => a[0] === ath)) return plan;
+    const sibling = (planned || []).find(p => p.date === plan.date && p.id !== plan.id && p.name === plan.name && p.exerciseAthletes && (() => {
+      const sv = Object.values(p.exerciseAthletes);
+      return sv.length && sv.every(a => Array.isArray(a) && a.length === 1 && a[0] !== ath);
+    })());
+    if (!sibling) return plan;
+    const siblingAth = Object.values(sibling.exerciseAthletes)[0][0];
+    return {
+      ...plan,
+      name: plan.name,
+      siblingPlanId: sibling.id,
+      exerciseIds: [...plan.exerciseIds, ...sibling.exerciseIds.filter(e => !plan.exerciseIds.includes(e))],
+      setConfigs: {
+        ...sibling.setConfigs,
+        ...plan.setConfigs
+      },
+      exerciseAthletes: {
+        ...plan.exerciseAthletes,
+        ...sibling.exerciseAthletes
+      },
+      exNotes: {
+        ...sibling.exNotes,
+        ...plan.exNotes
+      },
+      supersets: [...(plan.supersets || []), ...(sibling.supersets || [])],
+      athleteExerciseIds: {
+        [ath]: [...plan.exerciseIds],
+        [siblingAth]: [...sibling.exerciseIds]
+      }
+    };
+  };
   const startPlan = plan => {
     ['activeSession', 'activePlan'].forEach(k => {
       try {
@@ -9697,12 +9738,13 @@ function App() {
     try {
       localStorage.removeItem('wk2_v3_snap');
     } catch {}
+    const merged = mergeSiblingPlans(plan);
     try {
       localStorage.setItem('wk2_activeSession', '1');
-      localStorage.setItem('wk2_activePlan', JSON.stringify(plan));
+      localStorage.setItem('wk2_activePlan', JSON.stringify(merged));
     } catch {}
-    _push(plan?.id || null, plan, null);
-    setActivePlan(plan);
+    _push(merged?.id || null, merged, null);
+    setActivePlan(merged);
     setInWorkout(true);
   };
   const startEmpty = dateMs => {
@@ -9761,7 +9803,11 @@ function App() {
     } catch {}
     _clear();
     if (wk.exerciseIds.length > 0) setWorkouts(p => [...p, wk]);
-    if (activePlan && !activePlan.id?.startsWith('tpl-')) setPlanned(p => p.filter(pl => pl.id !== activePlan.id));
+    if (activePlan && !activePlan.id?.startsWith('tpl-')) {
+      const drop = new Set([activePlan.id]);
+      if (activePlan.siblingPlanId) drop.add(activePlan.siblingPlanId);
+      setPlanned(p => p.filter(pl => !drop.has(pl.id)));
+    }
     setInWorkout(false);
     setMinimized(false);
     setActivePlan(null);
@@ -11058,6 +11104,97 @@ function App() {
         return n;
       }
       return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_seed_lj_june2';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const stanley = {
+      id: 'pl-lj-june2-s',
+      date: '2026-06-02',
+      name: 'LJ Session',
+      color: '#8b5cf6',
+      exerciseIds: ['short-app-popup', 'approach-jump-12', 'approach-jump-16'],
+      supersets: [],
+      setConfigs: {
+        'short-app-popup': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'approach-jump-12': [{}, {}],
+        'approach-jump-16': [{}, {}, {}, {}, {}]
+      },
+      exerciseAthletes: {
+        'short-app-popup': ['ath-1'],
+        'approach-jump-12': ['ath-1'],
+        'approach-jump-16': ['ath-1']
+      },
+      exNotes: {
+        'approach-jump-12': 'Mimo dosky. Ramená dopredu. Prebehnúť posledné kroky. Pekná technika a odraz.',
+        'approach-jump-16': 'Mimo dosky → z debničky → 3× na dosku. Ramená dopredu.'
+      },
+      notes: 'Rozbehať ako pred súťažou.'
+    };
+    const miska = {
+      id: 'pl-lj-june2-m',
+      date: '2026-06-02',
+      name: 'LJ Session',
+      color: '#8b5cf6',
+      exerciseIds: ['short-app-popup', 'approach-jump-12', 'approach-jump-16', 'approach-jump-18'],
+      supersets: [],
+      setConfigs: {
+        'short-app-popup': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'approach-jump-12': [{}, {}, {}],
+        'approach-jump-16': [{}, {}],
+        'approach-jump-18': [{}, {}, {}, {}]
+      },
+      exerciseAthletes: {
+        'short-app-popup': ['ath-2'],
+        'approach-jump-12': ['ath-2'],
+        'approach-jump-16': ['ath-2'],
+        'approach-jump-18': ['ath-2']
+      },
+      exNotes: {
+        'approach-jump-12': 'Mimo dosky. 1 prebeh + 2 celé. Neutrhnúť to na konci. Ramená dopredu. Prirodzene.',
+        'approach-jump-16': 'Mimo dosky, celý skok z debničky. Správny pomer krokov. Nezakupovať nohy.',
+        'approach-jump-18': 'Rozbehy / pop up. Ramená dopredu. Neutrhnúť. Vyletieť odraz. Frekvenčný záver.'
+      },
+      notes: 'Kričať HOP. Rozbehať ako pred súťažou.'
+    };
+    setPlanned(p => {
+      let out = [...p];
+      [stanley, miska].forEach(plan => {
+        const i = out.findIndex(x => x.id === plan.id);
+        if (i >= 0) out[i] = {
+          ...out[i],
+          ...plan
+        };else out.push(plan);
+      });
+      return out;
     });
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
