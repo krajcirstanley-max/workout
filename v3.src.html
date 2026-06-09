@@ -4377,6 +4377,55 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-06-09 Gym - Power. Shared plan, only the deadlift
+  // variant differs (TB for Stanley, regular for Miška) so exerciseAthletes
+  // splits just those two exercises.
+  useEffect(()=>{const KEY='wk2_v3_seed_gym_june9';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'sled-push',name:'Sled Push',category:'T&F',metrics:['weight','distance']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    const plan={id:'pl-gym-june9',date:'2026-06-09',name:'Gym - Power',color:'#3b82f6',
+      exerciseIds:['cstm-mowtp19hc4nv','podrep-vypon','drop-jump-60cm','step-up','step-up-jump','sled-push','calf-raise','tb-deadlift','deadlift','cstm-mowxe3mxc3ui','lat-pulldown'],
+      supersets:[
+        ['cstm-mowtp19hc4nv','podrep-vypon'],
+        ['step-up','step-up-jump']
+      ],
+      setConfigs:{
+        'cstm-mowtp19hc4nv':[{reps:4},{reps:4}],
+        'podrep-vypon':[{reps:5},{reps:5}],
+        'drop-jump-60cm':[{reps:3},{reps:3},{reps:3}],
+        'step-up':[{reps:2},{reps:2},{reps:2}],
+        'step-up-jump':[{reps:2},{reps:2},{reps:2}],
+        'sled-push':[{distance:12},{distance:12},{distance:12},{distance:12}],
+        'calf-raise':[{reps:6},{reps:6},{reps:6}],
+        'tb-deadlift':[{reps:2},{reps:2},{reps:2},{reps:2}],
+        'deadlift':[{reps:2},{reps:2},{reps:2},{reps:2}],
+        'cstm-mowxe3mxc3ui':[{reps:4},{reps:4}],
+        'lat-pulldown':[{reps:6},{reps:6}]
+      },
+      exerciseAthletes:{
+        'tb-deadlift':['ath-1'],
+        'deadlift':['ath-2']
+      },
+      exNotes:{
+        'drop-jump-60cm':'Výška 60-70 cm.',
+        'calf-raise':'Power. Explozívne.',
+        'cstm-mowxe3mxc3ui':'Každá strana. 3s iso.'
+      },
+      notes:''
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-gym-june9');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-06-02 LJ Session - two athlete-specific plans, merged
   // automatically when one is started (so each athlete trains in their own
   // order and dosage). "Rozbehať ako pred súťažou" is the global warm-up cue.
