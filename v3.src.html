@@ -4377,6 +4377,37 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-06-09 LJ Session. Shared plan; Stanley does run-throughs
+  // (Miška skips them) via exerciseAthletes restriction.
+  useEffect(()=>{const KEY='wk2_v3_seed_lj_june9';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    const plan={id:'pl-lj-june9',date:'2026-06-09',name:'LJ Session',color:'#8b5cf6',
+      exerciseIds:['full-app-runthrough','full-app-popup','sl-bounds-pr-l','sl-bounds-pr-r','alt-bounds-jump'],
+      supersets:[],
+      setConfigs:{
+        'full-app-runthrough':[{reps:1},{reps:1},{reps:1}],
+        'full-app-popup':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
+        'sl-bounds-pr-l':[{reps:5},{reps:5},{reps:5}],
+        'sl-bounds-pr-r':[{reps:5},{reps:5},{reps:5}],
+        'alt-bounds-jump':[{reps:5},{reps:5},{reps:5}]
+      },
+      exerciseAthletes:{
+        'full-app-runthrough':['ath-1']
+      },
+      exNotes:{
+        'full-app-runthrough':'Set marks. Mereaj 11-21 a 10-1. Cones na posledné kroky.',
+        'full-app-popup':'Set marks. Cones od 3. setu. Mereaj 11-21 a 10-1. 1. set 85% bez cones, 2. 90% bez cones, 3. 100% bez cones, 4. focus posledné kroky, ramená, švihová noha.'
+      },
+      notes:''
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-lj-june9');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-06-09 Gym - Power. Shared plan, only the deadlift
   // variant differs (TB for Stanley, regular for Miška) so exerciseAthletes
   // splits just those two exercises.
