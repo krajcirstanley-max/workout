@@ -4377,13 +4377,14 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
-  // One-shot seed: 2026-06-09 LJ Session. Shared plan; Stanley does run-throughs
-  // (Miška skips them) via exerciseAthletes restriction.
-  useEffect(()=>{const KEY='wk2_v3_seed_lj_june9';
+  // One-shot seed: 2026-06-10 LJ Session. Shared plan; Stanley does run-throughs
+  // (Miška skips them) via exerciseAthletes restriction. Moved from a wrong
+  // June 9 date - the prior pl-lj-june9 entry is dropped if present.
+  useEffect(()=>{const KEY='wk2_v3_seed_lj_june10';
     if(localStorage.getItem(KEY)==='1')return;
     if(!exSynced||!plannedSynced)return;
     if(!exercises.length)return;
-    const plan={id:'pl-lj-june9',date:'2026-06-09',name:'LJ Session',color:'#8b5cf6',
+    const plan={id:'pl-lj-june10',date:'2026-06-10',name:'LJ Session',color:'#8b5cf6',
       exerciseIds:['full-app-runthrough','full-app-popup','sl-bounds-pr-l','sl-bounds-pr-r','alt-bounds-jump'],
       supersets:[],
       setConfigs:{
@@ -4402,9 +4403,12 @@ function App(){
       },
       notes:''
     };
-    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-lj-june9');
-      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
-      return[...p,plan]});
+    setPlanned(p=>{
+      const filtered=p.filter(x=>x.id!=='pl-lj-june9');
+      const i=filtered.findIndex(x=>x.id==='pl-lj-june10');
+      if(i>=0){const n=[...filtered];n[i]={...n[i],...plan};return n}
+      return[...filtered,plan];
+    });
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
