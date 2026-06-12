@@ -4377,6 +4377,62 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-06-12 Speed Session - two athlete-specific plans (sibling
+  // merge handles them at start time). Stanley high-volume free-fly weighted,
+  // Miška lower-contact with overspeed as her ceiling-raiser.
+  useEffect(()=>{const KEY='wk2_v3_seed_speed_june12';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    const newExs=[{id:'fly-30m',name:'30m Fly',category:'T&F',metrics:['tf-time']}];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    const stanley={id:'pl-speed-june12-s',date:'2026-06-12',name:'Speed Session',color:'#dc2626',
+      exerciseIds:['wickets','fly-30m','overspeed-40m','high-hurdle-jumps'],
+      supersets:[],
+      setConfigs:{
+        'wickets':[{reps:9},{reps:9},{reps:9},{reps:9}],
+        'fly-30m':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
+        'overspeed-40m':[{reps:1},{reps:1},{reps:1}],
+        'high-hurdle-jumps':[{reps:6},{reps:6},{reps:6},{reps:6}]
+      },
+      exerciseAthletes:{
+        'wickets':['ath-1'],'fly-30m':['ath-1'],
+        'overspeed-40m':['ath-1'],'high-hurdle-jumps':['ath-1']
+      },
+      exNotes:{
+        'fly-30m':'Rest 6-8 min.',
+        'overspeed-40m':'Doplnkovo. Max V je maintenance.'
+      },
+      notes:'~10 maximálnych pokusov. Free-fly weighted.'};
+    const miska={id:'pl-speed-june12-m',date:'2026-06-12',name:'Speed Session',color:'#dc2626',
+      exerciseIds:['wickets','fly-30m','overspeed-40m','high-hurdle-jumps'],
+      supersets:[],
+      setConfigs:{
+        'wickets':[{reps:9},{reps:9},{reps:9}],
+        'fly-30m':[{reps:1},{reps:1},{reps:1}],
+        'overspeed-40m':[{reps:1},{reps:1},{reps:1},{reps:1}],
+        'high-hurdle-jumps':[{reps:5},{reps:5},{reps:5}]
+      },
+      exerciseAthletes:{
+        'wickets':['ath-2'],'fly-30m':['ath-2'],
+        'overspeed-40m':['ath-2'],'high-hurdle-jumps':['ath-2']
+      },
+      exNotes:{
+        'wickets':'Primer.',
+        'fly-30m':'Rest 8-10 min. Každý genuinely maximálny.',
+        'overspeed-40m':'Priorita. Over 9.43 ceiling.'
+      },
+      notes:'Tendon-managed. Lower contact tolerance.'};
+    setPlanned(p=>{let out=[...p];
+      [stanley,miska].forEach(plan=>{const i=out.findIndex(x=>x.id===plan.id);
+        if(i>=0)out[i]={...out[i],...plan};else out.push(plan)});
+      return out;
+    });
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-06-10 LJ Session. Shared plan; Stanley does run-throughs
   // (Miška skips them) via exerciseAthletes restriction. Moved from a wrong
   // June 9 date - the prior pl-lj-june9 entry is dropped if present.
