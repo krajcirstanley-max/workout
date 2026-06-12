@@ -2302,7 +2302,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,setExercises,
         onSelect={ex2=>{addExerciseToLogged(ex2);setShowPicker(false)}}
         onCreateNew={setExercises?(()=>{setShowPicker(false);setShowNewEx(true)}):null}
         onClose={()=>setShowPicker(false)}/>}
-      {showNewEx&&setExercises&&<NewExerciseModal onSave={ex2=>{setExercises(p=>[...p,ex2]);addExerciseToLogged(ex2);setShowNewEx(false)}} onClose={()=>setShowNewEx(false)}/>
+      {showNewEx&&setExercises&&<NewExerciseModal onSave={ex2=>{setExercises(p=>[...p,ex2]);addExerciseToLogged(ex2);setShowNewEx(false)}} onClose={()=>setShowNewEx(false)}/>}
     </div>
   </div>)}
 
