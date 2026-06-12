@@ -908,7 +908,9 @@ function PlanBlocks({plan,exercises,activeAth}){
     <div className={'block-letter '+b.letter}>{b.letter}</div>
     <div className="block-body">
       {b.type==='ss'&&<div className="block-h" style={{fontSize:13,fontStyle:'normal',fontWeight:800,color:'var(--primary)',letterSpacing:'.6px',textTransform:'uppercase',marginBottom:8,fontFamily:'var(--mono)'}}>Superset</div>}
-      {b.eids.map(eid=>{const ex=(exercises||[]).find(e=>e.id===baseExId(eid));const cfg=plan.setConfigs?.[eid];const sets=cfg?.length||3;
+      {b.eids.map(eid=>{const ex=(exercises||[]).find(e=>e.id===baseExId(eid));
+        const cfg=plan.athleteSetConfigs?.[activeAth]?.[eid]||plan.setConfigs?.[eid];
+        const sets=cfg?.length||3;
         const c=cfg?.[0];const d=c?.distance;const r=c?.reps;
         const detail=d?`${sets}×${d}m`:r?`${sets}×${r}`:`${sets}×`;
         const note=noteFor(plan.exNotes,eid,activeAth);
@@ -1023,8 +1025,13 @@ function TodayScreen({athletes,activeAth,setActiveAth,workouts,planned,exercises
   </div>)}
 
 function WorkoutCard({plan,program,exercises,live,isPast,onAction,actionLabel,athletes,activeAth}){
-  const exCount=plan.exerciseIds.length;
-  const totalSets=Object.values(plan.setConfigs||{}).reduce((a,s)=>a+(s?.length||0),0);
+  // Prefer this athlete's own ordering and config when the plan carries them
+  // (sibling-merged plans store per-athlete dosage). Otherwise fall back to
+  // the plan-level fields.
+  const ownEids=plan.athleteExerciseIds?.[activeAth];
+  const ownCfg=plan.athleteSetConfigs?.[activeAth];
+  const exCount=(ownEids||plan.exerciseIds).length;
+  const totalSets=Object.values(ownCfg||plan.setConfigs||{}).reduce((a,s)=>a+(s?.length||0),0);
   const minutes=Math.max(15,exCount*3+totalSets*1);
   const c=plan.color||'var(--primary)';
   // If the plan is single-athlete-restricted, show a small chip so two
@@ -1632,14 +1639,19 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       if(ov>0){_startTime=ov;localStorage.removeItem('wk2_v3_startTime_override')}}catch{}
     const w={id:'wk-'+uid(),planId:initialPlan?.id||null,name:initialPlan?.name||'Workout',startTime:_startTime,endTime:null,started:false,warmupMs:0,conditions:null,
       color:initialPlan?.color||'#2156f4',tag:initialPlan?.tag||null,athletes:{},exerciseIds:[],supersets:initialPlan?.supersets||[],setConfigs:initialPlan?.setConfigs||{},exNotes:initialPlan?.exNotes?{...initialPlan.exNotes}:{},exerciseAthletes:initialPlan?.exerciseAthletes?{...initialPlan.exerciseAthletes}:{},vzMap:initialPlan?.velocityZones?{...initialPlan.velocityZones}:{},athleteNotes:{},
-      athleteExerciseIds:initialPlan?.athleteExerciseIds?{...initialPlan.athleteExerciseIds}:undefined};
+      athleteExerciseIds:initialPlan?.athleteExerciseIds?{...initialPlan.athleteExerciseIds}:undefined,
+      athleteSetConfigs:initialPlan?.athleteSetConfigs?{...initialPlan.athleteSetConfigs}:undefined};
     athletes.forEach(a=>{w.athletes[a.id]={sets:{}}});
     if(initialPlan){w.exerciseIds=[...initialPlan.exerciseIds];
-      const cfgs=initialPlan.setConfigs||{};
-      initialPlan.exerciseIds.forEach(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));if(!ex)return;
-        const cnt=cfgs[eid]?.length||3;
-        athletes.forEach(a=>{w.athletes[a.id].sets[eid]=Array.from({length:cnt},(_,i)=>{
-          const c=cfgs[eid]?.[i]||{};const v={};ex.metrics.forEach(m=>{v[m]=c[m]??''});return{values:v,completed:false}})})})}
+      // Build sets per-athlete from each athlete's OWN config + ordering.
+      athletes.forEach(a=>{
+        const cfgs=initialPlan.athleteSetConfigs?.[a.id]||initialPlan.setConfigs||{};
+        const eids=initialPlan.athleteExerciseIds?.[a.id]||initialPlan.exerciseIds||[];
+        eids.forEach(eid=>{const ex=exercises.find(e=>e.id===baseExId(eid));if(!ex)return;
+          const cnt=cfgs[eid]?.length||3;
+          w.athletes[a.id].sets[eid]=Array.from({length:cnt},(_,i)=>{
+            const c=cfgs[eid]?.[i]||{};const v={};ex.metrics.forEach(m=>{v[m]=c[m]??''});return{values:v,completed:false}})});
+      });}
     return w});
   const[restStarts,setRestStarts]=useState({});
   const[showFinish,setShowFinish]=useState(false);
@@ -1732,25 +1744,24 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
   const checkAll=eid=>setWorkout(w=>{const ss=w.athletes[activeAth].sets[eid];const allDone=ss.every(s=>s.completed);
     return{...w,athletes:{...w.athletes,[activeAth]:{...w.athletes[activeAth],
       sets:{...w.athletes[activeAth].sets,[eid]:ss.map(s=>({...s,completed:!allDone,flop:false}))}}}}});
-  // set count is shared structure - add/remove for every athlete
+  // Add a set only for the active athlete - their dosage is independent from
+  // the partner's. Previously this added a set for both athletes which broke
+  // sibling-merged plans where each athlete has their own setConfig.
   const addSet=eid=>setWorkout(w=>{const ex2=exercises.find(e=>e.id===baseExId(eid));const em=w.exerciseMetrics?.[eid]||ex2?.metrics||[];
-    const na={...w.athletes};
-    Object.keys(na).forEach(aId=>{const ss=na[aId].sets?.[eid];if(!ss)return;
-      const last=ss[ss.length-1];const nv={};em.forEach(m=>{nv[m]=last?.values[m]??''});
-      na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:[...ss,{values:nv,completed:false}]}}});
-    return{...w,athletes:na}});
+    const ad=w.athletes[activeAth];if(!ad)return w;
+    const ss=ad.sets?.[eid]||[];
+    const last=ss[ss.length-1];const nv={};em.forEach(m=>{nv[m]=last?.values?.[m]??''});
+    return{...w,athletes:{...w.athletes,[activeAth]:{...ad,sets:{...ad.sets,[eid]:[...ss,{values:nv,completed:false}]}}}}});
   // prepend a warmup-flagged set so warmups sit above the working sets (W1, W2... | 1, 2, 3...)
   const addWarmupSet=eid=>setWorkout(w=>{const ex2=exercises.find(e=>e.id===baseExId(eid));const em=w.exerciseMetrics?.[eid]||ex2?.metrics||[];
-    const na={...w.athletes};
-    Object.keys(na).forEach(aId=>{const ss=na[aId].sets?.[eid];if(!ss)return;
-      const nv={};em.forEach(m=>{nv[m]=''});
-      // insert AFTER any existing warmups so the order is W1, W2, ... then working
-      const lastWup=ss.reduce((a,s,i)=>s.warmup?i:a,-1);
-      const insertAt=lastWup+1;
-      const newSet={values:nv,completed:false,warmup:true};
-      const next=[...ss.slice(0,insertAt),newSet,...ss.slice(insertAt)];
-      na[aId]={...na[aId],sets:{...na[aId].sets,[eid]:next}}});
-    return{...w,athletes:na}});
+    const ad=w.athletes[activeAth];if(!ad)return w;
+    const ss=ad.sets?.[eid]||[];
+    const nv={};em.forEach(m=>{nv[m]=''});
+    const lastWup=ss.reduce((a,s,i)=>s.warmup?i:a,-1);
+    const insertAt=lastWup+1;
+    const newSet={values:nv,completed:false,warmup:true};
+    const next=[...ss.slice(0,insertAt),newSet,...ss.slice(insertAt)];
+    return{...w,athletes:{...w.athletes,[activeAth]:{...ad,sets:{...ad.sets,[eid]:next}}}}});
   // Remove the trailing set. For the active athlete, always remove it (they asked).
   // For OTHER athletes, only remove if their trailing set is empty - i.e. don't
   // wipe a set the partner already completed/filled in.
@@ -1776,26 +1787,98 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
     return{...w,supersets:next}});
   const addExercise=newEx=>{setWorkout(w=>{const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id).length;
     const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
+    const v={};newEx.metrics.forEach(m=>{v[m]=''});
+    // When the workout was built from sibling-merged plans, each athlete has
+    // their OWN exercise order - adding an exercise only adds it for the
+    // active athlete and auto-restricts via exerciseAthletes.
+    const perAth=!!w.athleteExerciseIds;
     const nw={...w,exerciseIds:[...w.exerciseIds,newEid],athletes:{...w.athletes}};
-    Object.keys(nw.athletes).forEach(aId=>{const v={};newEx.metrics.forEach(m=>{v[m]=''});
-      nw.athletes[aId]={...nw.athletes[aId],sets:{...nw.athletes[aId].sets,[newEid]:[{values:v,completed:false}]}}});
+    if(perAth){
+      nw.athleteExerciseIds={...w.athleteExerciseIds,
+        [activeAth]:[...(w.athleteExerciseIds[activeAth]||[]),newEid]};
+      nw.exerciseAthletes={...(w.exerciseAthletes||{}),[newEid]:[activeAth]};
+      nw.athletes[activeAth]={...nw.athletes[activeAth],sets:{...nw.athletes[activeAth].sets,[newEid]:[{values:v,completed:false}]}};
+    }else{
+      Object.keys(nw.athletes).forEach(aId=>{
+        nw.athletes[aId]={...nw.athletes[aId],sets:{...nw.athletes[aId].sets,[newEid]:[{values:v,completed:false}]}}});
+    }
     return nw});setShowPicker(false)};
   const replaceExercise=newEx=>{setWorkout(w=>{const oldEid=replacingEid;if(!oldEid)return w;
     const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id&&id!==oldEid).length;
     const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
+    const v={};newEx.metrics.forEach(m=>{v[m]=''});
+    const perAth=!!w.athleteExerciseIds;
+    if(perAth){
+      // Swap only for the active athlete. If the partner also had the old
+      // exercise, keep it for them under a new entry.
+      const ae={...w.athleteExerciseIds};
+      ae[activeAth]=(ae[activeAth]||[]).map(id=>id===oldEid?newEid:id);
+      const partnerStillUsesOld=Object.entries(ae).some(([k,v2])=>k!==activeAth&&v2.includes(oldEid));
+      const nw={...w,athleteExerciseIds:ae,athletes:{...w.athletes}};
+      const ans={...nw.athletes[activeAth].sets};delete ans[oldEid];ans[newEid]=[{values:v,completed:false}];
+      nw.athletes[activeAth]={...nw.athletes[activeAth],sets:ans};
+      // exerciseIds: add newEid, drop oldEid only if partner doesn't use it
+      let ids=[...w.exerciseIds];
+      if(!ids.includes(newEid))ids=[...ids,newEid];
+      if(!partnerStillUsesOld)ids=ids.filter(id=>id!==oldEid);
+      nw.exerciseIds=ids;
+      // exerciseAthletes update
+      const ea={...(w.exerciseAthletes||{})};
+      ea[newEid]=[activeAth];
+      if(!partnerStillUsesOld)delete ea[oldEid];
+      else ea[oldEid]=Object.entries(ae).filter(([k,v2])=>k!==activeAth&&v2.includes(oldEid)).map(([k])=>k);
+      nw.exerciseAthletes=ea;
+      nw.supersets=(w.supersets||[]).map(g=>g.map(id=>id===oldEid&&!partnerStillUsesOld?newEid:id));
+      return nw;
+    }
     const ids=w.exerciseIds.map(id=>id===oldEid?newEid:id);
     const nw={...w,exerciseIds:ids,supersets:(w.supersets||[]).map(g=>g.map(id=>id===oldEid?newEid:id)),athletes:{...w.athletes}};
-    Object.keys(nw.athletes).forEach(aId=>{const v={};newEx.metrics.forEach(m=>{v[m]=''});
+    Object.keys(nw.athletes).forEach(aId=>{
       const ns={...nw.athletes[aId].sets};delete ns[oldEid];ns[newEid]=[{values:v,completed:false}];
       nw.athletes[aId]={...nw.athletes[aId],sets:ns}});
     return nw});setReplacingEid(null);setShowPicker(false)};
-  const deleteExercise=eid=>{setWorkout(w=>{const ids=w.exerciseIds.filter(id=>id!==eid);
+  const deleteExercise=eid=>{setWorkout(w=>{
+    const perAth=!!w.athleteExerciseIds;
+    if(perAth){
+      // Remove from active athlete's order only; keep for the partner if they
+      // still have it. If neither athlete has it anymore, fully remove.
+      const ae={...w.athleteExerciseIds};
+      ae[activeAth]=(ae[activeAth]||[]).filter(id=>id!==eid);
+      const stillUsedBy=Object.entries(ae).filter(([k,v])=>v.includes(eid)).map(([k])=>k);
+      const nw={...w,athleteExerciseIds:ae,athletes:{...w.athletes}};
+      // Drop the active athlete's sets for this exercise
+      const ans={...nw.athletes[activeAth].sets};delete ans[eid];
+      nw.athletes[activeAth]={...nw.athletes[activeAth],sets:ans};
+      if(stillUsedBy.length>0){
+        // restrict to remaining athletes
+        nw.exerciseAthletes={...(w.exerciseAthletes||{}),[eid]:stillUsedBy};
+      }else{
+        nw.exerciseIds=w.exerciseIds.filter(id=>id!==eid);
+        const ea={...(w.exerciseAthletes||{})};delete ea[eid];nw.exerciseAthletes=ea;
+        nw.supersets=(w.supersets||[]).map(g=>g.filter(id=>id!==eid)).filter(g=>g.length>1);
+      }
+      return nw;
+    }
+    const ids=w.exerciseIds.filter(id=>id!==eid);
     const nw={...w,exerciseIds:ids,supersets:(w.supersets||[]).map(g=>g.filter(id=>id!==eid)).filter(g=>g.length>1),athletes:{...w.athletes}};
     Object.keys(nw.athletes).forEach(aId=>{const ns={...nw.athletes[aId].sets};delete ns[eid];nw.athletes[aId]={...nw.athletes[aId],sets:ns}});
     return nw});setActionsEid(null)};
-  const reorderExercise=(from,to)=>setWorkout(w=>{const ids=[...w.exerciseIds];if(from<0||to<0||from>=ids.length||to>=ids.length)return w;
+  const reorderExercise=(from,to)=>setWorkout(w=>{
+    if(w.athleteExerciseIds){
+      const list=[...(w.athleteExerciseIds[activeAth]||[])];
+      if(from<0||to<0||from>=list.length||to>=list.length)return w;
+      const[m]=list.splice(from,1);list.splice(to,0,m);
+      return{...w,athleteExerciseIds:{...w.athleteExerciseIds,[activeAth]:list}};
+    }
+    const ids=[...w.exerciseIds];if(from<0||to<0||from>=ids.length||to>=ids.length)return w;
     const[m]=ids.splice(from,1);ids.splice(to,0,m);return{...w,exerciseIds:ids}});
-  const moveToEnd=eid=>{setWorkout(w=>{const ids=w.exerciseIds.filter(id=>id!==eid);
+  const moveToEnd=eid=>{setWorkout(w=>{
+    if(w.athleteExerciseIds){
+      const list=(w.athleteExerciseIds[activeAth]||[]).filter(id=>id!==eid);
+      return{...w,athleteExerciseIds:{...w.athleteExerciseIds,[activeAth]:[...list,eid]},
+        supersets:(w.supersets||[]).map(g=>g.filter(x=>x!==eid)).filter(g=>g.length>1)};
+    }
+    const ids=w.exerciseIds.filter(id=>id!==eid);
     return{...w,exerciseIds:[...ids,eid],supersets:(w.supersets||[]).map(g=>g.filter(x=>x!==eid)).filter(g=>g.length>1)}});setActionsEid(null)};
   const changeMetrics=newMetrics=>{const t=metricsEid;setWorkout(w=>{const na={...w.athletes};
     Object.keys(na).forEach(aId=>{if(na[aId].sets[t]){
@@ -3825,6 +3908,9 @@ function App(){
       exNotes:{...sibling.exNotes,...plan.exNotes},
       supersets:[...(plan.supersets||[]),...(sibling.supersets||[])],
       athleteExerciseIds:{[ath]:[...plan.exerciseIds],[siblingAth]:[...sibling.exerciseIds]},
+      // Each athlete keeps their OWN setConfigs - without this both ended up
+      // with whoever-started's dosage.
+      athleteSetConfigs:{[ath]:{...(plan.setConfigs||{})},[siblingAth]:{...(sibling.setConfigs||{})}},
     };
   };
   const startPlan=plan=>{['activeSession','activePlan'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
