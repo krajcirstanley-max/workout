@@ -2091,18 +2091,50 @@ function FinishForm({workout,athletes,elapsed,onSave,onCancel}){
   </div>)}
 
 // === WORKOUT DETAIL MODAL ===
-function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDelete,onRepeat,onUpdate,onSaveTemplate}){
+function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,setExercises,onClose,onDelete,onRepeat,onUpdate,onSaveTemplate}){
   const[wk,setWk]=useState(initWk);
   const[editing,setEditing]=useState(false);
   const[selAth,setSelAth]=useState(athletes.find(a=>wk.athletes?.[a.id])?.id||athletes[0]?.id);
+  const[showPicker,setShowPicker]=useState(false);
+  const[showNewEx,setShowNewEx]=useState(false);
+  const addExerciseToLogged=newEx=>setWk(w=>{
+    const exists=w.exerciseIds.filter(id=>baseExId(id)===newEx.id).length;
+    const newEid=exists?`${newEx.id}__${exists+1}`:newEx.id;
+    const v={};(newEx.metrics||[]).forEach(m=>{v[m]=''});
+    const na={...(w.athletes||{})};
+    athletes.forEach(a=>{const cur=na[a.id]||{sets:{}};
+      na[a.id]={...cur,sets:{...(cur.sets||{}),[newEid]:[{values:{...v},completed:false}]}}});
+    return{...w,exerciseIds:[...(w.exerciseIds||[]),newEid],athletes:na};
+  });
+  const addSetToLogged=eid=>setWk(w=>{const ex=exercises.find(e=>e.id===baseExId(eid));const em=ex?.metrics||[];
+    const na={...(w.athletes||{})};
+    athletes.forEach(a=>{const ss=(na[a.id]?.sets?.[eid])||[];const last=ss[ss.length-1];
+      const nv={};em.forEach(m=>{nv[m]=last?.values?.[m]??''});
+      na[a.id]={...(na[a.id]||{}),sets:{...(na[a.id]?.sets||{}),[eid]:[...ss,{values:nv,completed:false}]}}});
+    return{...w,athletes:na};
+  });
+  const removeExerciseFromLogged=eid=>setWk(w=>{
+    const na={...(w.athletes||{})};
+    Object.keys(na).forEach(aid=>{const ns={...(na[aid].sets||{})};delete ns[eid];na[aid]={...na[aid],sets:ns}});
+    return{...w,exerciseIds:(w.exerciseIds||[]).filter(id=>id!==eid),athletes:na};
+  });
   const ad=wk.athletes?.[selAth];
   const dur=wk.endTime?fmtDur(wk.endTime-wk.startTime):'-';
   const totalSets=Object.values(ad?.sets||{}).reduce((a,s)=>a+s.filter(x=>x.completed||x.flop).length,0);
   const date=new Date(wk.startTime).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   const dirty=JSON.stringify(wk)!==JSON.stringify(initWk);
-  const setVal=(eid,si,mid,v)=>setWk(w=>{const n=JSON.parse(JSON.stringify(w));n.athletes[selAth].sets[eid][si].values[mid]=v===''?'':Number(v);return n});
+  // Targeted spreads instead of deep-cloning the whole workout on every
+  // keystroke - the previous JSON.parse(JSON.stringify) made big workouts
+  // lag noticeably while typing values.
+  const setVal=(eid,si,mid,v)=>setWk(w=>{const ath=w.athletes?.[selAth];if(!ath)return w;
+    const ss=[...(ath.sets?.[eid]||[])];const cur=ss[si]||{values:{}};
+    ss[si]={...cur,values:{...(cur.values||{}),[mid]:v===''?'':Number(v)}};
+    return{...w,athletes:{...w.athletes,[selAth]:{...ath,sets:{...ath.sets,[eid]:ss}}}};
+  });
   const setName=v=>setWk(w=>({...w,name:v}));
-  const setRpe=v=>setWk(w=>{const n=JSON.parse(JSON.stringify(w));if(n.athletes[selAth])n.athletes[selAth].rpe=v;return n});
+  const setRpe=v=>setWk(w=>{const ath=w.athletes?.[selAth];if(!ath)return w;
+    return{...w,athletes:{...w.athletes,[selAth]:{...ath,rpe:v}}};
+  });
   // PR map: base exercise → metric → {val, holder:{wkId, eid, setIdx}}.
   // "Holder" = the SINGLE earliest set that achieved the PB (so ties don't all light up).
   const prMap=useMemo(()=>{const m={};
@@ -2214,14 +2246,23 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
           </div>);
         })()}
         {wk.exerciseIds.map((eid,i)=>{const ex=exercises.find(e=>e.id===baseExId(eid));
-          const sets=(ad?.sets?.[eid]||[]).filter(s=>s.completed||s.flop);
-          if(!sets.length)return null;
-          // Determine which metrics actually have values across this exercise's sets
+          // When editing, show every set including empty new ones; out of edit
+          // mode keep the original "only completed/flop" filter.
+          const allSets=ad?.sets?.[eid]||[];
+          const sets=editing?allSets:allSets.filter(s=>s.completed||s.flop);
+          if(!sets.length&&!editing)return null;
+          // Determine which metrics actually have values across this exercise's sets.
+          // When editing, fall back to ALL declared metrics so empty sets still
+          // show input columns (otherwise a fresh set has nowhere to type into).
           const allMetrics=ex?.metrics||[];
-          const usedMetrics=allMetrics.filter(m=>sets.some(s=>s.values?.[m]!=null&&s.values[m]!==''&&Number(s.values[m])!==0));
+          const usedMetricsBase=allMetrics.filter(m=>sets.some(s=>s.values?.[m]!=null&&s.values[m]!==''&&Number(s.values[m])!==0));
+          const usedMetrics=editing&&usedMetricsBase.length===0?allMetrics.filter(m=>m!=='approach-mark'&&m!=='wicket-spc'):usedMetricsBase;
           const cols=`24px ${usedMetrics.map(()=>'minmax(0,1fr)').join(' ')}`;
           return(<div key={eid} style={{padding:'14px 0',borderBottom:'1px solid var(--border)'}}>
-            <div style={{fontSize:16,fontWeight:900,fontStyle:'italic',letterSpacing:'-.3px',color:'var(--text)',marginBottom:8,textTransform:'uppercase'}}>{ex?.name||'?'}</div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <div style={{fontSize:16,fontWeight:900,fontStyle:'italic',letterSpacing:'-.3px',color:'var(--text)',textTransform:'uppercase'}}>{ex?.name||'?'}</div>
+              {editing&&<button onClick={()=>{if(confirm('Remove this exercise from the workout?'))removeExerciseFromLogged(eid)}} style={{background:'transparent',border:'none',color:'var(--red)',fontSize:12,fontWeight:800,fontFamily:'var(--mono)',letterSpacing:'.5px',padding:'4px 8px',cursor:'pointer'}}>REMOVE</button>}
+            </div>
             {noteFor(wk.exNotes,eid,selAth)&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',marginBottom:8}}>{noteFor(wk.exNotes,eid,selAth)}</div>}
             {usedMetrics.length>0&&<div style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0 6px',fontFamily:'var(--mono)',fontSize:9,fontWeight:800,color:'var(--text3)',letterSpacing:'.5px',textTransform:'uppercase'}}>
               <span></span>
@@ -2248,13 +2289,20 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,onClose,onDel
                     {pr&&<span title="Personal Best" style={{display:'inline-flex',alignItems:'center',gap:2,padding:'1px 5px',background:'linear-gradient(135deg,#fbbf24,#f59e0b)',color:'#fff',borderRadius:5,fontSize:9,fontWeight:900,letterSpacing:'.4px',fontFamily:'var(--display)',fontStyle:'italic',flexShrink:0}}>🏆 PB</span>}
                   </span>)})}
               </div>)})}
+            {editing&&<button onClick={()=>addSetToLogged(eid)} style={{marginTop:8,padding:'8px 14px',background:'var(--surface2)',border:'1px dashed var(--border)',borderRadius:8,fontFamily:'var(--mono)',fontSize:11,fontWeight:800,color:'var(--text2)',letterSpacing:'.5px',width:'100%',cursor:'pointer'}}>+ ADD SET</button>}
           </div>)})}
+        {editing&&<button onClick={()=>setShowPicker(true)} style={{marginTop:14,padding:'12px 16px',background:'var(--primary-dim)',border:'1.5px dashed var(--primary)',borderRadius:10,fontFamily:'var(--mono)',fontSize:12,fontWeight:800,color:'var(--primary)',letterSpacing:'.6px',textTransform:'uppercase',width:'100%',cursor:'pointer'}}>+ Add Exercise</button>}
         {dirty&&onUpdate&&<button className="btn btn-primary" style={{marginTop:18}} onClick={()=>{onUpdate(wk);setEditing(false)}}>Save Changes</button>}
         <button className="btn btn-secondary" style={{marginTop:dirty?8:18}} onClick={copyText}>📋 Copy Workout</button>
         {onRepeat&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>onRepeat(wk)}>↻ Repeat Workout</button>}
         {onSaveTemplate&&<button className="btn btn-secondary" style={{marginTop:8}} onClick={()=>{onSaveTemplate(wk);alert('Template saved');onClose()}}>★ Save as Template</button>}
         {onDelete&&<button className="btn btn-secondary" style={{marginTop:8,color:'var(--red)',borderColor:'var(--red)'}} onClick={()=>{if(confirm('Delete this workout?')){onDelete(wk.id);onClose()}}}>Delete</button>}
       </div>
+      {showPicker&&<ExercisePicker exercises={exercises} exclude={wk.exerciseIds.map(baseExId)}
+        onSelect={ex2=>{addExerciseToLogged(ex2);setShowPicker(false)}}
+        onCreateNew={setExercises?(()=>{setShowPicker(false);setShowNewEx(true)}):null}
+        onClose={()=>setShowPicker(false)}/>}
+      {showNewEx&&setExercises&&<NewExerciseModal onSave={ex2=>{setExercises(p=>[...p,ex2]);addExerciseToLogged(ex2);setShowNewEx(false)}} onClose={()=>setShowNewEx(false)}/>
     </div>
   </div>)}
 
@@ -5537,7 +5585,7 @@ function App(){
     {tab==='stats'&&<StatScreen workouts={workouts} activeAth={activeAth} exercises={exercises} onView={setViewing} onSelectEx={setViewEx} remoteSession={remoteSession} onResume={resumeRemote} athletes={athletes} setActiveAth={setActiveAth} onEditAthlete={setEditAthlete}/>}
     {tab==='pred'&&<PredictionsScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth} workouts={workouts} onEditAthlete={setEditAthlete}/>}
 
-    {viewing&&<WorkoutDetailModal wk={viewing} athletes={athletes} exercises={exercises} workouts={workouts}
+    {viewing&&<WorkoutDetailModal wk={viewing} athletes={athletes} exercises={exercises} setExercises={setExercises} workouts={workouts}
       onClose={()=>setViewing(null)}
       onDelete={id=>setWorkouts(p=>p.filter(w=>w.id!==id))}
       onUpdate={updated=>{setWorkouts(p=>p.map(w=>w.id===updated.id?updated:w));setViewing(updated)}}
