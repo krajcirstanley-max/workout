@@ -11433,6 +11433,108 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_gym_june13';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'soleus-iso',
+      name: 'Soleus Iso',
+      category: 'Legs',
+      metrics: ['time']
+    }, {
+      id: 'pallof-press-hk',
+      name: 'Pallof Press (Half Kneeling)',
+      category: 'Core',
+      metrics: ['weight', 'reps']
+    }, {
+      id: 'spanish-squat',
+      name: 'Spanish Squat',
+      category: 'Legs',
+      metrics: ['time']
+    }, {
+      id: 'iso-zadaky',
+      name: 'Iso Zadáky',
+      category: 'Legs',
+      metrics: ['time']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const plan = {
+      id: 'pl-gym-june13',
+      date: '2026-06-13',
+      name: 'Low Gym',
+      color: '#3b82f6',
+      exerciseIds: ['iso-ankle', 'soleus-iso', 'iso-on-off', 'loaded-walk-banded', 'half-squat-jump-oh', 'sl-hamstring-rdl', 'copenhagen-plank', 'pallof-press-hk', 'spanish-squat', 'iso-zadaky'],
+      supersets: [['iso-ankle', 'soleus-iso']],
+      setConfigs: {
+        'iso-ankle': [{
+          time: 30
+        }, {
+          time: 30
+        }],
+        'soleus-iso': [{
+          time: 30
+        }, {
+          time: 30
+        }],
+        'iso-on-off': [{
+          reps: 3,
+          time: 3
+        }, {
+          reps: 3,
+          time: 3
+        }],
+        'loaded-walk-banded': [{}, {}],
+        'half-squat-jump-oh': [{}, {}],
+        'sl-hamstring-rdl': [{
+          reps: 6
+        }, {
+          reps: 6
+        }],
+        'copenhagen-plank': [{
+          time: 30
+        }, {
+          time: 30
+        }],
+        'pallof-press-hk': [{
+          reps: 8
+        }, {
+          reps: 8
+        }],
+        'spanish-squat': [{
+          time: 30
+        }, {
+          time: 30
+        }],
+        'iso-zadaky': [{
+          time: 10
+        }, {
+          time: 10
+        }]
+      },
+      exNotes: {
+        'iso-ankle': 'Každá noha.',
+        'soleus-iso': 'Každá noha.'
+      },
+      notes: ''
+    };
+    setPlanned(p => {
+      const i = p.findIndex(x => x.id === 'pl-gym-june13');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_speed_june12';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
