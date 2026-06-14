@@ -9896,6 +9896,49 @@ class ErrorBoundary extends React.Component {
   }
 }
 function App() {
+  useEffect(() => {
+    let startY = 0;
+    let startTarget = null;
+    const onTouchStart = e => {
+      if (e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+      startTarget = e.target;
+    };
+    const onTouchMove = e => {
+      if (e.touches.length !== 1) return;
+      const dy = e.touches[0].clientY - startY;
+      let el = startTarget;
+      while (el && el !== document.body) {
+        const cs = window.getComputedStyle(el);
+        const scrollable = (cs.overflowY === 'auto' || cs.overflowY === 'scroll') && el.scrollHeight > el.clientHeight;
+        if (scrollable) {
+          if (el.scrollTop <= 0 && dy > 0) {
+            if (e.cancelable) e.preventDefault();
+            return;
+          }
+          if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1 && dy < 0) {
+            if (e.cancelable) e.preventDefault();
+            return;
+          }
+          return;
+        }
+        el = el.parentElement;
+      }
+      if (e.cancelable) e.preventDefault();
+    };
+    document.addEventListener('touchstart', onTouchStart, {
+      passive: true
+    });
+    document.addEventListener('touchmove', onTouchMove, {
+      passive: false
+    });
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchmove', onTouchMove, {
+        passive: false
+      });
+    };
+  }, []);
   const [athletes, setAthletes] = useStore('athletes', DEFAULT_ATHLETES);
   const [exercises, setExercises, exSynced] = useStore('exercises', []);
   const [workouts, setWorkouts, wkSynced] = useStore('workouts2', []);

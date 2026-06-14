@@ -3878,6 +3878,39 @@ class ErrorBoundary extends React.Component{
 
 // === APP ROOT ===
 function App(){
+  // Kill the iOS pull-to-refresh gesture globally. CSS overscroll-behavior
+  // isn't enough on iOS Safari / PWA, so we intercept touchmove at the
+  // document and walk up to find the touched scroll container. If you're at
+  // its top edge and pulling down (the gesture that triggers the refresh
+  // wheel), we cancel the event. Normal scroll inside any scroller still
+  // works because we return early as soon as we find a scrollable ancestor
+  // that isn't at the edge.
+  useEffect(()=>{
+    let startY=0;let startTarget=null;
+    const onTouchStart=e=>{if(e.touches.length!==1)return;startY=e.touches[0].clientY;startTarget=e.target};
+    const onTouchMove=e=>{
+      if(e.touches.length!==1)return;
+      const dy=e.touches[0].clientY-startY;
+      let el=startTarget;
+      while(el&&el!==document.body){
+        const cs=window.getComputedStyle(el);
+        const scrollable=(cs.overflowY==='auto'||cs.overflowY==='scroll')&&el.scrollHeight>el.clientHeight;
+        if(scrollable){
+          if(el.scrollTop<=0&&dy>0){if(e.cancelable)e.preventDefault();return}
+          if(el.scrollTop+el.clientHeight>=el.scrollHeight-1&&dy<0){if(e.cancelable)e.preventDefault();return}
+          return;
+        }
+        el=el.parentElement;
+      }
+      if(e.cancelable)e.preventDefault();
+    };
+    document.addEventListener('touchstart',onTouchStart,{passive:true});
+    document.addEventListener('touchmove',onTouchMove,{passive:false});
+    return()=>{
+      document.removeEventListener('touchstart',onTouchStart);
+      document.removeEventListener('touchmove',onTouchMove,{passive:false});
+    };
+  },[]);
   const[athletes,setAthletes]=useStore('athletes',DEFAULT_ATHLETES);
   const[exercises,setExercises,exSynced]=useStore('exercises',[]);
   const[workouts,setWorkouts,wkSynced]=useStore('workouts2',[]);
