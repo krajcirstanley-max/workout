@@ -11433,6 +11433,14 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_drop_schex_week';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!plannedSynced) return;
+    const drop = new Set(['pl-schex-mon', 'pl-schex-tue', 'pl-schex-wed', 'pl-schex-thu', 'pl-schex-fri', 'pl-schex-sat']);
+    setPlanned(p => p.filter(x => !drop.has(x.id)));
+    localStorage.setItem(KEY, '1');
+  }, [plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_jumps_june14_v2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;

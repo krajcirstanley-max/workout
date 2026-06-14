@@ -4511,6 +4511,16 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot: drop 2026-06-15 .. 2026-06-20 plans (Schexnayder microcycle) -
+  // user wants the next week un-planned until they decide what to schedule.
+  useEffect(()=>{const KEY='wk2_v3_drop_schex_week';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!plannedSynced)return;
+    const drop=new Set(['pl-schex-mon','pl-schex-tue','pl-schex-wed','pl-schex-thu','pl-schex-fri','pl-schex-sat']);
+    setPlanned(p=>p.filter(x=>!drop.has(x.id)));
+    localStorage.setItem(KEY,'1')
+  },[plannedSynced]);
+
   // One-shot seed: 2026-06-14 Jumps + reactivity + power (D3).
   // Stanley does 16-step approach, Miška does 18-step approach (split via
   // exerciseAthletes - same plan, each athlete only sees their own variant).
