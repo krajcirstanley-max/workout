@@ -4621,6 +4621,26 @@ function WorkoutDetailModal({
 }) {
   const [wk, setWk] = useState(initWk);
   const [editing, setEditing] = useState(false);
+  useEffect(() => {
+    if (!editing) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.cssText;
+    const prevBody = body.style.cssText;
+    const scrollY = window.scrollY;
+    html.style.overscrollBehavior = 'none';
+    body.style.overscrollBehavior = 'none';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    return () => {
+      html.style.cssText = prevHtml;
+      body.style.cssText = prevBody;
+      window.scrollTo(0, scrollY);
+    };
+  }, [editing]);
   const [selAth, setSelAth] = useState(athletes.find(a => wk.athletes?.[a.id])?.id || athletes[0]?.id);
   const [showPicker, setShowPicker] = useState(false);
   const [showNewEx, setShowNewEx] = useState(false);
