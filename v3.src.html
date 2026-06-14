@@ -41,13 +41,8 @@
   --display:'Inter',system-ui,sans-serif;
   --mono:'JetBrains Mono',ui-monospace,monospace;
 }
-/* Lock the body absolutely in place. Pull-to-refresh on iOS Safari fires from
- * body-level overscroll - making body fixed-positioned + non-scrollable
- * removes the surface the gesture pulls against. touch-action:pan-y still
- * allows scrolling inside the .scroll/.modal containers (they have their own
- * touch-action). */
-html{height:100%;background:var(--bg);overscroll-behavior:none;overflow:hidden}
-body{font-family:var(--display);color:var(--text);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;overscroll-behavior:none;touch-action:pan-y;-webkit-overflow-scrolling:auto}
+html,body{height:100%;background:var(--bg);overscroll-behavior:none}
+body{font-family:var(--display);color:var(--text);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow:hidden}
 button,input,textarea,select{font:inherit;color:inherit;border:none;background:none;outline:none}
 button{cursor:pointer;-webkit-user-select:none;user-select:none}
 input[type=number]{-moz-appearance:textfield}
@@ -3805,40 +3800,6 @@ function PlanModal({plan,date,exercises,onSave,onDelete,onClose}){
     </div>
   </div>)}
 
-// === PULL TO REFRESH ===
-function PullRefresh(){
-  const[pullY,setPullY]=useState(0);const[refreshing,setRefreshing]=useState(false);
-  const ref=useRef({y0:0,active:false,didMove:false});const pullRef=useRef(0);
-  useEffect(()=>{
-    const inActive=()=>{try{return localStorage.getItem('wk2_activeSession')==='1'}catch{return false}};
-    const onStart=e=>{if(refreshing||inActive())return;
-      const sc=document.querySelector('.scroll');if(sc&&sc.scrollTop>5)return;
-      const t=e.touches[0];ref.current={y0:t.clientY,active:true,didMove:false};pullRef.current=0};
-    const onMove=e=>{const r=ref.current;if(!r.active)return;
-      const t=e.touches[0];const dy=t.clientY-r.y0;
-      if(dy<=0){if(r.didMove){r.active=false;setPullY(0);pullRef.current=0}return}
-      r.didMove=true;
-      const damped=Math.min(dy*0.5,160);pullRef.current=damped;setPullY(damped)};
-    const onEnd=async()=>{const r=ref.current;if(!r.active||!r.didMove){setPullY(0);pullRef.current=0;r.active=false;return}
-      r.active=false;const dx=pullRef.current;
-      if(dx>60){setRefreshing(true);setPullY(50);
-        try{if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();
-          if(reg)await reg.update();await new Promise(r=>setTimeout(r,300))}}catch{}
-        window.location.reload()}
-      else{setPullY(0);pullRef.current=0}};
-    document.addEventListener('touchstart',onStart,{passive:true});
-    document.addEventListener('touchmove',onMove,{passive:true});
-    document.addEventListener('touchend',onEnd,{passive:true});
-    return()=>{document.removeEventListener('touchstart',onStart);
-      document.removeEventListener('touchmove',onMove);
-      document.removeEventListener('touchend',onEnd)};
-  },[refreshing]);
-  if(pullY<3&&!refreshing)return null;
-  const rot=pullY*4;
-  return(<div style={{position:'fixed',top:0,left:0,right:0,height:60,display:'flex',alignItems:'center',justifyContent:'center',transform:`translateY(${pullY-60}px)`,transition:refreshing?'transform .25s ease':'none',zIndex:200,pointerEvents:'none'}}>
-    <div style={{width:30,height:30,borderRadius:'50%',border:'3px solid rgba(0,0,0,.08)',borderTopColor:'var(--primary)',transform:`rotate(${rot}deg)`,animation:refreshing?'spin .8s linear infinite':'none',background:'#fff',boxShadow:'0 2px 10px rgba(0,0,0,.08)'}}/>
-  </div>)}
-
 // === EDIT ATHLETE ===
 function EditAthleteModal({athlete,onSave,onClose}){
   const[name,setName]=useState(athlete?.name||'');const[color,setColor]=useState(athlete?.color||'#2156f4');
@@ -3883,39 +3844,6 @@ class ErrorBoundary extends React.Component{
 
 // === APP ROOT ===
 function App(){
-  // Kill the iOS pull-to-refresh gesture globally. CSS overscroll-behavior
-  // isn't enough on iOS Safari / PWA, so we intercept touchmove at the
-  // document and walk up to find the touched scroll container. If you're at
-  // its top edge and pulling down (the gesture that triggers the refresh
-  // wheel), we cancel the event. Normal scroll inside any scroller still
-  // works because we return early as soon as we find a scrollable ancestor
-  // that isn't at the edge.
-  useEffect(()=>{
-    let startY=0;let startTarget=null;
-    const onTouchStart=e=>{if(e.touches.length!==1)return;startY=e.touches[0].clientY;startTarget=e.target};
-    const onTouchMove=e=>{
-      if(e.touches.length!==1)return;
-      const dy=e.touches[0].clientY-startY;
-      let el=startTarget;
-      while(el&&el!==document.body){
-        const cs=window.getComputedStyle(el);
-        const scrollable=(cs.overflowY==='auto'||cs.overflowY==='scroll')&&el.scrollHeight>el.clientHeight;
-        if(scrollable){
-          if(el.scrollTop<=0&&dy>0){if(e.cancelable)e.preventDefault();return}
-          if(el.scrollTop+el.clientHeight>=el.scrollHeight-1&&dy<0){if(e.cancelable)e.preventDefault();return}
-          return;
-        }
-        el=el.parentElement;
-      }
-      if(e.cancelable)e.preventDefault();
-    };
-    document.addEventListener('touchstart',onTouchStart,{passive:true});
-    document.addEventListener('touchmove',onTouchMove,{passive:false});
-    return()=>{
-      document.removeEventListener('touchstart',onTouchStart);
-      document.removeEventListener('touchmove',onTouchMove,{passive:false});
-    };
-  },[]);
   const[athletes,setAthletes]=useStore('athletes',DEFAULT_ATHLETES);
   const[exercises,setExercises,exSynced]=useStore('exercises',[]);
   const[workouts,setWorkouts,wkSynced]=useStore('workouts2',[]);
@@ -5711,7 +5639,6 @@ function App(){
     onFinish={finishWorkout} onCancel={cancelWorkout} onMinimize={minimizeWorkout} allTags={allTags}/>);
 
   return(<>
-    <PullRefresh/>
     {tab==='today'&&<TodayScreen athletes={athletes} activeAth={activeAth} setActiveAth={setActiveAth}
       workouts={workouts} planned={planned} exercises={exercises} templates={templates}
       onStartPlan={startPlan} onStartEmpty={startEmptyForSelDate} onView={setViewing}
