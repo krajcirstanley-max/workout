@@ -2094,23 +2094,38 @@ function FinishForm({workout,athletes,elapsed,onSave,onCancel}){
 function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,setExercises,onClose,onDelete,onRepeat,onUpdate,onSaveTemplate}){
   const[wk,setWk]=useState(initWk);
   const[editing,setEditing]=useState(false);
-  // While editing, kill the pull-to-refresh gesture so an accidental scroll-up
-  // at the top of the modal can't reload the app and discard the edits. Locks
-  // the body in place while the modal handles its own scroll.
+  // While editing, kill the pull-to-refresh gesture. CSS overscroll-behavior
+  // isn't enough on iOS PWAs, so we intercept touchmove at the document and
+  // only block the gesture when the user is at the top of the modal scroll
+  // container and pulling down (the pull-to-refresh trigger). Normal scroll
+  // inside the modal still works.
   useEffect(()=>{if(!editing)return;
-    const html=document.documentElement;const body=document.body;
-    const prevHtml=html.style.cssText;
-    const prevBody=body.style.cssText;
-    const scrollY=window.scrollY;
-    html.style.overscrollBehavior='none';
-    body.style.overscrollBehavior='none';
-    body.style.position='fixed';
-    body.style.top=`-${scrollY}px`;
-    body.style.left='0';
-    body.style.right='0';
-    body.style.width='100%';
-    return()=>{html.style.cssText=prevHtml;body.style.cssText=prevBody;
-      window.scrollTo(0,scrollY)};
+    let startY=0;let startTarget=null;
+    const onTouchStart=e=>{startY=e.touches[0].clientY;startTarget=e.target};
+    const onTouchMove=e=>{
+      const dy=e.touches[0].clientY-startY;
+      // Walk up the DOM to find the scroll container the gesture started in.
+      let el=startTarget;
+      while(el&&el!==document.body){
+        const s=window.getComputedStyle(el);
+        if((s.overflowY==='auto'||s.overflowY==='scroll')&&el.scrollHeight>el.clientHeight){
+          // At top + pulling down = block. At bottom + pulling up = block too,
+          // so it can't chain to body either.
+          if(el.scrollTop<=0&&dy>0){if(e.cancelable)e.preventDefault();return}
+          if(el.scrollTop+el.clientHeight>=el.scrollHeight-1&&dy<0){if(e.cancelable)e.preventDefault();return}
+          return; // inside a normal scroller, let it scroll
+        }
+        el=el.parentElement;
+      }
+      // Touch wasn't inside any scroll container - block any body scroll.
+      if(e.cancelable)e.preventDefault();
+    };
+    document.addEventListener('touchstart',onTouchStart,{passive:true});
+    document.addEventListener('touchmove',onTouchMove,{passive:false});
+    return()=>{
+      document.removeEventListener('touchstart',onTouchStart);
+      document.removeEventListener('touchmove',onTouchMove,{passive:false});
+    };
   },[editing]);
   const[selAth,setSelAth]=useState(athletes.find(a=>wk.athletes?.[a.id])?.id||athletes[0]?.id);
   const[showPicker,setShowPicker]=useState(false);
