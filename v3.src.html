@@ -4491,6 +4491,118 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[plannedSynced]);
 
+  // One-shot: log the actually-done 2026-06-14 LJ Session (editing logged
+  // workouts isn't working, so user dictated and we insert it directly).
+  useEffect(()=>{const KEY='wk2_v3_log_lj_june14';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!wkSynced||!exercises.length)return;
+    const newExs=[
+      {id:'approach-popup-6',name:'6-Step Pop-up',category:'T&F',metrics:['reps','approach-mark']},
+      {id:'approach-popup-8',name:'8-Step Pop-up',category:'T&F',metrics:['reps','approach-mark']},
+      {id:'approach-popup-10',name:'10-Step Pop-up',category:'T&F',metrics:['reps','approach-mark']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+    const startTime=new Date(2026,5,14,14,0,0).getTime();
+    const endTime=new Date(2026,5,14,17,0,0).getTime();
+    const stanley={
+      sets:{
+        'drop-jump':[
+          {values:{reps:3,height:0.5},completed:true},
+          {values:{reps:3,height:0.5},completed:true},
+        ],
+        'approach-popup-6':[
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+        ],
+        'approach-popup-8':[
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+        ],
+        'fly-10m':[
+          {values:{'tf-time':1.00},completed:true},
+        ],
+        'approach-popup-10':[
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+        ],
+        'approach-jump-10':[
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+        ],
+        'approach-runthrough-16':[
+          {values:{reps:1,'time-20-11m':1.13,'time-10-1m':1.08},completed:true},
+        ],
+        'approach-popup-16':[
+          {values:{reps:1,'time-20-11m':1.08,'time-10-1m':1.08},completed:true},
+          {values:{reps:1,'time-20-11m':1.11,'time-10-1m':1.06},completed:true},
+          {values:{reps:1,'time-20-11m':1.14,'time-10-1m':1.07},completed:true},
+        ],
+        'approach-jump-16':[
+          {values:{'tf-dist':6.70,'time-20-11m':1.12,'time-10-1m':1.06},completed:true},
+          {values:{'time-20-11m':1.17,'time-10-1m':1.08},completed:true},
+          {values:{'time-20-11m':1.12,'time-10-1m':1.08},completed:true},
+          {values:{'tf-dist':6.55,'time-20-11m':1.13,'time-10-1m':1.10},completed:true},
+        ],
+      },
+      notes:'10m fly rozcvička 1.00s. Mimo dosky.'
+    };
+    const miska={
+      sets:{
+        'approach-popup-6':[
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+        ],
+        'approach-popup-8':[
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+        ],
+        'approach-popup-10':[
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+        ],
+        'approach-jump-10':[
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+          {values:{reps:1},completed:true},
+        ],
+        'drop-jump':[
+          {values:{reps:3,height:0.5},completed:true},
+          {values:{reps:3,height:0.5},completed:true},
+        ],
+      },
+      notes:'Dostala nervy že sa nevie vertikálne odraziť, skončila.'
+    };
+    const wk={
+      id:'wk-june14-lj',
+      name:'LJ Session',
+      color:'#8b5cf6',
+      startTime,endTime,started:true,
+      conditions:{venue:'outdoor',wind:'bočný/protivietor',temp:'chladnejšie'},
+      notes:'Obaja všetko mimo dosky. Extrémne bočný vietor sem tam aj protivietor, chladnejšie. Striedali sme pieskoviska. Problem dnes - vertikálne odraziť, bolo ploché, posledné kroky naťahované.',
+      athletes:{'ath-1':stanley,'ath-2':miska},
+      exerciseIds:['drop-jump','approach-popup-6','approach-popup-8','fly-10m','approach-popup-10','approach-jump-10','approach-runthrough-16','approach-popup-16','approach-jump-16'],
+      athleteExerciseIds:{
+        'ath-1':['drop-jump','approach-popup-6','approach-popup-8','fly-10m','approach-popup-10','approach-jump-10','approach-runthrough-16','approach-popup-16','approach-jump-16'],
+        'ath-2':['approach-popup-6','approach-popup-8','approach-popup-10','approach-jump-10','drop-jump'],
+      },
+      exerciseAthletes:{
+        'fly-10m':['ath-1'],
+        'approach-runthrough-16':['ath-1'],
+        'approach-popup-16':['ath-1'],
+        'approach-jump-16':['ath-1'],
+      },
+      supersets:[],
+    };
+    setWorkouts(prev=>{
+      if(prev.find(w=>w.id===wk.id))return prev;
+      return [...prev,wk];
+    });
+    localStorage.setItem(KEY,'1')
+  },[wkSynced,exSynced,exercises.length]);
+
   // One-shot seed: 2026-06-14 Jumps + reactivity + power (D3).
   // Stanley does 16-step approach, Miška does 18-step approach (split via
   // exerciseAthletes - same plan, each athlete only sees their own variant).
