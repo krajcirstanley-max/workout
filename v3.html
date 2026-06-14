@@ -41,8 +41,13 @@
   --display:'Inter',system-ui,sans-serif;
   --mono:'JetBrains Mono',ui-monospace,monospace;
 }
-html,body{height:100%;background:var(--bg);overscroll-behavior:none}
-body{font-family:var(--display);color:var(--text);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow:hidden}
+/* Lock the body absolutely in place. Pull-to-refresh on iOS Safari fires from
+ * body-level overscroll - making body fixed-positioned + non-scrollable
+ * removes the surface the gesture pulls against. touch-action:pan-y still
+ * allows scrolling inside the .scroll/.modal containers (they have their own
+ * touch-action). */
+html{height:100%;background:var(--bg);overscroll-behavior:none;overflow:hidden}
+body{font-family:var(--display);color:var(--text);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;overscroll-behavior:none;touch-action:pan-y;-webkit-overflow-scrolling:auto}
 button,input,textarea,select{font:inherit;color:inherit;border:none;background:none;outline:none}
 button{cursor:pointer;-webkit-user-select:none;user-select:none}
 input[type=number]{-moz-appearance:textfield}
