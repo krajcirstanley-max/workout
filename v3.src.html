@@ -4511,6 +4511,56 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[exercises.length,exSynced,plannedSynced]);
 
+  // One-shot seed: 2026-06-14 Jumps + reactivity + power (D3).
+  // Stanley does 16-step approach, Miška does 18-step approach (split via
+  // exerciseAthletes - same plan, each athlete only sees their own variant).
+  // Drop Jump metrics extended to include height (was reps-only).
+  useEffect(()=>{const KEY='wk2_v3_seed_jumps_june14_v2';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    // Extend drop-jump declared metrics to include height + reps so the
+    // workout's set entry shows both fields.
+    setExercises(prev=>prev.map(e=>{
+      if(e.id==='drop-jump'){
+        const cur=e.metrics||[];const need=['reps','height'].filter(m=>!cur.includes(m));
+        return need.length?{...e,metrics:[...cur,...need]}:e;
+      }
+      return e;
+    }));
+    const plan={id:'pl-jumps-june14',date:'2026-06-14',name:'Jumps + Power',color:'#8b5cf6',
+      exerciseIds:['approach-jump-16','approach-jump-18','drop-jump','hurdle-jumps','tb-deadlift','bulgarian-split-squat','nordics'],
+      supersets:[],
+      setConfigs:{
+        'approach-jump-16':[{},{},{},{},{},{},{},{}],
+        'approach-jump-18':[{},{},{},{},{},{},{},{}],
+        'drop-jump':[{reps:3},{reps:3},{reps:3},{reps:3}],
+        'hurdle-jumps':[{reps:6},{reps:6},{reps:6},{reps:6}],
+        'tb-deadlift':[{reps:3},{reps:3},{reps:3},{reps:3},{reps:3}],
+        'bulgarian-split-squat':[{reps:6},{reps:6},{reps:6}],
+        'nordics':[{reps:4},{reps:4},{reps:4}]
+      },
+      exerciseAthletes:{
+        'approach-jump-16':['ath-1'],
+        'approach-jump-18':['ath-2']
+      },
+      exNotes:{
+        'approach-jump-16':'Bez dosky. Celý skok naplno. ±30cm. Meraj splity.',
+        'approach-jump-18':'Bez dosky. Celý skok naplno. ±30cm. Meraj splity.',
+        'drop-jump':'Výška 60-76 cm.',
+        'hurdle-jumps':'Stanley h91, Miška h76.',
+        'tb-deadlift':'Mean <0,5 m/s.',
+        'bulgarian-split-squat':'Každá noha.'
+      },
+      notes:''
+    };
+    setPlanned(p=>{
+      const filtered=p.filter(x=>x.id!=='pl-jumps-june14');
+      return[...filtered,plan];
+    });
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-06-13 Low Gym - iso/yielding maintenance + posterior chain.
   useEffect(()=>{const KEY='wk2_v3_seed_gym_june13';
     if(localStorage.getItem(KEY)==='1')return;
