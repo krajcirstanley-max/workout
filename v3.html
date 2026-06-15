@@ -11336,6 +11336,221 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_low_june15';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'approach-runthrough-18',
+      name: '18-Step Run-through',
+      category: 'T&F',
+      metrics: ['approach-mark', 'reps', 'time-10-1m', 'time-20-11m']
+    }, {
+      id: 'barrel-oh',
+      name: 'Barrel Sprint (Overhead)',
+      category: 'T&F',
+      metrics: ['weight', 'distance']
+    }, {
+      id: 'barrel-front',
+      name: 'Barrel Sprint (Front)',
+      category: 'T&F',
+      metrics: ['weight', 'distance']
+    }, {
+      id: 'med-ball-front',
+      name: 'Med Ball Sprint (Front)',
+      category: 'T&F',
+      metrics: ['weight', 'distance']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const stanley = {
+      id: 'pl-low-june15-s',
+      date: '2026-06-15',
+      name: 'Low Day',
+      color: '#06b6d4',
+      exerciseIds: ['approach-runthrough-16', 'approach-runthrough-18', 'barrel-oh', 'barrel-front', 'med-ball-front', 'no-arm-sprint', 'pallof-press-hk', 'ab-wheel-rollout', 'sl-calf-iso', 'tibialis-raise-w', 'copenhagen-plank'],
+      supersets: [],
+      setConfigs: {
+        'approach-runthrough-16': [{
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'approach-runthrough-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'barrel-oh': [{
+          distance: 25
+        }, {
+          distance: 25
+        }],
+        'barrel-front': [{
+          distance: 25
+        }, {
+          distance: 25
+        }],
+        'med-ball-front': [{
+          distance: 25
+        }, {
+          distance: 25
+        }],
+        'no-arm-sprint': [{
+          distance: 25
+        }, {
+          distance: 25
+        }],
+        'pallof-press-hk': [{
+          reps: 8
+        }, {
+          reps: 8
+        }],
+        'ab-wheel-rollout': [{
+          reps: 6
+        }, {
+          reps: 6
+        }],
+        'sl-calf-iso': [{
+          time: 30
+        }, {
+          time: 30
+        }, {
+          time: 30
+        }],
+        'tibialis-raise-w': [{
+          reps: 12
+        }, {
+          reps: 12
+        }],
+        'copenhagen-plank': [{
+          time: 30
+        }, {
+          time: 30
+        }]
+      },
+      exerciseAthletes: Object.fromEntries(['approach-runthrough-16', 'approach-runthrough-18', 'barrel-oh', 'barrel-front', 'med-ball-front', 'no-arm-sprint', 'pallof-press-hk', 'ab-wheel-rollout', 'sl-calf-iso', 'tibialis-raise-w', 'copenhagen-plank'].map(e => [e, ['ath-1']])),
+      exNotes: {
+        'approach-runthrough-16': 'Rozbeh ľahko. Freelap 21-11 a 11-1.',
+        'approach-runthrough-18': 'Porovnaj s 16 pri rovnakom úsilí. NEunaviť.',
+        'barrel-oh': 'Anti-extension. Vzpriamený postoj.',
+        'barrel-front': 'Anti-predklon.',
+        'med-ball-front': 'Postúra.',
+        'no-arm-sprint': 'Postúra + relaxácia.'
+      },
+      notes: 'Cieľ: prekrviť, zmäkčiť, groovovať postúru proti naťahovaniu. Žiadne ťažké gym, žiadny náraz.'
+    };
+    const miska = {
+      id: 'pl-low-june15-m',
+      date: '2026-06-15',
+      name: 'Low Day',
+      color: '#06b6d4',
+      exerciseIds: ['approach-runthrough-18', 'barrel-oh', 'barrel-front', 'med-ball-front', 'no-arm-sprint', 'pallof-press-hk', 'ab-wheel-rollout', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso', 'tibialis-raise-w', 'copenhagen-plank'],
+      supersets: [],
+      setConfigs: {
+        'approach-runthrough-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'barrel-oh': [{
+          distance: 25
+        }, {
+          distance: 25
+        }],
+        'barrel-front': [{
+          distance: 25
+        }, {
+          distance: 25
+        }],
+        'med-ball-front': [{
+          distance: 25
+        }, {
+          distance: 25
+        }],
+        'no-arm-sprint': [{
+          distance: 25
+        }, {
+          distance: 25
+        }],
+        'pallof-press-hk': [{
+          reps: 8
+        }, {
+          reps: 8
+        }],
+        'ab-wheel-rollout': [{
+          reps: 6
+        }, {
+          reps: 6
+        }],
+        'sl-calf-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'soleus-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'leg-curl-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'tibialis-raise-w': [{
+          reps: 12
+        }, {
+          reps: 12
+        }],
+        'copenhagen-plank': [{
+          time: 30
+        }, {
+          time: 30
+        }]
+      },
+      exerciseAthletes: Object.fromEntries(['approach-runthrough-18', 'barrel-oh', 'barrel-front', 'med-ball-front', 'no-arm-sprint', 'pallof-press-hk', 'ab-wheel-rollout', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso', 'tibialis-raise-w', 'copenhagen-plank'].map(e => [e, ['ath-2']])),
+      exNotes: {
+        'approach-runthrough-18': 'Vlastný počet krokov. Cit rytmu. NEunaviť.',
+        'barrel-oh': 'Anti-extension.',
+        'barrel-front': 'Anti-predklon.',
+        'med-ball-front': 'Postúra.',
+        'no-arm-sprint': 'Postúra + relaxácia.',
+        'sl-calf-iso': 'Šľachy iso.',
+        'soleus-iso': 'Šľachy iso.',
+        'leg-curl-iso': 'Šľachy iso.'
+      },
+      notes: 'Žiadny tlak po včerajšku. Šľachy iso prevencia.'
+    };
+    setPlanned(p => {
+      let out = [...p];
+      [stanley, miska].forEach(plan => {
+        const i = out.findIndex(x => x.id === plan.id);
+        if (i >= 0) out[i] = {
+          ...out[i],
+          ...plan
+        };else out.push(plan);
+      });
+      return out;
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_log_lj_june14';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !wkSynced || !exercises.length) return;
