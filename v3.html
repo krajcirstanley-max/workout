@@ -4157,7 +4157,7 @@ function ActiveWorkout({
         tag: data.tag,
         athletes: cleanA,
         exerciseIds: finalEids,
-        endTime: workout.startTime + cust
+        endTime: workout.endTime || workout.startTime + cust
       });
     },
     onCancel: () => setShowFinish(false)
@@ -4631,7 +4631,8 @@ function WorkoutDetailModal({
   onDelete,
   onRepeat,
   onUpdate,
-  onSaveTemplate
+  onSaveTemplate,
+  onOpenInWorkout
 }) {
   const [wk, setWk] = useState(initWk);
   const [editing, setEditing] = useState(false);
@@ -4875,7 +4876,17 @@ function WorkoutDetailModal({
       display: 'flex',
       gap: 6
     }
-  }, React.createElement("button", {
+  }, onOpenInWorkout && React.createElement("button", {
+    className: "modal-x",
+    onClick: () => {
+      onOpenInWorkout(wk);
+      onClose();
+    },
+    title: "Open in Workout Editor"
+  }, React.createElement(Ic, {
+    n: "play",
+    s: 16
+  })), React.createElement("button", {
     className: "modal-x",
     onClick: () => setEditing(!editing),
     title: editing ? 'Done' : 'Edit'
@@ -10012,6 +10023,27 @@ function App() {
     setActivePlan(plan || null);
     setInWorkout(true);
   };
+  const openLoggedAsActive = wk => {
+    ['activeSession', 'activePlan'].forEach(k => {
+      try {
+        localStorage.removeItem('wk2_' + k);
+      } catch {}
+    });
+    try {
+      localStorage.setItem('wk2_v3_snap', JSON.stringify({
+        workout: {
+          ...wk,
+          started: true
+        },
+        blockIdx: 0
+      }));
+    } catch {}
+    try {
+      localStorage.setItem('wk2_activeSession', '1');
+    } catch {}
+    setActivePlan(null);
+    setInWorkout(true);
+  };
   const finishWorkout = wk => {
     ['activeSession', 'activePlan', 'activeSnapshot', 'v3_prelude_phase', 'v3_prelude_tag', 'v3_prelude_rd', 'v3_prelude_warmStart', 'v3_prelude_cond'].forEach(k => {
       try {
@@ -10022,7 +10054,15 @@ function App() {
       localStorage.removeItem('wk2_v3_snap');
     } catch {}
     _clear();
-    if (wk.exerciseIds.length > 0) setWorkouts(p => [...p, wk]);
+    if (wk.exerciseIds.length > 0) setWorkouts(p => {
+      const idx = p.findIndex(w => w.id === wk.id);
+      if (idx >= 0) {
+        const next = [...p];
+        next[idx] = wk;
+        return next;
+      }
+      return [...p, wk];
+    });
     if (activePlan && !activePlan.id?.startsWith('tpl-')) {
       const drop = new Set([activePlan.id]);
       if (activePlan.siblingPlanId) drop.add(activePlan.siblingPlanId);
@@ -14423,6 +14463,10 @@ function App() {
     onUpdate: updated => {
       setWorkouts(p => p.map(w => w.id === updated.id ? updated : w));
       setViewing(updated);
+    },
+    onOpenInWorkout: wk => {
+      setViewing(null);
+      openLoggedAsActive(wk);
     },
     onSaveTemplate: saveTemplate,
     onRepeat: wk => {

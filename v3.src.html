@@ -1949,7 +1949,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
       const finalEids=workout.exerciseIds.filter(eid=>Object.values(cleanA).some(a=>a.sets[eid]?.length>0));
       if(!finalEids.length){window.alert('Nothing is logged yet — enter a value or check off at least one set before finishing.');return}
       onFinish({...workout,name:data.name,weather:data.weather,tag:data.tag,athletes:cleanA,
-        exerciseIds:finalEids,endTime:workout.startTime+cust})}} onCancel={()=>setShowFinish(false)}/>;
+        exerciseIds:finalEids,endTime:workout.endTime||(workout.startTime+cust)})}} onCancel={()=>setShowFinish(false)}/>;
 
   const safeBlk=Math.min(blockIdx,Math.max(0,blocks.length-1));
   const curBlock=blocks[safeBlk];
@@ -2095,7 +2095,7 @@ function FinishForm({workout,athletes,elapsed,onSave,onCancel}){
   </div>)}
 
 // === WORKOUT DETAIL MODAL ===
-function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,setExercises,onClose,onDelete,onRepeat,onUpdate,onSaveTemplate}){
+function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,setExercises,onClose,onDelete,onRepeat,onUpdate,onSaveTemplate,onOpenInWorkout}){
   const[wk,setWk]=useState(initWk);
   const[editing,setEditing]=useState(false);
   const[selAth,setSelAth]=useState(athletes.find(a=>wk.athletes?.[a.id])?.id||athletes[0]?.id);
@@ -2178,6 +2178,7 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,setExercises,
         {editing?<input className="form-input" style={{flex:1,marginRight:10,fontSize:18,fontWeight:900,fontStyle:'italic'}} value={wk.name||''} onChange={e=>setName(e.target.value)}/>
           :<div className="modal-t">{wk.name||'Workout'}</div>}
         <div style={{display:'flex',gap:6}}>
+          {onOpenInWorkout&&<button className="modal-x" onClick={()=>{onOpenInWorkout(wk);onClose()}} title="Open in Workout Editor"><Ic n="play" s={16}/></button>}
           <button className="modal-x" onClick={()=>setEditing(!editing)} title={editing?'Done':'Edit'}><Ic n={editing?'check':'edit'} s={18}/></button>
           <button className="modal-x" onClick={onClose}><Ic n="x" s={20}/></button>
         </div>
@@ -3955,10 +3956,24 @@ function App(){
     try{localStorage.setItem('wk2_activeSession','1');if(plan)localStorage.setItem('wk2_activePlan',JSON.stringify(plan))}catch{}
     setActivePlan(plan||null);setInWorkout(true)};
 
+  // Open a logged workout in the same UI as the active workout - so you can
+  // add/remove/reorder exercises and edit sets using the full editor. The
+  // workout id is preserved so finish saves over the existing entry.
+  const openLoggedAsActive=wk=>{
+    ['activeSession','activePlan'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
+    try{localStorage.setItem('wk2_v3_snap',JSON.stringify({workout:{...wk,started:true},blockIdx:0}))}catch{}
+    try{localStorage.setItem('wk2_activeSession','1')}catch{}
+    setActivePlan(null);setInWorkout(true);
+  };
+
   const finishWorkout=wk=>{['activeSession','activePlan','activeSnapshot','v3_prelude_phase','v3_prelude_tag','v3_prelude_rd','v3_prelude_warmStart','v3_prelude_cond'].forEach(k=>{try{localStorage.removeItem('wk2_'+k)}catch{}});
     try{localStorage.removeItem('wk2_v3_snap')}catch{}
     _clear();
-    if(wk.exerciseIds.length>0)setWorkouts(p=>[...p,wk]);
+    if(wk.exerciseIds.length>0)setWorkouts(p=>{
+      const idx=p.findIndex(w=>w.id===wk.id);
+      if(idx>=0){const next=[...p];next[idx]=wk;return next}
+      return [...p,wk];
+    });
     if(activePlan&&!activePlan.id?.startsWith('tpl-')){
       const drop=new Set([activePlan.id]);
       if(activePlan.siblingPlanId)drop.add(activePlan.siblingPlanId);
@@ -5857,6 +5872,7 @@ function App(){
       onClose={()=>setViewing(null)}
       onDelete={id=>setWorkouts(p=>p.filter(w=>w.id!==id))}
       onUpdate={updated=>{setWorkouts(p=>p.map(w=>w.id===updated.id?updated:w));setViewing(updated)}}
+      onOpenInWorkout={wk=>{setViewing(null);openLoggedAsActive(wk)}}
       onSaveTemplate={saveTemplate}
       onRepeat={wk=>{const plan={id:'pl-'+uid(),name:wk.name||'Workout',exerciseIds:wk.exerciseIds.map(baseExId),
         supersets:[],setConfigs:{}};wk.exerciseIds.forEach(eid=>{const base=baseExId(eid);
