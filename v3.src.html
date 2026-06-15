@@ -2059,7 +2059,7 @@ function ActiveWorkout({athletes,activeAth,setActiveAth,exercises,setExercises,w
         </div>
         <div className="modal-b">
           <div style={{fontSize:12,color:'var(--text3)',fontWeight:600,marginBottom:8}}>Drag the handle to reorder. Tap <b style={{color:'var(--primary)'}}>+ Link</b> between two exercises to make them a superset.</div>
-          <ReorderList ids={workout.exerciseIds} exercises={exercises} onReorder={reorderExercise} onDelete={deleteExercise} supersets={workout.supersets} onToggleLink={toggleSupersetLive}/>
+          <ReorderList ids={workout.athleteExerciseIds?.[activeAth]||workout.exerciseIds} exercises={exercises} onReorder={reorderExercise} onDelete={deleteExercise} supersets={workout.supersets} onToggleLink={toggleSupersetLive}/>
           {!workout.exerciseIds.length&&<div style={{padding:'20px 0',textAlign:'center',color:'var(--text3)',fontSize:14}}>No exercises yet.</div>}
           <button className="btn btn-secondary" style={{marginTop:14,width:'100%'}} onClick={()=>{setShowOrganize(false);setReplacingEid(null);setShowPicker(true)}}>+ Add Exercise</button>
         </div>

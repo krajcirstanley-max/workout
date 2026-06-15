@@ -4488,7 +4488,7 @@ function ActiveWorkout({
       color: 'var(--primary)'
     }
   }, "+ Link"), " between two exercises to make them a superset."), React.createElement(ReorderList, {
-    ids: workout.exerciseIds,
+    ids: workout.athleteExerciseIds?.[activeAth] || workout.exerciseIds,
     exercises: exercises,
     onReorder: reorderExercise,
     onDelete: deleteExercise,
