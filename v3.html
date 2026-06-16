@@ -4009,13 +4009,59 @@ function ActiveWorkout({
       const cur = w.exerciseAthletes?.[t] || athletes.map(a => a.id);
       let next = cur.includes(aId) ? cur.filter(x => x !== aId) : [...cur, aId];
       if (next.length === 0) next = athletes.map(a => a.id);
-      return {
+      const wasAdded = !cur.includes(aId) && next.includes(aId);
+      const wasRemoved = cur.includes(aId) && !next.includes(aId);
+      let nw = {
         ...w,
         exerciseAthletes: {
           ...(w.exerciseAthletes || {}),
           [t]: next
         }
       };
+      if (w.athleteExerciseIds) {
+        const aei = {
+          ...w.athleteExerciseIds
+        };
+        if (wasAdded && !(aei[aId] || []).includes(t)) aei[aId] = [...(aei[aId] || []), t];
+        if (wasRemoved) aei[aId] = (aei[aId] || []).filter(x => x !== t);
+        nw.athleteExerciseIds = aei;
+      }
+      if (wasAdded && !nw.athletes[aId]?.sets?.[t]) {
+        const ex = exercises.find(e => e.id === baseExId(t));
+        const otherSets = Object.values(nw.athletes).map(a => a.sets?.[t]).find(Boolean);
+        const newSets = otherSets ? otherSets.map(s => {
+          const v = {};
+          Object.keys(s.values || {}).forEach(k => {
+            v[k] = '';
+          });
+          return {
+            values: v,
+            completed: false
+          };
+        }) : [(() => {
+          const v = {};
+          (ex?.metrics || []).forEach(m => {
+            v[m] = '';
+          });
+          return {
+            values: v,
+            completed: false
+          };
+        })()];
+        nw.athletes = {
+          ...nw.athletes,
+          [aId]: {
+            ...(nw.athletes[aId] || {
+              sets: {}
+            }),
+            sets: {
+              ...(nw.athletes[aId]?.sets || {}),
+              [t]: newSets
+            }
+          }
+        };
+      }
+      return nw;
     });
   };
   const exForAth = eid => {
@@ -11375,6 +11421,209 @@ function App() {
     setPlanned(p => p.filter(x => !drop.has(x.id)));
     localStorage.setItem(KEY, '1');
   }, [plannedSynced]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_seed_rozbehy_june16';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'sl-box-jump',
+      name: 'SL Box Jump',
+      category: 'Legs',
+      metrics: ['reps', 'height']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const stanley = {
+      id: 'pl-rozbehy-june16-s',
+      date: '2026-06-16',
+      name: 'Rozbehy + Power',
+      color: '#f97316',
+      exerciseIds: ['approach-jump-18', 'resisted-20m', 'alt-bounds-jump', 'cstm-mowtp19hc4nv', 'sl-box-jump', 'hip-thrust-staggered', 'calf-raise', 'nordics'],
+      supersets: [['cstm-mowtp19hc4nv', 'sl-box-jump']],
+      setConfigs: {
+        'approach-jump-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'resisted-20m': [{}, {}, {}, {}],
+        'alt-bounds-jump': [{
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'cstm-mowtp19hc4nv': [{
+          reps: 3
+        }, {
+          reps: 3
+        }, {
+          reps: 3
+        }],
+        'sl-box-jump': [{
+          reps: 3
+        }, {
+          reps: 3
+        }, {
+          reps: 3
+        }],
+        'hip-thrust-staggered': [{
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'calf-raise': [{
+          reps: 7
+        }, {
+          reps: 7
+        }, {
+          reps: 7
+        }],
+        'nordics': [{
+          reps: 4
+        }, {
+          reps: 4
+        }]
+      },
+      exerciseAthletes: Object.fromEntries(['approach-jump-18', 'resisted-20m', 'alt-bounds-jump', 'cstm-mowtp19hc4nv', 'sl-box-jump', 'hip-thrust-staggered', 'calf-raise', 'nordics'].map(e => [e, ['ath-1']])),
+      exNotes: {
+        'approach-jump-18': 'Plné skoky na board velocity. Freelap 21-11 / 11-1. Presnosť dosky.',
+        'resisted-20m': 'Stredný odpor.',
+        'alt-bounds-jump': 'Krátky nábeh, stiffness.',
+        'cstm-mowtp19hc4nv': 'Ťažší. Pri 0,75-1,0 m/s. SS s SL Box Jump.',
+        'sl-box-jump': 'SS s Podrep Výskok.'
+      },
+      notes: 'Rozcvička + drily (A/B skip, dribbling).'
+    };
+    const miska = {
+      id: 'pl-rozbehy-june16-m',
+      date: '2026-06-16',
+      name: 'Rozbehy + Power',
+      color: '#f97316',
+      exerciseIds: ['approach-jump-18', 'resisted-20m', 'alt-bounds-jump', 'cstm-mowtp19hc4nv', 'sl-box-jump', 'hip-thrust-staggered', 'calf-raise', 'nordics', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'],
+      supersets: [['cstm-mowtp19hc4nv', 'sl-box-jump']],
+      setConfigs: {
+        'approach-jump-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'resisted-20m': [{}, {}, {}],
+        'alt-bounds-jump': [{
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'cstm-mowtp19hc4nv': [{
+          reps: 3
+        }, {
+          reps: 3
+        }, {
+          reps: 3
+        }],
+        'sl-box-jump': [{
+          reps: 3
+        }, {
+          reps: 3
+        }, {
+          reps: 3
+        }],
+        'hip-thrust-staggered': [{
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'calf-raise': [{
+          reps: 7
+        }, {
+          reps: 7
+        }],
+        'nordics': [{
+          reps: 4
+        }, {
+          reps: 4
+        }],
+        'sl-calf-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'soleus-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'leg-curl-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }]
+      },
+      exerciseAthletes: Object.fromEntries(['approach-jump-18', 'resisted-20m', 'alt-bounds-jump', 'cstm-mowtp19hc4nv', 'sl-box-jump', 'hip-thrust-staggered', 'calf-raise', 'nordics', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'].map(e => [e, ['ath-2']])),
+      exNotes: {
+        'approach-jump-18': 'Vlastný počet krokov. Presnosť + cit.',
+        'resisted-20m': 'Stredný odpor.',
+        'alt-bounds-jump': 'Krátky nábeh, stiffness.',
+        'cstm-mowtp19hc4nv': 'Pri 0,75-1,0 m/s. SS s SL Box Jump.',
+        'sl-box-jump': 'SS s Podrep Výskok.',
+        'sl-calf-iso': 'Šľachy iso.',
+        'soleus-iso': 'Šľachy iso.',
+        'leg-curl-iso': 'Šľachy iso.'
+      },
+      notes: 'Rozcvička + drily.'
+    };
+    setPlanned(p => {
+      let out = [...p];
+      [stanley, miska].forEach(plan => {
+        const i = out.findIndex(x => x.id === plan.id);
+        if (i >= 0) out[i] = {
+          ...out[i],
+          ...plan
+        };else out.push(plan);
+      });
+      return out;
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
   useEffect(() => {
     const KEY = 'wk2_v3_seed_low_june15';
     if (localStorage.getItem(KEY) === '1') return;
