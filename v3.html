@@ -11422,6 +11422,198 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_maxv_june18';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'hex-bar-drop-jump',
+      name: 'Hex Bar Drop Jump',
+      category: 'Legs',
+      metrics: ['weight', 'reps', 'height']
+    }, {
+      id: 'assisted-jumps',
+      name: 'Assisted Jumps',
+      category: 'Legs',
+      metrics: ['reps', 'height']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const stanley = {
+      id: 'pl-maxv-june18-s',
+      date: '2026-06-18',
+      name: 'Max V + Plné skoky',
+      color: '#dc2626',
+      exerciseIds: ['fly-30m', 'approach-jump-18', 'hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff'],
+      supersets: [['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps']],
+      setConfigs: {
+        'fly-30m': [{
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'approach-jump-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'hex-bar-drop-jump': [{
+          reps: 3
+        }, {
+          reps: 3
+        }, {
+          reps: 3
+        }],
+        'pogos-bands': [{
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'assisted-jumps': [{
+          reps: 3
+        }, {
+          reps: 3
+        }, {
+          reps: 3
+        }],
+        'iso-takeoff': [{
+          time: 25
+        }, {
+          time: 25
+        }, {
+          time: 25
+        }]
+      },
+      exerciseAthletes: Object.fromEntries(['fly-30m', 'approach-jump-18', 'hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff'].map(e => [e, ['ath-1']])),
+      exNotes: {
+        'fly-30m': 'Max V. Plná pauza.',
+        'approach-jump-18': 'Súťažný rozbeh. #1 trafiť dosku, #2 odraz z nábehu, #3 hore nie plocho. Plná pauza.',
+        'hex-bar-drop-jump': 'SS s pogá + assisted.',
+        'pogos-bands': 'SS.',
+        'assisted-jumps': 'SS.'
+      },
+      notes: ''
+    };
+    const miska = {
+      id: 'pl-maxv-june18-m',
+      date: '2026-06-18',
+      name: 'Max V + Plné skoky',
+      color: '#dc2626',
+      exerciseIds: ['fly-30m', 'approach-jump-18', 'hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'],
+      supersets: [['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps']],
+      setConfigs: {
+        'fly-30m': [{
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'approach-jump-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'hex-bar-drop-jump': [{
+          reps: 3
+        }, {
+          reps: 3
+        }, {
+          reps: 3
+        }],
+        'pogos-bands': [{
+          reps: 5
+        }, {
+          reps: 5
+        }, {
+          reps: 5
+        }],
+        'assisted-jumps': [{
+          reps: 3
+        }, {
+          reps: 3
+        }, {
+          reps: 3
+        }],
+        'iso-takeoff': [{
+          time: 25
+        }, {
+          time: 25
+        }, {
+          time: 25
+        }],
+        'sl-calf-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'soleus-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'leg-curl-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }]
+      },
+      exerciseAthletes: Object.fromEntries(['fly-30m', 'approach-jump-18', 'hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'].map(e => [e, ['ath-2']])),
+      exNotes: {
+        'fly-30m': 'Max V. Plná pauza.',
+        'approach-jump-18': 'Pohodlný rozbeh. #1 presnosť dosky, #2 odraz z nábehu, #3 hore.',
+        'hex-bar-drop-jump': 'SS s pogá + assisted.',
+        'pogos-bands': 'SS.',
+        'assisted-jumps': 'SS.',
+        'sl-calf-iso': 'Šľachy iso.',
+        'soleus-iso': 'Šľachy iso.',
+        'leg-curl-iso': 'Šľachy iso.'
+      },
+      notes: ''
+    };
+    setPlanned(p => {
+      let out = [...p];
+      [stanley, miska].forEach(plan => {
+        const i = out.findIndex(x => x.id === plan.id);
+        if (i >= 0) out[i] = {
+          ...out[i],
+          ...plan
+        };else out.push(plan);
+      });
+      return out;
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_rozbehy_june16';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
