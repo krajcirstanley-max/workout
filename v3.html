@@ -11422,7 +11422,7 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [plannedSynced]);
   useEffect(() => {
-    const KEY = 'wk2_v3_seed_maxv_june18';
+    const KEY = 'wk2_v3_seed_june18_v2';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
     if (!exercises.length) return;
@@ -11440,13 +11440,13 @@ function App() {
     const exIds = new Set(exercises.map(e => e.id));
     const missing = newExs.filter(e => !exIds.has(e.id));
     if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
-    const stanley = {
-      id: 'pl-maxv-june18-s',
+    const trackS = {
+      id: 'pl-track-june18-s',
       date: '2026-06-18',
       name: 'Max V + Plné skoky',
       color: '#dc2626',
-      exerciseIds: ['fly-30m', 'approach-jump-18', 'hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff'],
-      supersets: [['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps']],
+      exerciseIds: ['fly-30m', 'approach-jump-18'],
+      supersets: [],
       setConfigs: {
         'fly-30m': [{
           reps: 1
@@ -11465,7 +11465,63 @@ function App() {
           reps: 1
         }, {
           reps: 1
+        }]
+      },
+      exerciseAthletes: {
+        'fly-30m': ['ath-1'],
+        'approach-jump-18': ['ath-1']
+      },
+      exNotes: {
+        'fly-30m': 'Max V. Plná pauza.',
+        'approach-jump-18': 'Súťažný rozbeh. #1 trafiť dosku, #2 odraz z nábehu, #3 hore nie plocho. Plná pauza.'
+      },
+      notes: ''
+    };
+    const trackM = {
+      id: 'pl-track-june18-m',
+      date: '2026-06-18',
+      name: 'Max V + Plné skoky',
+      color: '#dc2626',
+      exerciseIds: ['fly-30m', 'approach-jump-18'],
+      supersets: [],
+      setConfigs: {
+        'fly-30m': [{
+          reps: 1
+        }, {
+          reps: 1
         }],
+        'approach-jump-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }]
+      },
+      exerciseAthletes: {
+        'fly-30m': ['ath-2'],
+        'approach-jump-18': ['ath-2']
+      },
+      exNotes: {
+        'fly-30m': 'Max V. Plná pauza.',
+        'approach-jump-18': 'Pohodlný rozbeh. #1 presnosť dosky, #2 odraz z nábehu, #3 hore.'
+      },
+      notes: ''
+    };
+    const gymS = {
+      id: 'pl-gym-june18-s',
+      date: '2026-06-18',
+      name: 'Reactive Gym',
+      color: '#3b82f6',
+      exerciseIds: ['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff'],
+      supersets: [['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps']],
+      setConfigs: {
         'hex-bar-drop-jump': [{
           reps: 3
         }, {
@@ -11495,42 +11551,22 @@ function App() {
           time: 25
         }]
       },
-      exerciseAthletes: Object.fromEntries(['fly-30m', 'approach-jump-18', 'hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff'].map(e => [e, ['ath-1']])),
+      exerciseAthletes: Object.fromEntries(['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff'].map(e => [e, ['ath-1']])),
       exNotes: {
-        'fly-30m': 'Max V. Plná pauza.',
-        'approach-jump-18': 'Súťažný rozbeh. #1 trafiť dosku, #2 odraz z nábehu, #3 hore nie plocho. Plná pauza.',
         'hex-bar-drop-jump': 'SS s pogá + assisted.',
         'pogos-bands': 'SS.',
         'assisted-jumps': 'SS.'
       },
       notes: ''
     };
-    const miska = {
-      id: 'pl-maxv-june18-m',
+    const gymM = {
+      id: 'pl-gym-june18-m',
       date: '2026-06-18',
-      name: 'Max V + Plné skoky',
-      color: '#dc2626',
-      exerciseIds: ['fly-30m', 'approach-jump-18', 'hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'],
+      name: 'Reactive Gym',
+      color: '#3b82f6',
+      exerciseIds: ['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'],
       supersets: [['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps']],
       setConfigs: {
-        'fly-30m': [{
-          reps: 1
-        }, {
-          reps: 1
-        }],
-        'approach-jump-18': [{
-          reps: 1
-        }, {
-          reps: 1
-        }, {
-          reps: 1
-        }, {
-          reps: 1
-        }, {
-          reps: 1
-        }, {
-          reps: 1
-        }],
         'hex-bar-drop-jump': [{
           reps: 3
         }, {
@@ -11587,10 +11623,8 @@ function App() {
           time: 40
         }]
       },
-      exerciseAthletes: Object.fromEntries(['fly-30m', 'approach-jump-18', 'hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'].map(e => [e, ['ath-2']])),
+      exerciseAthletes: Object.fromEntries(['hex-bar-drop-jump', 'pogos-bands', 'assisted-jumps', 'iso-takeoff', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'].map(e => [e, ['ath-2']])),
       exNotes: {
-        'fly-30m': 'Max V. Plná pauza.',
-        'approach-jump-18': 'Pohodlný rozbeh. #1 presnosť dosky, #2 odraz z nábehu, #3 hore.',
         'hex-bar-drop-jump': 'SS s pogá + assisted.',
         'pogos-bands': 'SS.',
         'assisted-jumps': 'SS.',
@@ -11601,8 +11635,8 @@ function App() {
       notes: ''
     };
     setPlanned(p => {
-      let out = [...p];
-      [stanley, miska].forEach(plan => {
+      let out = p.filter(x => x.id !== 'pl-maxv-june18-s' && x.id !== 'pl-maxv-june18-m');
+      [trackS, trackM, gymS, gymM].forEach(plan => {
         const i = out.findIndex(x => x.id === plan.id);
         if (i >= 0) out[i] = {
           ...out[i],
