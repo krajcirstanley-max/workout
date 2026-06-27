@@ -4529,6 +4529,42 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[plannedSynced]);
 
+  // One-shot seed: 2026-06-27 Max Odraz + Reaktíva. Single shared plan for
+  // both athletes (only hurdle height differs - covered in cue).
+  useEffect(()=>{const KEY='wk2_v3_seed_max_odraz_june27';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    const plan={id:'pl-max-odraz-june27',date:'2026-06-27',name:'Max Odraz + Reaktíva',color:'#f97316',
+      exerciseIds:['alt-bounds-jump','sl-bounds-pr-l','sl-bounds-pr-r','resisted-20m','drop-jump-60cm','high-hurdle-jumps','iso-ankle','tibialis-raise-w'],
+      supersets:[],
+      setConfigs:{
+        'alt-bounds-jump':[{reps:5},{reps:5},{reps:5}],
+        'sl-bounds-pr-l':[{reps:5},{reps:5}],
+        'sl-bounds-pr-r':[{reps:5},{reps:5}],
+        'resisted-20m':[{},{},{},{},{},{},{}],
+        'drop-jump-60cm':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
+        'high-hurdle-jumps':[{reps:5},{reps:5},{reps:5}],
+        'iso-ankle':[{time:30},{time:30},{time:30}],
+        'tibialis-raise-w':[{reps:12},{reps:12},{reps:12}]
+      },
+      exNotes:{
+        'alt-bounds-jump':'Z nábehu. Na bomby.',
+        'sl-bounds-pr-l':'Z nábehu.',
+        'sl-bounds-pr-r':'Z nábehu.',
+        'resisted-20m':'ExerGenie. 10-20% Vdec. Ľahký ťah, čistá technika, stále rýchle.',
+        'drop-jump-60cm':'Výška 60-76 cm.',
+        'high-hurdle-jumps':'Stanley h91, Miška h76. Vertikálna reaktivita.',
+        'iso-ankle':'Každá noha.'
+      },
+      notes:'Rozcvička: drily (A/B skip, dribbling) + vystupňované rovinky 3-4×.'
+    };
+    setPlanned(p=>{const i=p.findIndex(x=>x.id==='pl-max-odraz-june27');
+      if(i>=0){const n=[...p];n[i]={...n[i],...plan};return n}
+      return[...p,plan]});
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-06-18 Two separate trainings - Track (Max V + plné skoky)
   // and Gym (reactive 2nd phase). 4 plans total (2 per athlete) so each
   // athlete starts the Track and Gym workouts independently.
