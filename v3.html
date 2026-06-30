@@ -11422,6 +11422,269 @@ function App() {
     localStorage.setItem(KEY, '1');
   }, [plannedSynced]);
   useEffect(() => {
+    const KEY = 'wk2_v3_seed_lj_june30';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const stanley = {
+      id: 'pl-lj-june30-s',
+      date: '2026-06-30',
+      name: 'Rozbeh + Skoky',
+      color: '#8b5cf6',
+      exerciseIds: ['approach-runthrough-16', 'approach-jump-16', 'pogos'],
+      supersets: [],
+      setConfigs: {
+        'approach-runthrough-16': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'approach-jump-16': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'pogos': [{
+          reps: 15
+        }, {
+          reps: 15
+        }]
+      },
+      exerciseAthletes: {
+        'approach-runthrough-16': ['ath-1'],
+        'approach-jump-16': ['ath-1'],
+        'pogos': ['ath-1']
+      },
+      exNotes: {
+        'approach-runthrough-16': 'Presnosť, bez prešľapu.',
+        'approach-jump-16': 'Skoro plné / plné. Board feel, vystretý odraz.',
+        'pogos': 'Ľahká reaktíva.'
+      },
+      notes: ''
+    };
+    const miska = {
+      id: 'pl-lj-june30-m',
+      date: '2026-06-30',
+      name: 'Rozbeh + Skoky',
+      color: '#8b5cf6',
+      exerciseIds: ['approach-runthrough-18', 'approach-jump-18', 'pogos'],
+      supersets: [],
+      setConfigs: {
+        'approach-runthrough-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'approach-jump-18': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'pogos': [{
+          reps: 15
+        }, {
+          reps: 15
+        }]
+      },
+      exerciseAthletes: {
+        'approach-runthrough-18': ['ath-2'],
+        'approach-jump-18': ['ath-2'],
+        'pogos': ['ath-2']
+      },
+      exNotes: {
+        'approach-runthrough-18': 'Presnosť, bez prešľapu.',
+        'approach-jump-18': 'Skoro plné / plné. Board feel, vystretý odraz.',
+        'pogos': 'Ľahká reaktíva.'
+      },
+      notes: ''
+    };
+    setPlanned(p => {
+      let out = [...p];
+      [stanley, miska].forEach(plan => {
+        const i = out.findIndex(x => x.id === plan.id);
+        if (i >= 0) out[i] = {
+          ...out[i],
+          ...plan
+        };else out.push(plan);
+      });
+      return out;
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
+    const KEY = 'wk2_v3_seed_speed_june29';
+    if (localStorage.getItem(KEY) === '1') return;
+    if (!exSynced || !plannedSynced) return;
+    if (!exercises.length) return;
+    const newExs = [{
+      id: 'sfs-sprint',
+      name: 'Sprint-Float-Sprint',
+      category: 'T&F',
+      metrics: ['tf-time', 'distance']
+    }];
+    const exIds = new Set(exercises.map(e => e.id));
+    const missing = newExs.filter(e => !exIds.has(e.id));
+    if (missing.length) setExercises(p => [...p, ...missing.filter(m => !p.find(x => x.id === m.id))]);
+    const plan = {
+      id: 'pl-speed-june29',
+      date: '2026-06-29',
+      name: 'Wickets + Fly + Overspeed',
+      color: '#dc2626',
+      exerciseIds: ['wickets', 'fly-10m', 'overspeed-40m', 'sfs-sprint', 'iso-ankle', 'tibialis-raise-w', 'sl-calf-iso', 'soleus-iso', 'leg-curl-iso'],
+      supersets: [],
+      setConfigs: {
+        'wickets': [{
+          reps: 10
+        }, {
+          reps: 10
+        }, {
+          reps: 10
+        }, {
+          reps: 10
+        }, {
+          reps: 10
+        }],
+        'fly-10m': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'overspeed-40m': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'sfs-sprint': [{
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }, {
+          reps: 1
+        }],
+        'iso-ankle': [{
+          time: 30
+        }, {
+          time: 30
+        }, {
+          time: 30
+        }],
+        'tibialis-raise-w': [{
+          reps: 12
+        }, {
+          reps: 12
+        }, {
+          reps: 12
+        }],
+        'sl-calf-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'soleus-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }],
+        'leg-curl-iso': [{
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }, {
+          time: 40
+        }]
+      },
+      exerciseAthletes: {
+        'sl-calf-iso': ['ath-2'],
+        'soleus-iso': ['ath-2'],
+        'leg-curl-iso': ['ath-2']
+      },
+      exNotes: {
+        'wickets': '10 krokov.',
+        'fly-10m': 'Plná pauza 6-8 min. Build-up 20-30m, meraj 10m fly.',
+        'overspeed-40m': 'Ľahký ťah.',
+        'sfs-sprint': '60-80m. Sprint-Float-Sprint.',
+        'iso-ankle': 'Každá noha.',
+        'sl-calf-iso': 'Šľachy iso.',
+        'soleus-iso': 'Šľachy iso.',
+        'leg-curl-iso': 'Šľachy iso.'
+      },
+      notes: ''
+    };
+    setPlanned(p => {
+      const i = p.findIndex(x => x.id === 'pl-speed-june29');
+      if (i >= 0) {
+        const n = [...p];
+        n[i] = {
+          ...n[i],
+          ...plan
+        };
+        return n;
+      }
+      return [...p, plan];
+    });
+    localStorage.setItem(KEY, '1');
+  }, [exercises.length, exSynced, plannedSynced]);
+  useEffect(() => {
     const KEY = 'wk2_v3_seed_max_odraz_june27';
     if (localStorage.getItem(KEY) === '1') return;
     if (!exSynced || !plannedSynced) return;
