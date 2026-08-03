@@ -2291,7 +2291,8 @@ function WorkoutDetailModal({wk:initWk,athletes,exercises,workouts,setExercises,
               <div style={{fontSize:16,fontWeight:900,fontStyle:'italic',letterSpacing:'-.3px',color:'var(--text)',textTransform:'uppercase'}}>{ex?.name||'?'}</div>
               {editing&&<button onClick={()=>{if(confirm('Remove this exercise from the workout?'))removeExerciseFromLogged(eid)}} style={{background:'transparent',border:'none',color:'var(--red)',fontSize:12,fontWeight:800,fontFamily:'var(--mono)',letterSpacing:'.5px',padding:'4px 8px',cursor:'pointer'}}>REMOVE</button>}
             </div>
-            {noteFor(wk.exNotes,eid,selAth)&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',marginBottom:8}}>{noteFor(wk.exNotes,eid,selAth)}</div>}
+            {noteFor(wk.exNotes,eid,selAth)&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',marginBottom:6}}>💬 {noteFor(wk.exNotes,eid,selAth)}</div>}
+            {wk.athleteNotes?.[eid]?.[selAth]&&<div style={{fontSize:12,color:'var(--primary)',fontStyle:'italic',marginBottom:8}}>📝 {wk.athleteNotes[eid][selAth]}</div>}
             {usedMetrics.length>0&&<div style={{display:'grid',gridTemplateColumns:cols,gap:10,padding:'4px 0 6px',fontFamily:'var(--mono)',fontSize:9,fontWeight:800,color:'var(--text3)',letterSpacing:'.5px',textTransform:'uppercase'}}>
               <span></span>
               {usedMetrics.map(m=>{const md=METRIC_MAP[m]||{name:m,unit:''};return<span key={m} style={{textAlign:'left'}}>{md.name||md.unit}</span>})}
@@ -3591,19 +3592,27 @@ function ExerciseDetail({exercise,athletes,activeAth,workouts,cm,onClose,onUpdat
         </div>}
         <div style={{padding:'0 18px',fontFamily:'var(--mono)',fontSize:11,fontWeight:800,color:'var(--text3)',letterSpacing:'1px',textTransform:'uppercase',marginTop:8,marginBottom:8}}>{history.length} Session{history.length===1?'':'s'}</div>
         {history.length===0?<div className="empty"><div className="empty-text">No sessions yet</div></div>
-          :history.map((h,i)=>(<div key={i} className="hist-card">
-            <div className="hist-date">{new Date(h.wk.startTime).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
-            {h.sets.map((s,j)=>{const f=histSet(s.values);
-              return(<div key={j} className="hist-set">
-                <span className="hist-set-n">{j+1}</span>
-                <div style={{flex:1,minWidth:0}}>
-                  {f.nm
-                    ?<div className="hist-nm">Not measured</div>
-                    :<><div className="hist-headline">{f.lead&&<span className="hist-lead">{f.lead}</span>}{f.headline}</div>
-                      {f.subs.length>0&&<div className="hist-subs">{f.subs.map((x,xi)=>(<span key={xi}>{x.lab} <b>{x.val}</b></span>))}</div>}</>}
-                </div>
-              </div>)})}
-          </div>))}
+          :history.map((h,i)=>{
+            const exNote=noteFor(h.wk.exNotes,h.exId,selAth);
+            const athNote=h.wk.athleteNotes?.[h.exId]?.[selAth]||'';
+            const wkNote=h.wk.athletes?.[selAth]?.notes||'';
+            return(<div key={i} className="hist-card">
+              <div className="hist-date">{new Date(h.wk.startTime).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
+              {exNote&&<div style={{fontSize:12,color:'var(--text3)',fontStyle:'italic',padding:'0 0 8px'}}>💬 {exNote}</div>}
+              {athNote&&<div style={{fontSize:12,color:'var(--primary)',fontStyle:'italic',padding:'0 0 8px'}}>📝 {athNote}</div>}
+              {h.sets.map((s,j)=>{const f=histSet(s.values);
+                return(<div key={j} className="hist-set">
+                  <span className="hist-set-n">{j+1}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    {f.nm
+                      ?<div className="hist-nm">Not measured</div>
+                      :<><div className="hist-headline">{f.lead&&<span className="hist-lead">{f.lead}</span>}{f.headline}</div>
+                        {f.subs.length>0&&<div className="hist-subs">{f.subs.map((x,xi)=>(<span key={xi}>{x.lab} <b>{x.val}</b></span>))}</div>}</>}
+                  </div>
+                </div>)})}
+              {wkNote&&<div style={{fontSize:11,color:'var(--text4)',padding:'8px 0 0',borderTop:'1px solid var(--border)',marginTop:6}}>Session notes: {wkNote}</div>}
+            </div>);
+          })}
       </div>:<div style={{padding:'18px 14px'}}>
         <div style={{fontFamily:'var(--mono)',fontSize:10,fontWeight:800,color:'var(--text3)',letterSpacing:'1px',textTransform:'uppercase',marginBottom:8}}>Metrics</div>
         <div style={{display:'flex',flexWrap:'wrap',marginBottom:14}}>

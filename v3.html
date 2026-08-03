@@ -5285,9 +5285,16 @@ function WorkoutDetailModal({
         fontSize: 12,
         color: 'var(--text3)',
         fontStyle: 'italic',
+        marginBottom: 6
+      }
+    }, "\uD83D\uDCAC ", noteFor(wk.exNotes, eid, selAth)), wk.athleteNotes?.[eid]?.[selAth] && React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: 'var(--primary)',
+        fontStyle: 'italic',
         marginBottom: 8
       }
-    }, noteFor(wk.exNotes, eid, selAth)), usedMetrics.length > 0 && React.createElement("div", {
+    }, "\uD83D\uDCDD ", wk.athleteNotes[eid][selAth]), usedMetrics.length > 0 && React.createElement("div", {
       style: {
         display: 'grid',
         gridTemplateColumns: cols,
@@ -8929,39 +8936,66 @@ function ExerciseDetail({
     className: "empty"
   }, React.createElement("div", {
     className: "empty-text"
-  }, "No sessions yet")) : history.map((h, i) => React.createElement("div", {
-    key: i,
-    className: "hist-card"
-  }, React.createElement("div", {
-    className: "hist-date"
-  }, new Date(h.wk.startTime).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric'
-  })), h.sets.map((s, j) => {
-    const f = histSet(s.values);
+  }, "No sessions yet")) : history.map((h, i) => {
+    const exNote = noteFor(h.wk.exNotes, h.exId, selAth);
+    const athNote = h.wk.athleteNotes?.[h.exId]?.[selAth] || '';
+    const wkNote = h.wk.athletes?.[selAth]?.notes || '';
     return React.createElement("div", {
-      key: j,
-      className: "hist-set"
-    }, React.createElement("span", {
-      className: "hist-set-n"
-    }, j + 1), React.createElement("div", {
+      key: i,
+      className: "hist-card"
+    }, React.createElement("div", {
+      className: "hist-date"
+    }, new Date(h.wk.startTime).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    })), exNote && React.createElement("div", {
       style: {
-        flex: 1,
-        minWidth: 0
+        fontSize: 12,
+        color: 'var(--text3)',
+        fontStyle: 'italic',
+        padding: '0 0 8px'
       }
-    }, f.nm ? React.createElement("div", {
-      className: "hist-nm"
-    }, "Not measured") : React.createElement(React.Fragment, null, React.createElement("div", {
-      className: "hist-headline"
-    }, f.lead && React.createElement("span", {
-      className: "hist-lead"
-    }, f.lead), f.headline), f.subs.length > 0 && React.createElement("div", {
-      className: "hist-subs"
-    }, f.subs.map((x, xi) => React.createElement("span", {
-      key: xi
-    }, x.lab, " ", React.createElement("b", null, x.val)))))));
-  })))) : React.createElement("div", {
+    }, "\uD83D\uDCAC ", exNote), athNote && React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: 'var(--primary)',
+        fontStyle: 'italic',
+        padding: '0 0 8px'
+      }
+    }, "\uD83D\uDCDD ", athNote), h.sets.map((s, j) => {
+      const f = histSet(s.values);
+      return React.createElement("div", {
+        key: j,
+        className: "hist-set"
+      }, React.createElement("span", {
+        className: "hist-set-n"
+      }, j + 1), React.createElement("div", {
+        style: {
+          flex: 1,
+          minWidth: 0
+        }
+      }, f.nm ? React.createElement("div", {
+        className: "hist-nm"
+      }, "Not measured") : React.createElement(React.Fragment, null, React.createElement("div", {
+        className: "hist-headline"
+      }, f.lead && React.createElement("span", {
+        className: "hist-lead"
+      }, f.lead), f.headline), f.subs.length > 0 && React.createElement("div", {
+        className: "hist-subs"
+      }, f.subs.map((x, xi) => React.createElement("span", {
+        key: xi
+      }, x.lab, " ", React.createElement("b", null, x.val)))))));
+    }), wkNote && React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: 'var(--text4)',
+        padding: '8px 0 0',
+        borderTop: '1px solid var(--border)',
+        marginTop: 6
+      }
+    }, "Session notes: ", wkNote));
+  })) : React.createElement("div", {
     style: {
       padding: '18px 14px'
     }
