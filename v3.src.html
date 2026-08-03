@@ -4538,6 +4538,68 @@ function App(){
     localStorage.setItem(KEY,'1')
   },[plannedSynced]);
 
+  // One-shot seed: 2026-08-03 Wickets + Speed. Two athlete plans - Stanley
+  // does 12-step wickets + free fly-30, Miška does two 10-step wicket blocks
+  // (spacing + frequency) + resisted 30m accel with free-accel superset. Both
+  // share stiff bounds + 60m SFS at the end.
+  useEffect(()=>{const KEY='wk2_v3_seed_wickets_aug3';
+    if(localStorage.getItem(KEY)==='1')return;
+    if(!exSynced||!plannedSynced)return;
+    if(!exercises.length)return;
+    const newExs=[
+      {id:'stiff-bounds',name:'Stiff Bounds',category:'T&F',metrics:['reps','distance']},
+    ];
+    const exIds=new Set(exercises.map(e=>e.id));
+    const missing=newExs.filter(e=>!exIds.has(e.id));
+    if(missing.length)setExercises(p=>[...p,...missing.filter(m=>!p.find(x=>x.id===m.id))]);
+
+    const stanley={id:'pl-wickets-aug3-s',date:'2026-08-03',name:'Wickets + Speed',color:'#dc2626',
+      exerciseIds:['wickets','fly-30m','stiff-bounds','sfs-sprint'],
+      supersets:[],
+      setConfigs:{
+        'wickets':[{reps:12},{reps:12},{reps:12}],
+        'fly-30m':[{reps:1},{reps:1},{reps:1},{reps:1},{reps:1}],
+        'stiff-bounds':[{distance:25},{distance:25},{distance:25}],
+        'sfs-sprint':[{reps:1},{reps:1},{reps:1}]
+      },
+      exerciseAthletes:{'wickets':['ath-1'],'fly-30m':['ath-1'],'stiff-bounds':['ath-1'],'sfs-sprint':['ath-1']},
+      exNotes:{
+        'wickets':'12 klobúčikov, spacing 2.35.',
+        'stiff-bounds':'20-30m, krátky GCT.',
+        'sfs-sprint':'60m. Sprint-Float-Sprint.'
+      },
+      notes:''};
+
+    const miska={id:'pl-wickets-aug3-m',date:'2026-08-03',name:'Wickets + Speed',color:'#dc2626',
+      exerciseIds:['wickets','wickets__1','resisted-30m','start-30m','stiff-bounds','sfs-sprint'],
+      supersets:[['resisted-30m','start-30m']],
+      setConfigs:{
+        'wickets':[{reps:10},{reps:10},{reps:10}],
+        'wickets__1':[{reps:10},{reps:10},{reps:10}],
+        'resisted-30m':[{},{},{},{},{}],
+        'start-30m':[{},{}],
+        'stiff-bounds':[{distance:25},{distance:25},{distance:25}],
+        'sfs-sprint':[{reps:1},{reps:1},{reps:1}]
+      },
+      exerciseAthletes:{'wickets':['ath-2'],'wickets__1':['ath-2'],'resisted-30m':['ath-2'],'start-30m':['ath-2'],'stiff-bounds':['ath-2'],'sfs-sprint':['ath-2']},
+      exNotes:{
+        'wickets':'10 klobúčikov, spacing 2.20/2.25/2.30.',
+        'wickets__1':'10 klobúčikov, frekvencia.',
+        'resisted-30m':'ExerGenie. SS s free accel.',
+        'start-30m':'Free accel, SS s resisted.',
+        'stiff-bounds':'20-30m, krátky GCT.',
+        'sfs-sprint':'60m. Sprint-Float-Sprint.'
+      },
+      notes:''};
+
+    setPlanned(p=>{let out=[...p];
+      [stanley,miska].forEach(plan=>{const i=out.findIndex(x=>x.id===plan.id);
+        if(i>=0)out[i]={...out[i],...plan};else out.push(plan)});
+      return out;
+    });
+    localStorage.setItem(KEY,'1')
+  },[exercises.length,exSynced,plannedSynced]);
+
   // One-shot seed: 2026-06-30 Rozbeh + Skoky - two athlete plans
   // (Stanley 16-step, Miška 18-step). Pogos shared.
   useEffect(()=>{const KEY='wk2_v3_seed_lj_june30';
